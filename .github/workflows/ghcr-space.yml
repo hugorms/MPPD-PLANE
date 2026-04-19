@@ -1,5 +1,5 @@
 # Construye y publica la imagen de apps/space en GitHub Container Registry.
-# Imagen: ghcr.io/bibliotecaven/ghp-gcs-space
+# Imagen: ghcr.io/bibliotecaven/mppd-gcs-space
 #
 # Variables: mismo bloque "Variables VITE compartidas" que ghcr-admin.yml
 # (apps/space/Dockerfile.space acepta los mismos ARG que admin).
@@ -26,7 +26,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bibliotecaven/ghp-gcs-space
+  IMAGE_NAME: bibliotecaven/mppd-gcs-space
 
 permissions:
   contents: read

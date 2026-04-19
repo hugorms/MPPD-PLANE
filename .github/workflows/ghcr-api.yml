@@ -1,5 +1,5 @@
 # Construye y publica la imagen de apps/api en GitHub Container Registry.
-# Imagen: ghcr.io/bibliotecaven/ghp-gcs-api
+# Imagen: ghcr.io/bibliotecaven/mppd-gcs-api
 #
 # GHCR_TOKEN (PAT): debe incluir write:packages. Solo read:packages provoca:
 #   denied: permission_denied: The token provided does not match expected scopes
@@ -22,7 +22,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bibliotecaven/ghp-gcs-api
+  IMAGE_NAME: bibliotecaven/mppd-gcs-api
 
 permissions:
   contents: read

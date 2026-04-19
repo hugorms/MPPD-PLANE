@@ -1,5 +1,5 @@
 # Construye y publica la imagen de apps/web en GitHub Container Registry.
-# Imagen: ghcr.io/bibliotecaven/ghp-gcs-web
+# Imagen: ghcr.io/bibliotecaven/mppd-gcs-web
 #
 # Variables del repositorio (Settings → Secrets and variables → Actions → Variables):
 #   Compartidas: ver comentario en ghcr-admin.yml (bloque "Variables VITE compartidas").
@@ -28,7 +28,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bibliotecaven/ghp-gcs-web
+  IMAGE_NAME: bibliotecaven/mppd-gcs-web
 
 permissions:
   contents: read

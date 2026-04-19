@@ -1,5 +1,5 @@
 # Construye y publica la imagen de apps/live en GitHub Container Registry.
-# Imagen: ghcr.io/bibliotecaven/ghp-gcs-live
+# Imagen: ghcr.io/bibliotecaven/mppd-gcs-live
 #
 # apps/live no usa VITE en build: servidor Node (process.env en runtime).
 # En Dokploy/deploy: API_BASE_URL, LIVE_SERVER_SECRET_KEY, REDIS_*, PORT, etc.
@@ -27,7 +27,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bibliotecaven/ghp-gcs-live
+  IMAGE_NAME: bibliotecaven/mppd-gcs-live
 
 permissions:
   contents: read

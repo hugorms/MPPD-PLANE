@@ -1,5 +1,5 @@
 # Construye y publica la imagen de apps/admin en GitHub Container Registry.
-# Imagen: ghcr.io/bibliotecaven/ghp-gcs-admin
+# Imagen: ghcr.io/bibliotecaven/mppd-gcs-admin
 #
 # --- Variables VITE compartidas (definir una vez en el repo; usan web/admin/space) ---
 #   VITE_API_BASE_URL          URL pública del API (ej. https://api.tudominio.com)
@@ -37,7 +37,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: bibliotecaven/ghp-gcs-admin
+  IMAGE_NAME: bibliotecaven/mppd-gcs-admin
 
 permissions:
   contents: read
