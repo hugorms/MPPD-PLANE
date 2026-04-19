@@ -1,0 +1,86 @@
+# Construye y publica la imagen de apps/web en GitHub Container Registry.
+# Imagen: ghcr.io/bibliotecaven/ghp-gcs-web
+#
+# Variables del repositorio (Settings → Secrets and variables → Actions → Variables):
+#   Compartidas: ver comentario en ghcr-admin.yml (bloque "Variables VITE compartidas").
+#   Esta imagen usa el subconjunto que acepta apps/web/Dockerfile.web (sin API_BASE_PATH,
+#   VITE_WEB_BASE_PATH, VITE_WEBSITE_URL, VITE_SUPPORT_EMAIL).
+#
+# Mismos requisitos de token que ghcr-api.yml (write:packages).
+# Rebuild: 2026-04-09 — disparar imagen tras actualizar variables en GitHub.
+
+name: GHCR — Web
+
+on:
+  push:
+    branches:
+      - preview
+      - main
+    paths:
+      - "apps/web/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "package.json"
+      - "turbo.json"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/ghcr-web.yml"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: bibliotecaven/ghp-gcs-web
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ghcr-web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/web/Dockerfile.web
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_BASE_URL=${{ vars.VITE_API_BASE_URL }}
+            VITE_WEB_BASE_URL=${{ vars.VITE_WEB_BASE_URL }}
+            VITE_ADMIN_BASE_URL=${{ vars.VITE_ADMIN_BASE_URL }}
+            VITE_ADMIN_BASE_PATH=${{ vars.VITE_ADMIN_BASE_PATH || '/god-mode' }}
+            VITE_SPACE_BASE_URL=${{ vars.VITE_SPACE_BASE_URL }}
+            VITE_SPACE_BASE_PATH=${{ vars.VITE_SPACE_BASE_PATH || '/spaces' }}
+            VITE_LIVE_BASE_URL=${{ vars.VITE_LIVE_BASE_URL }}
+            VITE_LIVE_BASE_PATH=${{ vars.VITE_LIVE_BASE_PATH || '/live' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

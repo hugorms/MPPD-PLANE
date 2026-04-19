@@ -1,0 +1,72 @@
+# Construye y publica la imagen de apps/api en GitHub Container Registry.
+# Imagen: ghcr.io/bibliotecaven/ghp-gcs-api
+#
+# GHCR_TOKEN (PAT): debe incluir write:packages. Solo read:packages provoca:
+#   denied: permission_denied: The token provided does not match expected scopes
+# - PAT classic: marcar "write:packages" (suele incluir read).
+# - PAT fine-grained: permiso "Packages" = Read and write en el repo/org del paquete.
+# Login: usuario = dueño del PAT (github.actor o secreto GHCR_USERNAME si difiere).
+# Rebuild: 2026-04-09 — disparar imagen tras actualizar variables en GitHub.
+
+name: GHCR — API
+
+on:
+  push:
+    branches:
+      - preview
+      - main
+    paths:
+      - "apps/api/**"
+      - ".github/workflows/ghcr-api.yml"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: bibliotecaven/ghp-gcs-api
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: ghcr-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          # Usuario GitHub del dueño del PAT (si GHCR_USERNAME no está definido, usa el actor del workflow).
+          username: ${{ secrets.GHCR_USERNAME || github.actor }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/api
+          file: ./apps/api/Dockerfile.api
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
