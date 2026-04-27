@@ -1124,7 +1124,7 @@ export default {
         edit_slug: "You can only edit the slug of the URL",
       },
       organization_size: {
-        label: "How many people will use this workspace?",
+        label: "Componente",
         placeholder: "Select a range",
       },
     },

@@ -1291,8 +1291,8 @@ export default {
         edit_slug: "Poți edita doar identificatorul URL-ului",
       },
       organization_size: {
-        label: "Câți oameni vor folosi acest spațiu de lucru?",
-        placeholder: "Selectează un interval",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

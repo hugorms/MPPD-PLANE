@@ -1284,8 +1284,8 @@ export default {
         edit_slug: "URLのスラッグのみ編集可能です",
       },
       organization_size: {
-        label: "このワークスペースを何人で使用しますか？",
-        placeholder: "範囲を選択",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

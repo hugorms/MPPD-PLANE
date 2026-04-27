@@ -1290,8 +1290,8 @@ export default {
         edit_slug: "Puoi modificare solo lo slug dell'URL",
       },
       organization_size: {
-        label: "Quante persone utilizzeranno questo spazio di lavoro?",
-        placeholder: "Seleziona una fascia",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

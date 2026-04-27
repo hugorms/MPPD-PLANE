@@ -1299,8 +1299,8 @@ export default {
         edit_slug: "Vous ne pouvez modifier que le slug de l’URL",
       },
       organization_size: {
-        label: "Combien de personnes utiliseront cet espace de travail ?",
-        placeholder: "Sélectionnez une plage",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

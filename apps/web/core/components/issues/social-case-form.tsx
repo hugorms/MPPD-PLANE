@@ -250,7 +250,7 @@ const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "nombre", label: "Nombre" },
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
-  { key: "jornada", label: "Actividad" },
+  { key: "jornada", label: "Componente" },
   { key: "referencia", label: "Solicitud / Beneficio" },
 ];
 
@@ -276,14 +276,12 @@ export const SocialCaseForm = ({
   onSavingChange,
   onPhotoUpload,
   onPhotoFound,
-  actividadesDisponibles = [],
 }: Props) => {
   const [data, setData] = useState<SocialCaseData>(EMPTY);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [jornadaNueva, setJornadaNueva] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [cedulaLooking, setCedulaLooking] = useState(false);
   const [cedulaNotFound, setCedulaNotFound] = useState(false);
@@ -827,60 +825,22 @@ export const SocialCaseForm = ({
             <span className={sectionHeadClass}>Datos del caso</span>
             <div>
               <label htmlFor="sc-jornada" className={labelClass}>
-                Actividad
+                Componente
               </label>
-              {actividadesDisponibles.length > 0 ? (
-                <>
-                  <select
-                    id="sc-jornada"
-                    disabled={!isEditable}
-                    className={fc(isEditable)}
-                    value={
-                      jornadaNueva || (data.jornada && !actividadesDisponibles.includes(data.jornada))
-                        ? "__nueva__"
-                        : data.jornada
-                    }
-                    onChange={(e) => {
-                      if (e.target.value === "__nueva__") {
-                        // Solo activar el input — NO limpiar jornada para evitar
-                        // que el auto-save dispare antes de que el usuario escriba
-                        setJornadaNueva(true);
-                      } else {
-                        setJornadaNueva(false);
-                        update("jornada", e.target.value);
-                      }
-                    }}
-                  >
-                    <option value="">-- Seleccionar actividad --</option>
-                    {actividadesDisponibles.map((a) => (
-                      <option key={a} value={a}>
-                        {a}
-                      </option>
-                    ))}
-                    <option value="__nueva__">+ Nueva actividad...</option>
-                  </select>
-                  {(jornadaNueva || (Boolean(data.jornada) && !actividadesDisponibles.includes(data.jornada))) && (
-                    <input
-                      disabled={!isEditable}
-                      autoCapitalize="sentences"
-                      className={`${fc(isEditable)} mt-2`}
-                      placeholder="Nombre de la nueva actividad"
-                      value={data.jornada}
-                      onChange={(e) => update("jornada", e.target.value)}
-                    />
-                  )}
-                </>
-              ) : (
-                <input
-                  id="sc-jornada"
-                  disabled={!isEditable}
-                  autoCapitalize="sentences"
-                  className={fc(isEditable)}
-                  placeholder="Nombre de la actividad"
-                  value={data.jornada}
-                  onChange={(e) => update("jornada", e.target.value)}
-                />
-              )}
+              <select
+                id="sc-jornada"
+                disabled={!isEditable}
+                className={fc(isEditable)}
+                value={data.jornada}
+                onChange={(e) => update("jornada", e.target.value)}
+              >
+                <option value="">-- Seleccionar componente --</option>
+                <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
+                <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
+                <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
+                <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
+                <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
+              </select>
             </div>
           </div>
 

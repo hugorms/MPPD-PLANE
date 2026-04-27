@@ -1290,8 +1290,8 @@ export default {
         edit_slug: "Anda hanya dapat mengedit slug URL",
       },
       organization_size: {
-        label: "Berapa banyak orang yang akan menggunakan ruang kerja ini?",
-        placeholder: "Pilih rentang",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

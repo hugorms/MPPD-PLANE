@@ -1288,8 +1288,8 @@ export default {
         edit_slug: "Yalnızca URL'nin kısa adını düzenleyebilirsiniz",
       },
       organization_size: {
-        label: "Bu çalışma alanını kaç kişi kullanacak?",
-        placeholder: "Bir aralık seçin",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

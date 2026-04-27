@@ -1299,8 +1299,8 @@ export default {
         edit_slug: "Sie können nur den Slug-Teil der URL bearbeiten",
       },
       organization_size: {
-        label: "Wie viele Personen werden diesen Bereich nutzen?",
-        placeholder: "Wählen Sie einen Bereich",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

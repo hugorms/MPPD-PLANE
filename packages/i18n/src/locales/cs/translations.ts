@@ -1286,8 +1286,8 @@ export default {
         edit_slug: "Můžete upravit pouze část URL (slug)",
       },
       organization_size: {
-        label: "Kolik lidí bude tento prostor používat?",
-        placeholder: "Vyberte rozsah",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

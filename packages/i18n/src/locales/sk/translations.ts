@@ -1288,8 +1288,8 @@ export default {
         edit_slug: "Môžete upraviť iba časť URL (slug)",
       },
       organization_size: {
-        label: "Koľko ľudí bude tento priestor používať?",
-        placeholder: "Vyberte rozsah",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

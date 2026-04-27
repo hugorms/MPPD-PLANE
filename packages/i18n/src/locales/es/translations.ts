@@ -340,8 +340,7 @@ export default {
   failed_to_remove_project_from_favorites:
     "No se pudo eliminar el proyecto de favoritos. Por favor, inténtalo de nuevo.",
   project_created_successfully: "Proyecto creado exitosamente",
-  project_created_successfully_description:
-    "Proyecto creado exitosamente. Ahora puedes comenzar a agregar casos.",
+  project_created_successfully_description: "Proyecto creado exitosamente. Ahora puedes comenzar a agregar casos.",
   project_name_already_taken: "El nombre del proyecto ya está en uso.",
   project_identifier_already_taken: "El identificador del proyecto ya está en uso.",
   project_cover_image_alt: "Imagen de portada del proyecto",
@@ -351,8 +350,7 @@ export default {
   project_id_must_be_at_least_1_character: "El ID del proyecto debe tener al menos 1 carácter",
   project_id_must_be_at_most_5_characters: "El ID del proyecto debe tener como máximo 5 caracteres",
   project_id: "ID del proyecto",
-  project_id_tooltip_content:
-    "Te ayuda a identificar casos en el proyecto de manera única. Máximo 10 caracteres.",
+  project_id_tooltip_content: "Te ayuda a identificar casos en el proyecto de manera única. Máximo 10 caracteres.",
   description_placeholder: "Descripción",
   only_alphanumeric_non_latin_characters_allowed: "Solo se permiten caracteres alfanuméricos y no latinos.",
   project_id_is_required: "El ID del proyecto es requerido",
@@ -992,8 +990,7 @@ export default {
       label: "Agregar caso",
       cycle: {
         failed: "No se pudo agregar el caso al ciclo. Por favor, inténtalo de nuevo.",
-        success:
-          "{count, plural, one {Caso agregado} other {Casos agregados}} al ciclo correctamente.",
+        success: "{count, plural, one {Caso agregado} other {Casos agregados}} al ciclo correctamente.",
         loading: "Agregando {count, plural, one {caso} other {casos}} al ciclo",
       },
       assignee: "Agregar asignados",
@@ -1278,8 +1275,7 @@ export default {
       },
       sidebar_filter: {
         title: "No hay casos coincidentes",
-        description:
-          "Ningún caso coincide con el filtro aplicado en intake. Crea un nuevo caso.",
+        description: "Ningún caso coincide con el filtro aplicado en intake. Crea un nuevo caso.",
       },
       detail: {
         title: "Selecciona un caso para ver sus detalles.",
@@ -1300,8 +1296,8 @@ export default {
         edit_slug: "Solo puedes editar el slug de la URL",
       },
       organization_size: {
-        label: "¿Cuántas personas usarán este espacio de trabajo?",
-        placeholder: "Selecciona un rango",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {
@@ -1490,8 +1486,7 @@ export default {
       },
       no_projects: {
         title: "Sin proyecto",
-        description:
-          "Para crear casos o gestionar tu trabajo, necesitas crear un proyecto o ser parte de uno.",
+        description: "Para crear casos o gestionar tu trabajo, necesitas crear un proyecto o ser parte de uno.",
         primary_button: {
           text: "Inicia tu primer proyecto",
           comic: {
@@ -1516,8 +1511,7 @@ export default {
     empty_state: {
       "all-issues": {
         title: "No hay casos en el proyecto",
-        description:
-          "¡Primer proyecto completado! Ahora, divide tu trabajo en piezas rastreables con casos. ¡Vamos!",
+        description: "¡Primer proyecto completado! Ahora, divide tu trabajo en piezas rastreables con casos. ¡Vamos!",
         primary_button: {
           text: "Crear nuevo caso",
         },
@@ -1871,8 +1865,7 @@ export default {
       default_assignee: "Asignado por defecto",
       guest_super_permissions: {
         title: "Otorgar acceso de visualización a todos los casos para usuarios invitados:",
-        sub_heading:
-          "Esto permitirá a los invitados tener acceso de visualización a todos los casos del proyecto.",
+        sub_heading: "Esto permitirá a los invitados tener acceso de visualización a todos los casos del proyecto.",
       },
       invite_members: {
         title: "Invitar miembros",
@@ -1983,14 +1976,12 @@ export default {
       label: "Automatizaciones",
       "auto-archive": {
         title: "Archivar automáticamente casos cerrados",
-        description:
-          "Plane archivará automáticamente los casos que hayan sido completados o cancelados.",
+        description: "Plane archivará automáticamente los casos que hayan sido completados o cancelados.",
         duration: "Archivar automáticamente casos cerrados durante",
       },
       "auto-close": {
         title: "Cerrar automáticamente casos",
-        description:
-          "Plane cerrará automáticamente los casos que no hayan sido completados o cancelados.",
+        description: "Plane cerrará automáticamente los casos que no hayan sido completados o cancelados.",
         duration: "Cerrar automáticamente casos inactivos durante",
         auto_close_status: "Estado de cierre automático",
       },
@@ -2344,8 +2335,7 @@ export default {
     empty_state: {
       general: {
         title: "Aún no hay comentarios",
-        description:
-          "Los comentarios pueden usarse como un espacio de discusión y seguimiento para los casos",
+        description: "Los comentarios pueden usarse como un espacio de discusión y seguimiento para los casos",
       },
     },
   },

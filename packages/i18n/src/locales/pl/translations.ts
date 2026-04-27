@@ -1286,8 +1286,8 @@ export default {
         edit_slug: "Możesz edytować tylko fragment adresu URL (slug)",
       },
       organization_size: {
-        label: "Ile osób będzie używać tej przestrzeni?",
-        placeholder: "Wybierz zakres",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {

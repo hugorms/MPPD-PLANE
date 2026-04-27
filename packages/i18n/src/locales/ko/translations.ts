@@ -1278,8 +1278,8 @@ export default {
         edit_slug: "URL의 슬러그만 편집할 수 있습니다",
       },
       organization_size: {
-        label: "이 작업 공간을 사용할 사람 수",
-        placeholder: "범위 선택",
+        label: "Componente",
+        placeholder: "Seleccione un componente",
       },
     },
     errors: {
