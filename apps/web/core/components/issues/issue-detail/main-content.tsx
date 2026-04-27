@@ -45,7 +45,7 @@ import {
 } from "@/components/issues/social-case-form";
 import { useSocialCaseStateChange } from "@/hooks/use-social-case-state-change";
 import { useSocialCaseFichaExport } from "@/hooks/use-social-case-ficha-export";
-import { useSocialCaseActividades, invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
+import { invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
 import { SocialCaseSlotButtons } from "@/components/issues/social-case-slot-buttons";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
 import { FileService } from "@/services/file.service";
@@ -91,7 +91,6 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
   const currentState = issue?.state_id ? getStateById(issue.state_id) : undefined;
   const { handleStateChange } = useSocialCaseStateChange({ workspaceSlug, projectId, issueId, issueOperations });
   const { exportFicha, isExporting } = useSocialCaseFichaExport({ workspaceSlug, projectId, issueId });
-  const actividadesDisponibles = useSocialCaseActividades(workspaceSlug, projectId);
   const projectStates = getProjectStates(projectId);
   // El flujo de casos sociales solo aplica si el proyecto tiene los tres estados esperados.
   // Esto evita que proyectos genéricos con nombres de estado similares activen la UI de casos.
@@ -260,7 +259,6 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
             return response.asset_url ?? "";
           }}
           onSavingChange={(status) => setIsSubmitting(status)}
-          actividadesDisponibles={actividadesDisponibles}
         />
 
         {isSocialCase && (

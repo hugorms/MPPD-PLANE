@@ -67,8 +67,6 @@ type Props = {
   onPhotoFound?: (url: string) => void;
   /** Sincroniza el estado de guardado con el indicador global del issue ("submitting" | "submitted" | "saved") */
   onSavingChange?: (status: "submitting" | "submitted" | "saved") => void;
-  /** Lista de actividades ya usadas en el proyecto para mostrar como sugerencias en el campo Actividad */
-  actividadesDisponibles?: string[];
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────

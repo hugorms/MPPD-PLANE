@@ -22,7 +22,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUser } from "@/hooks/store/user";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
-import { useSocialCaseActividades, invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
+import { invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
 // plane web components
 import { DeDupeIssuePopoverRoot } from "@/plane-web/components/de-dupe/duplicate-popover";
 import { IssueTypeSwitcher } from "@/plane-web/components/issues/issue-details/issue-type-switcher";
@@ -126,7 +126,6 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
     issueId,
     issueOperations,
   });
-  const actividadesDisponibles = useSocialCaseActividades(workspaceSlug, issue?.project_id ?? "");
   // debounced duplicate issues swr
   const { duplicateIssues } = useDebouncedDuplicateIssues(
     workspaceSlug,
@@ -265,7 +264,6 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
           return response.asset_url ?? "";
         }}
         onSavingChange={(status) => setIsSubmitting(status)}
-        actividadesDisponibles={actividadesDisponibles}
       />
 
       <DescriptionInput

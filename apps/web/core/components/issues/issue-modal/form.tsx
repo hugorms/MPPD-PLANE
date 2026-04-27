@@ -43,7 +43,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
-import { useSocialCaseActividades, invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
+import { invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
 // plane web imports
 import { DeDupeButtonRoot } from "@/plane-web/components/de-dupe/de-dupe-button";
 import { DuplicateModalRoot } from "@/plane-web/components/de-dupe/duplicate-modal";
@@ -197,7 +197,6 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   // eslint-disable-next-line no-shadow
   const projectDetails = projectId ? getProjectById(projectId) : undefined;
   const isDisabled = isSubmitting || isApplyingTemplate;
-  const actividadesDisponibles = useSocialCaseActividades(workspaceSlug?.toString() ?? "", projectId ?? "");
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 
@@ -604,7 +603,6 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                       socialCaseDataRef.current = d;
                     }}
                     onPhotoFound={(url) => setProfilePhotoUrl(url)}
-                    actividadesDisponibles={actividadesDisponibles}
                   />
                 )}
                 <IssueDescriptionEditor
