@@ -36,9 +36,9 @@ import "@fontsource/ibm-plex-mono";
 const APP_TITLE = "Plane | Simple, extensible, open-source project management tool.";
 
 export const links: LinksFunction = () => [
-  { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32 },
-  { rel: "icon", type: "image/png", sizes: "16x16", href: favicon16 },
-  { rel: "shortcut icon", href: faviconIco },
+  { rel: "icon", type: "image/png", sizes: "32x32", href: "/logo-mppd.png" },
+  { rel: "icon", type: "image/png", sizes: "16x16", href: "/logo-mppd.png" },
+  { rel: "shortcut icon", href: "/logo-mppd.png" },
   { rel: "manifest", href: "/site.webmanifest.json" },
   { rel: "apple-touch-icon", href: icon512 },
   { rel: "apple-touch-icon", sizes: "180x180", href: icon180 },
