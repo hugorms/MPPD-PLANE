@@ -37,7 +37,12 @@
       "Bash(git -C /c/Users/rober/plane remote get-url origin)",
       "Bash(npx tsc:*)",
       "Bash(git commit *)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/favicon/favicon.ico\")",
+      "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/favicon/favicon-16x16.png\")",
+      "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/favicon/favicon-32x32.png\")",
+      "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/icons/icon-180x180.png\")",
+      "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/icons/icon-512x512.png\")"
     ]
   }
 }
