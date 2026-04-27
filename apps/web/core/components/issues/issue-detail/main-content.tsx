@@ -4,8 +4,10 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
+import { FileDown } from "lucide-react";
+import { Button } from "@plane/propel/button";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import type { TNameDescriptionLoader } from "@plane/types";
@@ -42,6 +44,9 @@ import {
   injectProfilePhotoIntoHtml,
 } from "@/components/issues/social-case-form";
 import { useSocialCaseStateChange } from "@/hooks/use-social-case-state-change";
+import { useSocialCaseFichaExport } from "@/hooks/use-social-case-ficha-export";
+import { useSocialCaseActividades, invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
+import { SocialCaseSlotButtons } from "@/components/issues/social-case-slot-buttons";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
 import { FileService } from "@/services/file.service";
 
@@ -75,7 +80,6 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
   const { getUserDetails } = useMember();
   const {
     issue: { getIssueById },
-    attachment: { getAttachmentsByIssueId, getAttachmentById },
     peekIssue,
   } = useIssueDetail();
   const { getProjectById } = useProject();
@@ -86,6 +90,8 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
   const issue = issueId ? getIssueById(issueId) : undefined;
   const currentState = issue?.state_id ? getStateById(issue.state_id) : undefined;
   const { handleStateChange } = useSocialCaseStateChange({ workspaceSlug, projectId, issueId, issueOperations });
+  const { exportFicha, isExporting } = useSocialCaseFichaExport({ workspaceSlug, projectId, issueId });
+  const actividadesDisponibles = useSocialCaseActividades(workspaceSlug, projectId);
   const projectStates = getProjectStates(projectId);
   // El flujo de casos sociales solo aplica si el proyecto tiene los tres estados esperados.
   // Esto evita que proyectos genéricos con nombres de estado similares activen la UI de casos.
@@ -94,35 +100,32 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
     projectStates?.some((s) => s.name?.toLowerCase().includes("articulaci")) &&
     projectStates?.some((s) => s.name?.toLowerCase().includes("recib"))
   );
+  const isSocialCase = useMemo(
+    () => hasSocialCaseWorkflow && extractFromHtml(issue?.description_html ?? "") !== null,
+    [hasSocialCaseWorkflow, issue?.description_html]
+  );
   const isClosed = currentState?.group === "completed";
   const isSinResolucion = currentState?.group === "cancelled";
   const isArticulacion = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("articulaci"));
   const isEnProceso = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("proceso"));
-  const isRecibido = hasSocialCaseWorkflow && Boolean(
-    !isClosed && !isSinResolucion && !isArticulacion && !isEnProceso && currentState?.name?.toLowerCase().includes("recib")
-  );
-  const completedStateId = projectStates?.find((s) => s.group === "completed" && !s.name?.toLowerCase().includes("sin"))?.id;
+  const isRecibido =
+    hasSocialCaseWorkflow &&
+    Boolean(
+      !isClosed &&
+      !isSinResolucion &&
+      !isArticulacion &&
+      !isEnProceso &&
+      currentState?.name?.toLowerCase().includes("recib")
+    );
+  const completedStateId = projectStates?.find(
+    (s) => s.group === "completed" && !s.name?.toLowerCase().includes("sin")
+  )?.id;
   const sinResolucionStateId = projectStates?.find(
     (s) => s.name?.toLowerCase().includes("sin") && s.name?.toLowerCase().includes("resoluci")
   )?.id;
   const procesoStateId = projectStates?.find((s) => s.name?.toLowerCase().includes("proceso"))?.id;
   const articulacionStateId = projectStates?.find((s) => s.name?.toLowerCase().includes("articulaci"))?.id;
   const recibidoStateId = projectStates?.find((s) => s.name?.toLowerCase().includes("recib"))?.id;
-  const SLOT_PREFIXES = ["[CI_SOL]", "[CI_BEN]", "[ENTREGA]"];
-  const initialSlotFiles = (getAttachmentsByIssueId(issueId) ?? []).reduce<Record<string, string>>((acc, id) => {
-    const att = getAttachmentById(id);
-    if (!att) return acc;
-    const prefix = SLOT_PREFIXES.find((p) => att.attributes.name.startsWith(p));
-    if (!prefix) return acc;
-    if (prefix === "[ENTREGA]") {
-      // Múltiples adjuntos de registro fotográfico — clave única por índice
-      const count = Object.keys(acc).filter((k) => k.startsWith("[ENTREGA]")).length;
-      acc[`[ENTREGA]_${count + 1}`] = att.attributes.name;
-    } else {
-      acc[prefix] = att.attributes.name;
-    }
-    return acc;
-  }, {});
   // debounced duplicate issues swr
   const { duplicateIssues } = useDebouncedDuplicateIssues(
     workspaceSlug,
@@ -202,6 +205,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
             await issueOperations.update(workspaceSlug.toString(), issue.project_id, issue.id, {
               description_html: newHtml,
             });
+            invalidateSocialCaseActividades(workspaceSlug.toString(), issue.project_id);
           }}
           onComplete={
             completedStateId
@@ -246,11 +250,6 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
                 }
               : undefined
           }
-          initialSlotFiles={initialSlotFiles}
-          onSlotUpload={async (slotPrefix, file) => {
-            const prefixedFile = new File([file], `${slotPrefix}_${file.name}`, { type: file.type });
-            await attachmentService.uploadIssueAttachment(workspaceSlug, projectId, issueId, prefixedFile);
-          }}
           onPhotoUpload={async (file) => {
             const response = await fileService.uploadProjectAsset(
               workspaceSlug,
@@ -261,7 +260,24 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
             return response.asset_url ?? "";
           }}
           onSavingChange={(status) => setIsSubmitting(status)}
+          actividadesDisponibles={actividadesDisponibles}
         />
+
+        {isSocialCase && (
+          <div className="flex">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={exportFicha}
+              disabled={isExporting}
+              loading={isExporting}
+            >
+              {!isExporting && <FileDown className="mr-1.5 size-3.5" />}
+              Exportar PDF
+            </Button>
+          </div>
+        )}
 
         <DescriptionInput
           issueSequenceId={issue.sequence_id}
@@ -332,6 +348,17 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
         disabled={!isEditable || isArchived}
         renderWidgetModals={!isPeekModeActive}
         issueServiceType={EIssueServiceType.ISSUES}
+        extraActionButtons={
+          <SocialCaseSlotButtons
+            workspaceSlug={workspaceSlug}
+            projectId={projectId}
+            issueId={issueId}
+            onSlotUpload={async (slotPrefix, file) => {
+              const prefixedFile = new File([file], `${slotPrefix}_${file.name}`, { type: file.type });
+              await attachmentService.uploadIssueAttachment(workspaceSlug, projectId, issueId, prefixedFile);
+            }}
+          />
+        }
       />
 
       {windowSize[0] < 768 && (

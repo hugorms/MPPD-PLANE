@@ -22,6 +22,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useUser } from "@/hooks/store/user";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
+import { useSocialCaseActividades, invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
 // plane web components
 import { DeDupeIssuePopoverRoot } from "@/plane-web/components/de-dupe/duplicate-popover";
 import { IssueTypeSwitcher } from "@/plane-web/components/issues/issue-details/issue-type-switcher";
@@ -43,10 +44,8 @@ import {
   injectProfilePhotoIntoHtml,
 } from "@/components/issues/social-case-form";
 import { useSocialCaseStateChange } from "@/hooks/use-social-case-state-change";
-import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
 import { FileService } from "@/services/file.service";
 
-const attachmentService = new IssueAttachmentService();
 const fileService = new FileService();
 // services init
 const workItemVersionService = new WorkItemVersionService();
@@ -70,7 +69,6 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
   const { data: currentUser } = useUser();
   const {
     issue: { getIssueById },
-    attachment: { getAttachmentsByIssueId, getAttachmentById },
   } = useIssueDetail();
   const { getProjectById } = useProject();
   const { getStateById, getProjectStates } = useProjectState();
@@ -104,10 +102,18 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
   const isSinResolucion = currentState?.group === "cancelled";
   const isArticulacion = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("articulaci"));
   const isEnProceso = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("proceso"));
-  const isRecibido = hasSocialCaseWorkflow && Boolean(
-    !isClosed && !isSinResolucion && !isArticulacion && !isEnProceso && currentState?.name?.toLowerCase().includes("recib")
-  );
-  const completedStateId = projectStates?.find((s) => s.group === "completed" && !s.name?.toLowerCase().includes("sin"))?.id;
+  const isRecibido =
+    hasSocialCaseWorkflow &&
+    Boolean(
+      !isClosed &&
+      !isSinResolucion &&
+      !isArticulacion &&
+      !isEnProceso &&
+      currentState?.name?.toLowerCase().includes("recib")
+    );
+  const completedStateId = projectStates?.find(
+    (s) => s.group === "completed" && !s.name?.toLowerCase().includes("sin")
+  )?.id;
   const sinResolucionStateId = projectStates?.find(
     (s) => s.name?.toLowerCase().includes("sin") && s.name?.toLowerCase().includes("resoluci")
   )?.id;
@@ -120,20 +126,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
     issueId,
     issueOperations,
   });
-  const SLOT_PREFIXES = ["[CI_SOL]", "[CI_BEN]", "[ENTREGA]"];
-  const initialSlotFiles = (getAttachmentsByIssueId(issueId) ?? []).reduce<Record<string, string>>((acc, id) => {
-    const att = getAttachmentById(id);
-    if (!att) return acc;
-    const prefix = SLOT_PREFIXES.find((p) => att.attributes.name.startsWith(p));
-    if (!prefix) return acc;
-    if (prefix === "[ENTREGA]") {
-      const count = Object.keys(acc).filter((k) => k.startsWith("[ENTREGA]")).length;
-      acc[`[ENTREGA]_${count + 1}`] = att.attributes.name;
-    } else {
-      acc[prefix] = att.attributes.name;
-    }
-    return acc;
-  }, {});
+  const actividadesDisponibles = useSocialCaseActividades(workspaceSlug, issue?.project_id ?? "");
   // debounced duplicate issues swr
   const { duplicateIssues } = useDebouncedDuplicateIssues(
     workspaceSlug,
@@ -204,6 +197,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
           await issueOperations.update(workspaceSlug.toString(), issue.project_id, issue.id, {
             description_html: newHtml,
           });
+          invalidateSocialCaseActividades(workspaceSlug.toString(), issue.project_id);
         }}
         onComplete={
           completedStateId
@@ -260,12 +254,6 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
               }
             : undefined
         }
-        initialSlotFiles={initialSlotFiles}
-        onSlotUpload={async (slotPrefix, file) => {
-          if (!issue.project_id) return;
-          const prefixedFile = new File([file], `${slotPrefix}_${file.name}`, { type: file.type });
-          await attachmentService.uploadIssueAttachment(workspaceSlug, issue.project_id, issueId, prefixedFile);
-        }}
         onPhotoUpload={async (file) => {
           if (!issue.project_id) return "";
           const response = await fileService.uploadProjectAsset(
@@ -277,6 +265,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
           return response.asset_url ?? "";
         }}
         onSavingChange={(status) => setIsSubmitting(status)}
+        actividadesDisponibles={actividadesDisponibles}
       />
 
       <DescriptionInput

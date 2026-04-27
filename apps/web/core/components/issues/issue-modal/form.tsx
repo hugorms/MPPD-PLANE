@@ -43,6 +43,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
+import { useSocialCaseActividades, invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
 // plane web imports
 import { DeDupeButtonRoot } from "@/plane-web/components/de-dupe/de-dupe-button";
 import { DuplicateModalRoot } from "@/plane-web/components/de-dupe/duplicate-modal";
@@ -196,6 +197,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   // eslint-disable-next-line no-shadow
   const projectDetails = projectId ? getProjectById(projectId) : undefined;
   const isDisabled = isSubmitting || isApplyingTemplate;
+  const actividadesDisponibles = useSocialCaseActividades(workspaceSlug?.toString() ?? "", projectId ?? "");
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 
@@ -366,6 +368,8 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
           } catch (_) {}
         }
         socialCaseDataRef.current = null;
+        // Invalidar cache de actividades para que el próximo formulario muestre la nueva actividad
+        invalidateSocialCaseActividades(workspaceSlug?.toString() ?? "", projectId ?? "");
         // Resetear el SocialCaseForm y foto de perfil para el próximo item
         setSocialFormKey((k) => k + 1);
         setProfilePhotoUrl(null);
@@ -374,9 +378,9 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
           URL.revokeObjectURL(profilePhotoPreview);
           setProfilePhotoPreview(null);
         }
-        try {
-          localStorage.removeItem(PROFILE_PHOTO_KEY);
-        } catch (_) {}
+        // PROFILE_PHOTO_KEY se borra intencionalmente desde SocialCaseForm (modo view)
+        // una vez que description_html contiene la foto. Si borramos aquí, el detalle
+        // del caso recién creado no tendría foto hasta que el store cargue el description_html.
         setGptAssistantModal(false);
         if (isCreateMoreToggleEnabled && workItemTemplateId) {
           handleTemplateChange({
@@ -599,6 +603,8 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                     onDataChange={(d) => {
                       socialCaseDataRef.current = d;
                     }}
+                    onPhotoFound={(url) => setProfilePhotoUrl(url)}
+                    actividadesDisponibles={actividadesDisponibles}
                   />
                 )}
                 <IssueDescriptionEditor

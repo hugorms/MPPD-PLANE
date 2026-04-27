@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { Search } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import { cn, getFileURL } from "@plane/utils";
 import { VENEZUELA_ESTADOS } from "./social-case-estados";
+import { OnfaloService } from "@/services/onfalo.service";
+
+const onfaloService = new OnfaloService();
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,14 +61,14 @@ type Props = {
   onSinResolucion?: () => Promise<void>;
   /** Reabre un caso cerrado (vuelve a proceso) */
   onReabrir?: () => Promise<void>;
-  /** Llamado al subir un archivo a un slot específico de evidencia */
-  onSlotUpload?: (slotPrefix: string, file: File) => Promise<void>;
-  /** Archivos ya subidos por slot al montar (prefix → nombre de archivo) */
-  initialSlotFiles?: Record<string, string>;
   /** Sube una nueva foto de perfil y devuelve la URL del asset */
   onPhotoUpload?: (file: File) => Promise<string>;
+  /** Llamado cuando Onfalo devuelve una foto — para que el padre la muestre en su propio componente */
+  onPhotoFound?: (url: string) => void;
   /** Sincroniza el estado de guardado con el indicador global del issue ("submitting" | "submitted" | "saved") */
   onSavingChange?: (status: "submitting" | "submitted" | "saved") => void;
+  /** Lista de actividades ya usadas en el proyecto para mostrar como sugerencias en el campo Actividad */
+  actividadesDisponibles?: string[];
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -216,7 +220,7 @@ const sectionHeadClass = "block text-xs text-custom-text-300 uppercase tracking-
 
 const labelClass = "block text-xs text-custom-text-300 mb-0.5";
 
-const fieldBase = "w-full rounded-md border-[0.5px] text-13 px-3 py-1.5 transition-colors";
+const fieldBase = "w-full rounded-md border-[0.5px] text-13 px-3 py-1.5 transition-colors font-body";
 const fieldEditable =
   "border-subtle bg-surface-2 text-primary placeholder:text-placeholder focus:border-strong focus:outline-none";
 const fieldReadonly = "border-subtle bg-surface-1 text-primary cursor-default outline-none opacity-75";
@@ -233,6 +237,7 @@ const ARTICULACION_REQUIRED: (keyof SocialCaseData)[] = [
   "nombre",
   "cedula",
   "resultado",
+  "accionTomada",
   "referencia",
   "solicitante",
   "nombreBeneficiario",
@@ -269,19 +274,22 @@ export const SocialCaseForm = ({
   onSinResolucion,
   onReabrir,
   onSavingChange,
-  onSlotUpload,
-  initialSlotFiles = {},
   onPhotoUpload,
+  onPhotoFound,
+  actividadesDisponibles = [],
 }: Props) => {
   const [data, setData] = useState<SocialCaseData>(EMPTY);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [slotUploading, setSlotUploading] = useState<Record<string, boolean>>({});
-  // prefix → nombre del archivo subido (persiste en sesión)
-  const [slotFiles, setSlotFiles] = useState<Record<string, string>>(initialSlotFiles);
+  const [jornadaNueva, setJornadaNueva] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [cedulaLooking, setCedulaLooking] = useState(false);
+  const [cedulaNotFound, setCedulaNotFound] = useState(false);
+  // URL de foto obtenida de Onfalo en la sesión actual (válida en cualquier modo)
+  const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null);
+  const lastCedulaQueried = useRef("");
   const savedData = useRef<SocialCaseData>(EMPTY);
   // Siempre apunta al descriptionHtml más reciente para evitar cierres obsoletos en save()
   const latestDescHtml = useRef(descriptionHtml);
@@ -296,7 +304,12 @@ export const SocialCaseForm = ({
     latestData.current = data;
   });
   // Cancelar timer al desmontar
-  useEffect(() => () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); }, []);
+  useEffect(
+    () => () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    },
+    []
+  );
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -335,10 +348,15 @@ export const SocialCaseForm = ({
           if (migratedKey) sessionStorage.setItem(migratedKey, "1");
           const parsed: SocialCaseData = JSON.parse(pending);
           setData(parsed);
-          const newHtml = injectSocialCaseIntoHtml(latestDescHtml.current, parsed);
+          const baseHtml = injectSocialCaseIntoHtml(latestDescHtml.current, parsed);
+          const photoUrl = localStorage.getItem(PROFILE_PHOTO_KEY);
+          const newHtml = photoUrl ? injectProfilePhotoIntoHtml(baseHtml, photoUrl) : baseHtml;
           onSave(newHtml)
             .then(() => {
               localStorage.removeItem(PENDING_KEY);
+              // PROFILE_PHOTO_KEY lo limpia el useEffect cuando descriptionHtml
+              // ya contiene la foto — no limpiar aquí para evitar que el componente
+              // quede sin fuente de foto durante el ciclo async de actualización del prop
               // Limpiar el guard de sesión una vez confirmado — ya está en DB
               if (migratedKey) sessionStorage.removeItem(migratedKey);
               return undefined;
@@ -391,7 +409,10 @@ export const SocialCaseForm = ({
         await onSave(newHtml);
         setSaved(true);
         onSavingChange?.("submitted");
-        setTimeout(() => { setSaved(false); onSavingChange?.("saved"); }, 2000);
+        setTimeout(() => {
+          setSaved(false);
+          onSavingChange?.("saved");
+        }, 2000);
       } catch (_) {
         onSavingChange?.("saved");
       } finally {
@@ -410,7 +431,10 @@ export const SocialCaseForm = ({
       setSaved(true);
       setEditing(false);
       onSavingChange?.("submitted");
-      setTimeout(() => { setSaved(false); onSavingChange?.("saved"); }, 2000);
+      setTimeout(() => {
+        setSaved(false);
+        onSavingChange?.("saved");
+      }, 2000);
     } catch (_) {
       onSavingChange?.("saved");
     } finally {
@@ -448,23 +472,71 @@ export const SocialCaseForm = ({
     }
   };
 
-  const handleSlotUpload = async (prefix: string, file: File) => {
-    if (!onSlotUpload) return;
-    setSlotUploading((prev) => ({ ...prev, [prefix]: true }));
+  const handleCedulaSearch = async (force = false) => {
+    const num = data.cedula.replace(/\D/g, "");
+    if (!num || num.length < 6) return;
+    if (!force && num === lastCedulaQueried.current) return;
+    setCedulaLooking(true);
+    setCedulaNotFound(false);
     try {
-      await onSlotUpload(prefix, file);
-      // Guardar nombre permanentemente — sin timeout
-      setSlotFiles((prev) => ({ ...prev, [prefix]: file.name }));
+      const result = await onfaloService.lookupCedula(data.cedula);
+      // Solo bloqueamos el ref si obtuvimos respuesta válida — si falla la red, blur puede reintentar
+      if (!result) return;
+      lastCedulaQueried.current = num;
+      if (result.notFound) {
+        setCedulaNotFound(true);
+        return;
+      }
+      const onfaloFields = {
+        ...(result.nombre && { nombre: result.nombre }),
+        ...(result.telefono && { telefono: result.telefono }),
+        ...(result.direccion && { direccion: result.direccion }),
+        ...(result.parroquia && { parroquia: result.parroquia }),
+        ...(result.municipio && { municipio: result.municipio }),
+        ...(result.entidad && { entidad: result.entidad }),
+      };
+      setData((prev) => ({ ...prev, ...onfaloFields }));
+      const next = { ...latestData.current, ...onfaloFields };
+      if (result.fotoUrl) {
+        setLocalPhotoUrl(result.fotoUrl);
+        onPhotoFound?.(result.fotoUrl);
+      }
+      if (mode === "create-no-save") {
+        try {
+          localStorage.setItem(PENDING_KEY, JSON.stringify(next));
+        } catch (_) {}
+        onDataChange?.(next);
+        if (result.fotoUrl) {
+          try {
+            localStorage.setItem(PROFILE_PHOTO_KEY, result.fotoUrl);
+          } catch (_) {}
+        }
+      } else if (onSave) {
+        // Guardar en localStorage para que la foto se muestre inmediatamente
+        // mientras el prop descriptionHtml se actualiza de forma asíncrona
+        if (result.fotoUrl) {
+          try {
+            localStorage.setItem(PROFILE_PHOTO_KEY, result.fotoUrl);
+          } catch (_) {}
+        }
+        // Guardar datos + foto juntos para que el useEffect no sobreescriba con el HTML viejo
+        let newHtml = injectSocialCaseIntoHtml(latestDescHtml.current, next);
+        if (result.fotoUrl) newHtml = injectProfilePhotoIntoHtml(newHtml, result.fotoUrl);
+        await onSave(newHtml);
+      }
+    } catch (e) {
+      console.error("[Onfalo] error:", e);
     } finally {
-      setSlotUploading((prev) => ({ ...prev, [prefix]: false }));
+      setCedulaLooking(false);
     }
   };
 
   // En articulación, si es la misma persona se eximen los campos de beneficiario
   // (igual que hace el hook de cierre en el servidor)
-  const effectiveArticulacionRequired = isArticulacion && data.mismoBeneficiario === "true"
-    ? ARTICULACION_REQUIRED.filter((k) => k !== "nombreBeneficiario" && k !== "cedulaBeneficiario")
-    : ARTICULACION_REQUIRED;
+  const effectiveArticulacionRequired =
+    isArticulacion && data.mismoBeneficiario === "true"
+      ? ARTICULACION_REQUIRED.filter((k) => k !== "nombreBeneficiario" && k !== "cedulaBeneficiario")
+      : ARTICULACION_REQUIRED;
   const articulacionComplete = isArticulacion ? effectiveArticulacionRequired.every((k) => data[k]?.trim()) : false;
 
   // accionTomada y resultado solo se muestran en proceso, articulación o resuelto
@@ -505,16 +577,38 @@ export const SocialCaseForm = ({
   const fc = (editable: boolean) => cn(fieldBase, editable ? fieldEditable : fieldReadonly);
 
   // Foto de perfil actual extraída del HTML.
-  // getFileURL construye la URL absoluta (API_BASE_URL + path) igual que hace
-  // la columna de foto en la lista — <img> puede seguir el redirect a MinIO
-  // sin restricciones CORS, mientras que fetch las tiene.
-  const currentPhotoUrl = mode === "view" ? extractProfilePhotoFromHtml(descriptionHtml) : null;
+  // Fallback: si description_html aún no tiene la foto (store no cargado todavía),
+  // usa el PROFILE_PHOTO_KEY guardado en localStorage durante la creación del caso.
+  // Una vez que description_html tenga la foto, limpiamos el localStorage.
+  const currentPhotoUrl =
+    mode === "view"
+      ? (extractProfilePhotoFromHtml(descriptionHtml) ??
+        localPhotoUrl ??
+        (() => {
+          try {
+            return localStorage.getItem(PROFILE_PHOTO_KEY) || null;
+          } catch {
+            return null;
+          }
+        })())
+      : localPhotoUrl;
   const photoSrc = currentPhotoUrl ? getFileURL(currentPhotoUrl) : null;
+
+  useEffect(() => {
+    if (mode !== "view") return;
+    if (extractProfilePhotoFromHtml(descriptionHtml)) {
+      try {
+        localStorage.removeItem(PROFILE_PHOTO_KEY);
+      } catch {
+        /* noop */
+      }
+    }
+  }, [mode, descriptionHtml]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full">
-      {/* Foto de perfil — solo en modo view */}
+    <div className="w-full font-body">
+      {/* Foto de perfil — solo en modo view (en create la muestra ProfilePhotoUpload del modal) */}
       {mode === "view" && (
         <div className="flex justify-center py-2">
           <div className="relative">
@@ -602,15 +696,38 @@ export const SocialCaseForm = ({
               <div>
                 <label htmlFor="sc-cedula" className={labelClass}>
                   Cedula de identidad
+                  {cedulaLooking && (
+                    <span className="ml-2 animate-pulse text-[10px] text-placeholder">consultando...</span>
+                  )}
+                  {cedulaNotFound && !cedulaLooking && (
+                    <span className="text-red-500 ml-2 text-[10px]">No encontrado</span>
+                  )}
                 </label>
-                <input
-                  id="sc-cedula"
-                  disabled={!isEditable}
-                  className={fc(isEditable)}
-                  placeholder="V-00.000.000"
-                  value={data.cedula}
-                  onChange={(e) => update("cedula", e.target.value)}
-                />
+                <div className="flex items-center gap-1">
+                  <input
+                    id="sc-cedula"
+                    disabled={!isEditable || cedulaLooking}
+                    className={cn(fc(isEditable), "min-w-0 flex-1")}
+                    placeholder="V-00.000.000"
+                    value={data.cedula}
+                    onChange={(e) => {
+                      update("cedula", e.target.value);
+                      if (cedulaNotFound) setCedulaNotFound(false);
+                    }}
+                    onBlur={() => handleCedulaSearch()}
+                  />
+                  {isEditable && (
+                    <button
+                      type="button"
+                      disabled={cedulaLooking}
+                      onClick={() => handleCedulaSearch(true)}
+                      title="Buscar en SENIAT"
+                      className="text-custom-text-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-[0.5px] border-subtle bg-surface-2 transition-colors hover:border-strong hover:text-primary disabled:opacity-50"
+                    >
+                      <Search className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
               <div>
                 <label htmlFor="sc-nombre" className={labelClass}>
@@ -712,15 +829,58 @@ export const SocialCaseForm = ({
               <label htmlFor="sc-jornada" className={labelClass}>
                 Actividad
               </label>
-              <input
-                id="sc-jornada"
-                disabled={!isEditable}
-                autoCapitalize="sentences"
-                className={fc(isEditable)}
-                placeholder="Nombre de la actividad"
-                value={data.jornada}
-                onChange={(e) => update("jornada", e.target.value)}
-              />
+              {actividadesDisponibles.length > 0 ? (
+                <>
+                  <select
+                    id="sc-jornada"
+                    disabled={!isEditable}
+                    className={fc(isEditable)}
+                    value={
+                      jornadaNueva || (data.jornada && !actividadesDisponibles.includes(data.jornada))
+                        ? "__nueva__"
+                        : data.jornada
+                    }
+                    onChange={(e) => {
+                      if (e.target.value === "__nueva__") {
+                        // Solo activar el input — NO limpiar jornada para evitar
+                        // que el auto-save dispare antes de que el usuario escriba
+                        setJornadaNueva(true);
+                      } else {
+                        setJornadaNueva(false);
+                        update("jornada", e.target.value);
+                      }
+                    }}
+                  >
+                    <option value="">-- Seleccionar actividad --</option>
+                    {actividadesDisponibles.map((a) => (
+                      <option key={a} value={a}>
+                        {a}
+                      </option>
+                    ))}
+                    <option value="__nueva__">+ Nueva actividad...</option>
+                  </select>
+                  {(jornadaNueva || (Boolean(data.jornada) && !actividadesDisponibles.includes(data.jornada))) && (
+                    <input
+                      disabled={!isEditable}
+                      autoCapitalize="sentences"
+                      className={`${fc(isEditable)} mt-2`}
+                      placeholder="Nombre de la nueva actividad"
+                      value={data.jornada}
+                      onChange={(e) => update("jornada", e.target.value)}
+                    />
+                  )}
+                </>
+              ) : (
+                <input
+                  id="sc-jornada"
+                  disabled={!isEditable}
+                  autoCapitalize="sentences"
+                  className={fc(isEditable)}
+                  placeholder="Nombre de la actividad"
+                  value={data.jornada}
+                  onChange={(e) => update("jornada", e.target.value)}
+                />
+              )}
             </div>
           </div>
 
@@ -795,12 +955,12 @@ export const SocialCaseForm = ({
                         ...prev,
                         mismoBeneficiario: diferente ? "" : "true",
                         // Al volver a "misma persona" → restaurar los datos del ciudadano
-                        ...(diferente
-                          ? {}
-                          : { nombreBeneficiario: prev.nombre, cedulaBeneficiario: prev.cedula }),
+                        ...(diferente ? {} : { nombreBeneficiario: prev.nombre, cedulaBeneficiario: prev.cedula }),
                       };
                       if (mode === "create-no-save") {
-                        try { localStorage.setItem(PENDING_KEY, JSON.stringify(next)); } catch (_) {}
+                        try {
+                          localStorage.setItem(PENDING_KEY, JSON.stringify(next));
+                        } catch (_) {}
                         onDataChange?.(next);
                       }
                       return next;
@@ -817,8 +977,8 @@ export const SocialCaseForm = ({
 
               {/* Misma persona → mostrar datos del ciudadano como referencia */}
               {data.mismoBeneficiario === "true" && (
-                <div className="rounded-md bg-custom-background-90 px-3 py-2 text-sm text-custom-text-300">
-                  <span className="font-medium text-custom-text-200">{data.nombre || "—"}</span>
+                <div className="bg-custom-background-90 text-sm text-custom-text-300 rounded-md px-3 py-2">
+                  <span className="text-custom-text-200 font-medium">{data.nombre || "—"}</span>
                   <span className="mx-2">·</span>
                   <span>{data.cedula || "—"}</span>
                 </div>
@@ -856,7 +1016,6 @@ export const SocialCaseForm = ({
                   </div>
                 </div>
               )}
-
             </div>
           )}
 
@@ -869,7 +1028,8 @@ export const SocialCaseForm = ({
                 </span>
                 {isArticulacion && !isClosed && (
                   <span className="text-xs text-custom-text-400">
-                    {effectiveArticulacionRequired.filter((k) => data[k]?.trim()).length}/{effectiveArticulacionRequired.length} campos
+                    {effectiveArticulacionRequired.filter((k) => data[k]?.trim()).length}/
+                    {effectiveArticulacionRequired.length} campos
                   </span>
                 )}
               </div>
@@ -923,204 +1083,143 @@ export const SocialCaseForm = ({
 
           {/* BARRA DE NAVEGACIÓN — unificada al final del formulario */}
           {mode === "view" && (
-            <div className="space-y-3 border-t border-custom-border-100 pt-3">
-
-              {/* Slots de evidencia — agrupados junto a los botones de acción */}
-              {onSlotUpload && !isClosed && (isEnProceso || isArticulacion) && (
-                <div className="flex flex-wrap gap-2">
-                  {EVIDENCE_SLOTS.filter(
-                    (slot) => slot.prefix !== "[CI_SOL]" || data.mismoBeneficiario !== "true"
-                  ).map((slot) => {
-                    const isRegistro = slot.prefix === "[ENTREGA]";
-                    const uploaded = slotFiles[slot.prefix];
-                    const uploading = slotUploading[slot.prefix];
-                    const registroCount = isRegistro
-                      ? Object.keys(slotFiles).filter((k) => k.startsWith("[ENTREGA]")).length
-                      : 0;
-                    const isDone = isRegistro ? registroCount > 0 : !!uploaded;
-                    const displayLabel = isRegistro
-                      ? registroCount > 0
-                        ? `${slot.label} (${registroCount})`
-                        : slot.label
-                      : uploaded
-                        ? slot.label
-                        : slot.label;
-                    return (
-                      <label
-                        key={slot.prefix}
-                        className={cn(
-                          "text-xs flex cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 transition-colors",
-                          uploading
-                            ? "border-blue-300 bg-blue-50 text-blue-500 dark:bg-blue-900/20"
-                            : isDone
-                              ? "border-green-400 bg-green-50 text-green-600 dark:bg-green-900/20"
-                              : "text-custom-text-200 hover:text-custom-text-100 border-subtle bg-surface-2 hover:border-strong"
-                        )}
-                      >
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          className="hidden"
-                          disabled={uploading}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            if (isRegistro) {
-                              const count = Object.keys(slotFiles).filter((k) => k.startsWith("[ENTREGA]")).length;
-                              handleSlotUpload(`[ENTREGA]_${count + 1}`, file);
-                            } else {
-                              handleSlotUpload(slot.prefix, file);
-                            }
-                            e.target.value = "";
-                          }}
-                        />
-                        {/* ícono clip */}
-                        <svg className="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                        {uploading ? "Subiendo..." : isDone ? `✓ ${displayLabel}` : displayLabel}
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-
-            <div className="flex items-center justify-between gap-2">
-              {/* Izquierda: retroceder / reabrir */}
-              <div className="flex items-center gap-2">
-                {isEnProceso && !isArticulacion && !isClosed && onRetreat && (
-                  <Button type="button" variant="tertiary" size="sm" onClick={() => onRetreat()}>
-                    ← Recibidos
-                  </Button>
-                )}
-                {isArticulacion && !isClosed && onRetreat && (
-                  <Button type="button" variant="tertiary" size="sm" onClick={() => onRetreat()}>
-                    ← Proceso
-                  </Button>
-                )}
-                {(isClosed || isSinResolucion) && onReabrir && (
-                  <Button type="button" variant="tertiary" size="sm" onClick={() => onReabrir()}>
-                    Reabrir caso
-                  </Button>
-                )}
-                {!isRecibido && !isEnProceso && !isArticulacion && !isClosed && !isSinResolucion && editing && (
-                  <Button
-                    type="button"
-                    variant="tertiary"
-                    size="sm"
-                    onClick={() => {
-                      setData(savedData.current);
-                      setEditing(false);
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                )}
-              </div>
-
-              {/* Derecha: guardar / avanzar */}
-              <div className="flex items-center gap-2">
-                {/* Estado: Recibido */}
-                {isRecibido && (
-                  <>
-                    {!recibidoComplete && (
-                      <span className="text-xs text-custom-text-400">
-                        Falta:{" "}
-                        {RECIBIDO_REQUIRED.filter(({ key }) => !data[key]?.trim())
-                          .map(({ label }) => label)
-                          .join(", ")}
-                      </span>
-                    )}
-                    {onSinResolucion && (
-                      <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
-                        Sin resolución
-                      </Button>
-                    )}
-                    {onAdvance && (
-                      <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        loading={saving}
-                        disabled={!recibidoComplete}
-                        onClick={() => saveAndAdvance(onAdvance)}
-                      >
-                        Iniciar proceso →
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                {/* Estado: En proceso */}
-                {isEnProceso && !isArticulacion && !isClosed && (
-                  <>
-                    {onSinResolucion && (
-                      <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
-                        Sin resolución
-                      </Button>
-                    )}
-                    <Button type="button" variant="secondary" size="sm" loading={saving} onClick={save}>
-                      {saved ? "Guardado" : "Guardar"}
+            <div className="border-custom-border-100 space-y-3 border-t pt-3">
+              <div className="flex items-center justify-between gap-2">
+                {/* Izquierda: retroceder / reabrir */}
+                <div className="flex items-center gap-2">
+                  {isEnProceso && !isArticulacion && !isClosed && onRetreat && (
+                    <Button type="button" variant="tertiary" size="sm" onClick={() => onRetreat()}>
+                      ← Recibidos
                     </Button>
-                    {onAdvance && (
-                      <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        loading={saving}
-                        disabled={!procesoComplete}
-                        onClick={() => saveAndAdvance(onAdvance)}
-                      >
-                        Articulación →
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                {/* Estado: Articulación */}
-                {isArticulacion && !isClosed && (
-                  <>
-                    {!articulacionComplete && (
-                      <span className="text-xs text-custom-text-400">Completa los campos requeridos</span>
-                    )}
+                  )}
+                  {isArticulacion && !isClosed && onRetreat && (
+                    <Button type="button" variant="tertiary" size="sm" onClick={() => onRetreat()}>
+                      ← Proceso
+                    </Button>
+                  )}
+                  {(isClosed || isSinResolucion) && onReabrir && (
+                    <Button type="button" variant="tertiary" size="sm" onClick={() => onReabrir()}>
+                      Reabrir caso
+                    </Button>
+                  )}
+                  {!isRecibido && !isEnProceso && !isArticulacion && !isClosed && !isSinResolucion && editing && (
                     <Button
                       type="button"
-                      variant="primary"
+                      variant="tertiary"
                       size="sm"
-                      loading={saving}
-                      disabled={!articulacionComplete}
-                      onClick={saveAndComplete}
+                      onClick={() => {
+                        setData(savedData.current);
+                        setEditing(false);
+                      }}
                     >
-                      Resolver caso
+                      Cancelar
                     </Button>
-                  </>
-                )}
+                  )}
+                </div>
 
-                {/* Fallback: estado no reconocido — botones de edición manual */}
-                {!isRecibido && !isEnProceso && !isArticulacion && !isClosed && !isSinResolucion && (
-                  <>
-                    {!editing && (
+                {/* Derecha: guardar / avanzar */}
+                <div className="flex items-center gap-2">
+                  {/* Estado: Recibido */}
+                  {isRecibido && (
+                    <>
+                      {!recibidoComplete && (
+                        <span className="text-xs text-custom-text-400">
+                          Falta:{" "}
+                          {RECIBIDO_REQUIRED.filter(({ key }) => !data[key]?.trim())
+                            .map(({ label }) => label)
+                            .join(", ")}
+                        </span>
+                      )}
+                      {onSinResolucion && (
+                        <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
+                          Sin resolución
+                        </Button>
+                      )}
+                      {onAdvance && (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          loading={saving}
+                          disabled={!recibidoComplete}
+                          onClick={() => saveAndAdvance(onAdvance)}
+                        >
+                          Iniciar proceso →
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Estado: En proceso */}
+                  {isEnProceso && !isArticulacion && !isClosed && (
+                    <>
+                      {onSinResolucion && (
+                        <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
+                          Sin resolución
+                        </Button>
+                      )}
+                      <Button type="button" variant="secondary" size="sm" loading={saving} onClick={save}>
+                        {saved ? "Guardado" : "Guardar"}
+                      </Button>
+                      {onAdvance && (
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          loading={saving}
+                          disabled={!procesoComplete}
+                          onClick={() => saveAndAdvance(onAdvance)}
+                        >
+                          Articulación →
+                        </Button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Estado: Articulación */}
+                  {isArticulacion && !isClosed && (
+                    <>
+                      {!articulacionComplete && (
+                        <span className="text-xs text-custom-text-400">Completa los campos requeridos</span>
+                      )}
                       <Button
                         type="button"
-                        variant="secondary"
+                        variant="primary"
                         size="sm"
-                        onClick={() => {
-                          savedData.current = data;
-                          setEditing(true);
-                        }}
+                        loading={saving}
+                        disabled={!articulacionComplete}
+                        onClick={saveAndComplete}
                       >
-                        Editar ficha
+                        Resolver caso
                       </Button>
-                    )}
-                    {editing && (
-                      <Button type="button" variant="primary" size="sm" loading={saving} onClick={save}>
-                        {saved ? "Guardado" : "Guardar ficha"}
-                      </Button>
-                    )}
-                  </>
-                )}
+                    </>
+                  )}
+
+                  {/* Fallback: estado no reconocido — botones de edición manual */}
+                  {!isRecibido && !isEnProceso && !isArticulacion && !isClosed && !isSinResolucion && (
+                    <>
+                      {!editing && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            savedData.current = data;
+                            setEditing(true);
+                          }}
+                        >
+                          Editar ficha
+                        </Button>
+                      )}
+                      {editing && (
+                        <Button type="button" variant="primary" size="sm" loading={saving} onClick={save}>
+                          {saved ? "Guardado" : "Guardar ficha"}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
             </div>
           )}
         </div>

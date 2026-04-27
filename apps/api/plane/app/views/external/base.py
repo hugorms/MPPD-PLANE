@@ -4,12 +4,19 @@
 
 # Python import
 import os
+import re
 from typing import List, Dict, Tuple
+
+import boto3
+from botocore.config import Config as BotocoreConfig
+
+_PHOTO_FILENAME_RE = re.compile(r"^[VEJGP]-\d{6,10}-[a-f0-9]+\.jpg$", re.IGNORECASE)
 
 # Third party import
 from openai import OpenAI
 import requests
 
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -210,6 +217,78 @@ class WorkspaceGPTIntegrationEndpoint(BaseAPIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+def _onfalo_headers() -> dict:
+    return {
+        "X-Api-Key": os.environ.get("ONFALO_API_KEY", ""),
+        "X-Tenant-Id": os.environ.get("ONFALO_TENANT_ID", "sp3"),
+    }
+
+
+def _onfalo_url() -> str:
+    return os.environ.get("ONFALO_API_URL", "https://api.onfalo.nexus.ia.ve")
+
+
+class CedulaLookupView(BaseAPIView):
+    """Proxy hacia Onfalo API para buscar datos personales por cédula venezolana."""
+
+    def get(self, request, prefix, cedula):
+        if not os.environ.get("ONFALO_API_KEY"):
+            return Response({"error": "ONFALO_API_KEY no configurado"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        cedula_num = "".join(c for c in cedula if c.isdigit())
+        nationality = prefix.upper() if prefix.upper() in ("V", "E", "J", "G", "P") else "V"
+        if not cedula_num:
+            return Response({"error": "Cédula inválida"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            resp = requests.post(
+                f"{_onfalo_url()}/v1/person/search/external/full/{nationality}/{cedula_num}",
+                json={},
+                headers={**_onfalo_headers(), "Content-Type": "application/json"},
+                timeout=10,
+                verify=False,
+            )
+            try:
+                data = resp.json()
+            except Exception:
+                data = {"raw": resp.text}
+            return Response(data, status=resp.status_code)
+        except Exception as e:
+            log_exception(e)
+            return Response({"error": "Error al consultar Onfalo"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
+def _minio_client():
+    """Retorna un cliente boto3 apuntando al MinIO de Onfalo."""
+    return boto3.client(
+        "s3",
+        endpoint_url=os.environ.get("ONFALO_MINIO_URL", "http://10.51.12.85:9000"),
+        aws_access_key_id=os.environ.get("ONFALO_MINIO_USER", "GHP_GCS"),
+        aws_secret_access_key=os.environ.get(
+            "ONFALO_MINIO_TOKEN",
+            "3aee7c976753c5050c7e1a120cf17177380a58a591aee40618f4d4c6de114e96",
+        ),
+        config=BotocoreConfig(signature_version="s3v4"),
+        region_name="us-east-1",
+    )
+
+
+class CedulaPhotoView(BaseAPIView):
+    """Proxy de fotos de cédula — descarga desde MinIO con credenciales internas."""
+
+    def get(self, request, filename):
+        if not _PHOTO_FILENAME_RE.match(filename):
+            return Response({"error": "Nombre de archivo inválido"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            bucket = os.environ.get("ONFALO_MINIO_BUCKET", "alfa-images")
+            s3 = _minio_client()
+            obj = s3.get_object(Bucket=bucket, Key=filename)
+            content_type = obj.get("ContentType", "image/jpeg")
+            return HttpResponse(obj["Body"].read(), content_type=content_type, status=200)
+        except Exception as e:
+            log_exception(e)
+            return Response({"error": "Error al obtener foto"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
 
 class UnsplashEndpoint(BaseAPIView):
