@@ -18,10 +18,13 @@ export type SocialCaseData = {
   parroquia: string;
   municipio: string;
   entidad: string;
+  gradoMilitar: string;
+  unidadDependencia: string;
   jornada: string;
   referencia: string;
   accionTomada: string;
   resultado: string;
+  institucionContactada: string;
   // Campos de proceso (se activan en "En proceso")
   mismoBeneficiario: string; // "true" | ""
   // Campos de cierre (se activan al resolver el caso)
@@ -80,10 +83,13 @@ const EMPTY: SocialCaseData = {
   parroquia: "",
   municipio: "",
   entidad: "",
+  gradoMilitar: "",
+  unidadDependencia: "",
   jornada: "",
   referencia: "",
   accionTomada: "",
   resultado: "",
+  institucionContactada: "",
   mismoBeneficiario: "true",
   solicitante: "",
   nombreBeneficiario: "",
@@ -113,10 +119,13 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "parroquia", label: "Parroquia" },
   { key: "municipio", label: "Municipio" },
   { key: "entidad", label: "Estado" },
+  { key: "gradoMilitar", label: "Grado militar" },
+  { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "jornada", label: "Jornada" },
   { key: "referencia", label: "Referencia" },
   { key: "accionTomada", label: "Accion tomada" },
   { key: "resultado", label: "Resultado" },
+  { key: "institucionContactada", label: "Órgano / Institución contactada" },
   { key: "mismoBeneficiario", label: "Mismo beneficiario" },
   { key: "solicitante", label: "Solicitante" },
   { key: "nombreBeneficiario", label: "Nombre del beneficiario" },
@@ -767,6 +776,36 @@ export const SocialCaseForm = ({
                 />
               </div>
             </div>
+            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3">
+              <div>
+                <label htmlFor="sc-grado" className={labelClass}>
+                  Grado militar
+                </label>
+                <input
+                  id="sc-grado"
+                  disabled={!isEditable}
+                  autoCapitalize="words"
+                  className={fc(isEditable)}
+                  placeholder="Ej: Teniente, Sargento..."
+                  value={data.gradoMilitar}
+                  onChange={(e) => update("gradoMilitar", e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="sc-unidad" className={labelClass}>
+                  Unidad / Dependencia
+                </label>
+                <input
+                  id="sc-unidad"
+                  disabled={!isEditable}
+                  autoCapitalize="sentences"
+                  className={fc(isEditable)}
+                  placeholder="Nombre de la unidad o dependencia"
+                  value={data.unidadDependencia}
+                  onChange={(e) => update("unidadDependencia", e.target.value)}
+                />
+              </div>
+            </div>
             <div className="mt-3 grid grid-cols-3 gap-x-6 gap-y-3">
               <div>
                 <label htmlFor="sc-parroquia" className={labelClass}>
@@ -990,6 +1029,20 @@ export const SocialCaseForm = ({
                     {effectiveArticulacionRequired.length} campos
                   </span>
                 )}
+              </div>
+              <div className="mb-3">
+                <label htmlFor="sc-institucion" className={labelClass}>
+                  Órgano / Institución contactada
+                </label>
+                <input
+                  id="sc-institucion"
+                  disabled={!isEditable}
+                  autoCapitalize="sentences"
+                  className={fc(isEditable)}
+                  placeholder="Ej: IVSS, BANAVIH, MPPS..."
+                  value={data.institucionContactada}
+                  onChange={(e) => update("institucionContactada", e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 <div>
