@@ -36,7 +36,8 @@
       "Bash(npx oxlint:*)",
       "Bash(git -C /c/Users/rober/plane remote get-url origin)",
       "Bash(npx tsc:*)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git pull *)"
     ]
   }
 }
