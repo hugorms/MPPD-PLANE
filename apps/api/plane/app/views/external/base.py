@@ -264,10 +264,10 @@ def _minio_client():
     return boto3.client(
         "s3",
         endpoint_url=os.environ.get("ONFALO_MINIO_URL", "http://10.51.12.85:9000"),
-        aws_access_key_id=os.environ.get("ONFALO_MINIO_USER", "GHP_GCS"),
+        aws_access_key_id=os.environ.get("ONFALO_MINIO_USER", "MPPD_GCS"),
         aws_secret_access_key=os.environ.get(
             "ONFALO_MINIO_TOKEN",
-            "3aee7c976753c5050c7e1a120cf17177380a58a591aee40618f4d4c6de114e96",
+            "797099740b424dc188bc12e71f1ea63118d3e84508583232372f74c763cfabbb",
         ),
         config=BotocoreConfig(signature_version="s3v4"),
         region_name="us-east-1",
