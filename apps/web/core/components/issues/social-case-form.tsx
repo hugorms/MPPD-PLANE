@@ -512,8 +512,8 @@ export const SocialCaseForm = ({
         ...(result.gradoMilitar && { gradoMilitar: result.gradoMilitar }),
         ...(result.componente && { jornada: result.componente }),
       };
-      setData((prev) => ({ ...prev, ...onfaloFields }));
       const next = { ...latestData.current, ...onfaloFields };
+      setData(next);
       if (result.fotoUrl) {
         setLocalPhotoUrl(result.fotoUrl);
         onPhotoFound?.(result.fotoUrl);
