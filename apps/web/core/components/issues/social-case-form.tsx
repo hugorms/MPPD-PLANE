@@ -161,7 +161,8 @@ export const extractFromHtml = (html: string): SocialCaseData | null => {
     if (caption?.textContent) {
       try {
         const parsed = JSON.parse(caption.textContent);
-        if (parsed && typeof parsed === "object" && "cedula" in parsed) return parsed as SocialCaseData;
+        if (parsed && typeof parsed === "object" && "cedula" in parsed)
+          return { ...EMPTY, ...parsed } as SocialCaseData;
       } catch (_) {}
     }
 
