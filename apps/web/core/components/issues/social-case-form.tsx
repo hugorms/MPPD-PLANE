@@ -387,20 +387,17 @@ export const SocialCaseForm = ({
   }, [issueId, mode, descriptionHtml, editing]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const NO_CAP = new Set<keyof SocialCaseData>([
-    "numeroCaso",
-    "cedula",
-    "telefono",
-    "telefono2",
-    "mismoBeneficiario",
+  const SELECT_FIELDS = new Set<keyof SocialCaseData>([
+    "jornada",
+    "entidad",
     "esMilitar",
+    "mismoBeneficiario",
+    "fechaCierre",
   ]);
-  const TITLE_CAP = new Set<keyof SocialCaseData>(["nombre"]);
 
   const capFirst = (f: keyof SocialCaseData, v: string) => {
-    if (NO_CAP.has(f)) return v;
-    if (TITLE_CAP.has(f)) return v.replace(/\b\w/g, (c) => c.toUpperCase());
-    return v.charAt(0).toUpperCase() + v.slice(1);
+    if (SELECT_FIELDS.has(f)) return v;
+    return v.toUpperCase();
   };
 
   const update = (field: keyof SocialCaseData, value: string) => {
