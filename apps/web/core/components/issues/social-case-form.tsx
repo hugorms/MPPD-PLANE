@@ -499,6 +499,8 @@ export const SocialCaseForm = ({
         ...(result.parroquia && { parroquia: result.parroquia }),
         ...(result.municipio && { municipio: result.municipio }),
         ...(result.entidad && { entidad: result.entidad }),
+        ...(result.gradoMilitar && { gradoMilitar: result.gradoMilitar }),
+        ...(result.componente && { jornada: result.componente }),
       };
       setData((prev) => ({ ...prev, ...onfaloFields }));
       const next = { ...latestData.current, ...onfaloFields };

@@ -11,6 +11,8 @@ export type OnfaloPersonData = {
   entidad: string;
   fotoUrl: string | null;
   notFound: boolean;
+  gradoMilitar: string;
+  componente: string;
 };
 
 const ONFALO_PHOTO_BASE = `${API_BASE_URL}/api/cedula-photo`;
@@ -78,7 +80,34 @@ export class OnfaloService {
       const entidad = VENEZUELA_ESTADOS.find((e) => e.toLowerCase() === rawEstado.toLowerCase()) ?? "";
       const photoFile: string | undefined = d.photos?.[0] ?? d.photoPersons?.[0]?.photo?.url;
       const fotoUrl = photoFile ? `${ONFALO_PHOTO_BASE}/${photoFile}` : null;
-      return { nombre, telefono, direccion, parroquia, municipio, entidad, fotoUrl, notFound: false };
+
+      const COMPONENTE_MAP: Record<string, string> = {
+        EJ: "Ejército Nacional Bolivariano",
+        AV: "Aviación Militar Bolivariana",
+        AR: "Armada Bolivariana de Venezuela",
+        GN: "Guardia Nacional Bolivariana",
+        MI: "Milicia Nacional Bolivariana",
+      };
+      const gradoMilitar = (d.Grado?.descripcion ?? "")
+        .split(" ")
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+      const componenteDesc: string = d.Tif?.Componente?.descripcion ?? "";
+      const componenteAbr: string = d.Tif?.Componente?.abreviatura ?? d.HistorialMilitar?.[0]?.componente ?? "";
+      const componente = componenteDesc || COMPONENTE_MAP[componenteAbr.toUpperCase()] || "";
+
+      return {
+        nombre,
+        telefono,
+        direccion,
+        parroquia,
+        municipio,
+        entidad,
+        fotoUrl,
+        notFound: false,
+        gradoMilitar,
+        componente,
+      };
     } catch (err: any) {
       const httpStatus = err?.response?.status;
       if (httpStatus === 404)
@@ -91,6 +120,8 @@ export class OnfaloService {
           entidad: "",
           fotoUrl: null,
           notFound: true,
+          gradoMilitar: "",
+          componente: "",
         };
       return null;
     }
