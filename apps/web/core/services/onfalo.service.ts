@@ -51,9 +51,9 @@ const matchComponente = (raw: string): string => {
   );
 };
 
-const firstNonEmptyAll = (...vals: (string | null | undefined)[]): string => {
+const firstNonEmptyAll = (...vals: unknown[]): string => {
   for (const v of vals) {
-    if (!v) continue;
+    if (!v || (typeof v !== "string" && typeof v !== "number")) continue;
     const parts = String(v)
       .split(/[,;]/)
       .map((s) => s.trim())
