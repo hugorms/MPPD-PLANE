@@ -230,6 +230,8 @@ export const injectSocialCaseIntoHtml = (html: string, data: SocialCaseData): st
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
+const toUpper = (v: string) => v.toUpperCase();
+
 const sectionHeadClass = "block text-xs text-custom-text-300 uppercase tracking-wider mb-2.5";
 
 const labelClass = "block text-xs text-custom-text-300 mb-0.5";
@@ -265,6 +267,7 @@ const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
   { key: "jornada", label: "Componente" },
+  { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "referencia", label: "Solicitud / Beneficio" },
 ];
 
@@ -509,14 +512,14 @@ export const SocialCaseForm = ({
       }
       const esMilitarDetectado = Boolean(result.gradoMilitar || result.componente);
       const onfaloFields = {
-        ...(result.nombre && { nombre: result.nombre }),
+        ...(result.nombre && { nombre: toUpper(result.nombre) }),
         ...(result.telefono && { telefono: result.telefono }),
-        ...(result.direccion && { direccion: result.direccion }),
-        ...(result.parroquia && { parroquia: result.parroquia }),
-        ...(result.municipio && { municipio: result.municipio }),
+        ...(result.direccion && { direccion: toUpper(result.direccion) }),
+        ...(result.parroquia && { parroquia: toUpper(result.parroquia) }),
+        ...(result.municipio && { municipio: toUpper(result.municipio) }),
         ...(result.entidad && { entidad: result.entidad }),
         ...(esMilitarDetectado && { esMilitar: "true" }),
-        ...(result.gradoMilitar && { gradoMilitar: result.gradoMilitar }),
+        ...(result.gradoMilitar && { gradoMilitar: toUpper(result.gradoMilitar) }),
         ...(result.componente && { jornada: result.componente }),
       };
       const next = { ...latestData.current, ...onfaloFields };
@@ -569,7 +572,9 @@ export const SocialCaseForm = ({
 
   // Progreso recibido → proceso (Componente solo requerido si es Militar)
   const effectiveRecibidoRequired =
-    data.esMilitar === "true" ? RECIBIDO_REQUIRED : RECIBIDO_REQUIRED.filter(({ key }) => key !== "jornada");
+    data.esMilitar === "true"
+      ? RECIBIDO_REQUIRED
+      : RECIBIDO_REQUIRED.filter(({ key }) => key !== "jornada" && key !== "unidadDependencia");
   const recibidoFilled = effectiveRecibidoRequired.filter(({ key }) => data[key]?.trim()).length;
   const recibidoComplete = recibidoFilled === effectiveRecibidoRequired.length;
 
