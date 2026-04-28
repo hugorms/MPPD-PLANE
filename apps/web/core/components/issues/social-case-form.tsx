@@ -341,6 +341,10 @@ export const SocialCaseForm = ({
         if (!extracted.nombreBeneficiario) extracted.nombreBeneficiario = extracted.nombre;
         if (!extracted.cedulaBeneficiario) extracted.cedulaBeneficiario = extracted.cedula;
       }
+      // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por datos militares
+      if (!extracted.esMilitar && (extracted.gradoMilitar || extracted.jornada)) {
+        extracted.esMilitar = "true";
+      }
       setData(extracted);
       return;
     }
