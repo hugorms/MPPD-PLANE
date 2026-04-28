@@ -88,12 +88,14 @@ export class OnfaloService {
         GN: "Guardia Nacional Bolivariana",
         MI: "Milicia Nacional Bolivariana",
       };
-      const gradoMilitar = (d.Grado?.descripcion ?? "")
+      const mil = d.militaryData ?? d.militarData ?? {};
+      const gradoRaw: string = mil.Grado?.descripcion ?? d.Grado?.descripcion ?? "";
+      const gradoMilitar = gradoRaw
         .split(" ")
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
         .join(" ");
-      const componenteDesc: string = d.Tif?.Componente?.descripcion ?? "";
-      const componenteAbr: string = d.Tif?.Componente?.abreviatura ?? d.HistorialMilitar?.[0]?.componente ?? "";
+      const componenteDesc: string = mil.Componente?.descripcion ?? d.Tif?.Componente?.descripcion ?? "";
+      const componenteAbr: string = mil.Componente?.abreviatura ?? d.HistorialMilitar?.[0]?.componente ?? "";
       const componente = componenteDesc || COMPONENTE_MAP[componenteAbr.toUpperCase()] || "";
 
       return {
