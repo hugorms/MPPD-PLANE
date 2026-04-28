@@ -94,12 +94,12 @@ const S = StyleSheet.create({
   cell: { fontSize: 7, color: C.gray700 },
   cellBold: { fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray900 },
 
-  // Anchos de columna (sin foto — se reserva para detalle)
+  // Anchos de columna
   cId: { width: 38 },
   cNombre: { flex: 2 },
   cCedula: { width: 58 },
   cMunicipio: { width: 62 },
-  cJornada: { width: 58 },
+  cComponente: { width: 68 },
   cResponsable: { width: 80 },
   cBenef: { width: 36 },
   cReferencia: { flex: 2 },
@@ -112,7 +112,6 @@ const S = StyleSheet.create({
   pillText: { fontSize: 6, fontFamily: "Helvetica-Bold" },
 
   // ── DETALLE ──
-  // Banda superior fija con el nombre del proyecto
   detailPageHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -213,7 +212,8 @@ export type ParsedIssueRow = {
   nombre: string;
   cedula: string;
   municipio: string;
-  jornada: string;
+  componente: string;
+  esMilitar: boolean;
   referencia: string;
   accionTomada: string;
   resultado: string;
@@ -228,7 +228,8 @@ type Props = {
   projectName: string;
   dateRange: string;
   byState: Record<string, number>;
-  byJornada: Record<string, number>;
+  byComponente: Record<string, number>;
+  byCondicion?: Record<string, number>;
   conResultado: number;
   generatedAtLabel: string;
   stateFlow: StateFlowStep[];
@@ -291,7 +292,8 @@ export const SocialCaseReportPDF = ({
   projectName,
   dateRange,
   byState,
-  byJornada,
+  byComponente,
+  byCondicion,
   conResultado,
   generatedAtLabel,
   stateFlow,
@@ -336,10 +338,10 @@ export const SocialCaseReportPDF = ({
 
           <View style={S.divider} />
 
-          {/* Resumen por estado y jornada */}
+          {/* Resumen por estado del caso, componente y condición */}
           <View style={S.summaryGrid}>
             <View style={S.summaryCol}>
-              <Text style={S.summaryTitle}>Por estado</Text>
+              <Text style={S.summaryTitle}>Por estado del caso</Text>
               {Object.entries(byState).map(([name, count]) => (
                 <View key={name} style={S.summaryRow}>
                   <Text style={S.summaryKey}>{name}</Text>
@@ -348,13 +350,24 @@ export const SocialCaseReportPDF = ({
               ))}
             </View>
             <View style={S.summaryCol}>
-              <Text style={S.summaryTitle}>Por jornada</Text>
-              {Object.entries(byJornada).map(([name, count]) => (
+              <Text style={S.summaryTitle}>Por componente</Text>
+              {Object.entries(byComponente).map(([name, count]) => (
                 <View key={name} style={S.summaryRow}>
                   <Text style={S.summaryKey}>{name}</Text>
                   <Text style={S.summaryVal}>{count}</Text>
                 </View>
               ))}
+              {byCondicion && Object.keys(byCondicion).length > 0 && (
+                <>
+                  <Text style={[S.summaryTitle, { marginTop: 12 }]}>Civil / Militar</Text>
+                  {Object.entries(byCondicion).map(([name, count]) => (
+                    <View key={name} style={S.summaryRow}>
+                      <Text style={S.summaryKey}>{name}</Text>
+                      <Text style={S.summaryVal}>{count}</Text>
+                    </View>
+                  ))}
+                </>
+              )}
             </View>
           </View>
 
@@ -385,8 +398,8 @@ export const SocialCaseReportPDF = ({
           <View style={S.cMunicipio}>
             <Text style={S.cellHeader}>Municipio</Text>
           </View>
-          <View style={S.cJornada}>
-            <Text style={S.cellHeader}>Jornada</Text>
+          <View style={S.cComponente}>
+            <Text style={S.cellHeader}>Componente</Text>
           </View>
           <View style={S.cResponsable}>
             <Text style={S.cellHeader}>Responsable</Text>
@@ -423,8 +436,8 @@ export const SocialCaseReportPDF = ({
             <View style={S.cMunicipio}>
               <Text style={S.cell}>{row.municipio}</Text>
             </View>
-            <View style={S.cJornada}>
-              <Text style={S.cell}>{row.jornada}</Text>
+            <View style={S.cComponente}>
+              <Text style={S.cell}>{row.componente}</Text>
             </View>
             <View style={S.cResponsable}>
               <Text style={S.cell}>{row.responsable}</Text>
@@ -485,8 +498,8 @@ export const SocialCaseReportPDF = ({
                         <Text style={S.metaValue}>{row.municipio}</Text>
                       </View>
                       <View style={S.metaCol}>
-                        <Text style={S.metaLabel}>Jornada</Text>
-                        <Text style={S.metaValue}>{row.jornada}</Text>
+                        <Text style={S.metaLabel}>Componente</Text>
+                        <Text style={S.metaValue}>{row.componente}</Text>
                         <Text style={S.metaLabel}>Responsable</Text>
                         <Text style={S.metaValue}>{row.responsable}</Text>
                       </View>
@@ -525,7 +538,6 @@ export const SocialCaseReportPDF = ({
               {/* ── PÁGINAS DE ADJUNTOS ── */}
               {rowAttachments.map((att, attIdx) => (
                 <Page key={`att-${row.id}-${att.name}`} size="A4" style={S.page}>
-                  {/* Cabecera compacta — sin "fixed" para no romper el flex */}
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
                     <Text style={{ fontSize: 8, color: C.gray500 }}>
                       GCS-{row.sequenceId} · {row.nombre}
