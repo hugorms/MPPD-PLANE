@@ -859,7 +859,7 @@ export const SocialCaseForm = ({
               </div>
             )}
 
-            {/* Fila 4: Teléfono (media fila) */}
+            {/* Teléfono (media fila) */}
             <div className="grid grid-cols-2 gap-x-6">
               <div>
                 <label htmlFor="sc-telefono" className={labelClass}>
@@ -1077,7 +1077,7 @@ export const SocialCaseForm = ({
             </div>
           )}
 
-          {/* SECCION 5: CIERRE DEL CASO — visible en articulación (editable) o resuelto (lectura) */}
+          {/* SECCION 4: CIERRE DEL CASO — visible en articulación (editable) o resuelto (lectura) */}
           {(isClosed || isArticulacion) && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
