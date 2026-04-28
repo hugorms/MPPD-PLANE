@@ -22,6 +22,7 @@ export type SocialCaseData = {
   gradoMilitar: string;
   unidadDependencia: string;
   jornada: string;
+  telefono2: string;
   referencia: string;
   accionTomada: string;
   resultado: string;
@@ -88,6 +89,7 @@ const EMPTY: SocialCaseData = {
   gradoMilitar: "",
   unidadDependencia: "",
   jornada: "",
+  telefono2: "",
   referencia: "",
   accionTomada: "",
   resultado: "",
@@ -125,6 +127,7 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "gradoMilitar", label: "Grado militar" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "jornada", label: "Jornada" },
+  { key: "telefono2", label: "Telefono 2" },
   { key: "referencia", label: "Referencia" },
   { key: "accionTomada", label: "Accion tomada" },
   { key: "resultado", label: "Resultado" },
@@ -384,7 +387,14 @@ export const SocialCaseForm = ({
   }, [issueId, mode, descriptionHtml, editing]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const NO_CAP = new Set<keyof SocialCaseData>(["numeroCaso", "cedula", "telefono", "mismoBeneficiario", "esMilitar"]);
+  const NO_CAP = new Set<keyof SocialCaseData>([
+    "numeroCaso",
+    "cedula",
+    "telefono",
+    "telefono2",
+    "mismoBeneficiario",
+    "esMilitar",
+  ]);
   const TITLE_CAP = new Set<keyof SocialCaseData>(["nombre"]);
 
   const capFirst = (f: keyof SocialCaseData, v: string) => {
@@ -859,7 +869,7 @@ export const SocialCaseForm = ({
               </div>
             )}
 
-            {/* Teléfono (media fila) */}
+            {/* Teléfono 1 | Teléfono 2 */}
             <div className="grid grid-cols-2 gap-x-6">
               <div>
                 <label htmlFor="sc-telefono" className={labelClass}>
@@ -872,6 +882,19 @@ export const SocialCaseForm = ({
                   placeholder="0424-000.00.00"
                   value={data.telefono}
                   onChange={(e) => update("telefono", e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="sc-telefono2" className={labelClass}>
+                  Teléfono 2 <span className="text-custom-text-400">(opcional)</span>
+                </label>
+                <input
+                  id="sc-telefono2"
+                  disabled={!isEditable}
+                  className={fc(isEditable)}
+                  placeholder="0414-000.00.00"
+                  value={data.telefono2}
+                  onChange={(e) => update("telefono2", e.target.value)}
                 />
               </div>
             </div>
@@ -943,7 +966,7 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Fila 7: Solicitud / Beneficio (fila completa) */}
+            {/* Solicitud / Beneficio (fila completa, auto-resize) */}
             <div>
               <label htmlFor="sc-referencia" className={labelClass}>
                 Solicitud / Beneficio
@@ -952,10 +975,21 @@ export const SocialCaseForm = ({
                 id="sc-referencia"
                 disabled={!isEditable}
                 autoCapitalize="sentences"
-                className={cn(fc(isEditable), "min-h-[64px] resize-y leading-relaxed")}
+                rows={3}
+                className={cn(fc(isEditable), "min-h-[64px] resize-none overflow-hidden leading-relaxed")}
                 placeholder="Describe por qué llegó el caso y qué solicitó el ciudadano..."
                 value={data.referencia}
-                onChange={(e) => update("referencia", e.target.value)}
+                onInput={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
+                onChange={(e) => {
+                  update("referencia", e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
               />
             </div>
           </div>
