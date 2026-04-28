@@ -18,6 +18,7 @@ export type SocialCaseData = {
   parroquia: string;
   municipio: string;
   entidad: string;
+  esMilitar: string; // "true" | ""
   gradoMilitar: string;
   unidadDependencia: string;
   jornada: string;
@@ -83,6 +84,7 @@ const EMPTY: SocialCaseData = {
   parroquia: "",
   municipio: "",
   entidad: "",
+  esMilitar: "",
   gradoMilitar: "",
   unidadDependencia: "",
   jornada: "",
@@ -119,6 +121,7 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "parroquia", label: "Parroquia" },
   { key: "municipio", label: "Municipio" },
   { key: "entidad", label: "Estado" },
+  { key: "esMilitar", label: "Es militar" },
   { key: "gradoMilitar", label: "Grado militar" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "jornada", label: "Jornada" },
@@ -376,7 +379,7 @@ export const SocialCaseForm = ({
   }, [issueId, mode, descriptionHtml, editing]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const NO_CAP = new Set<keyof SocialCaseData>(["numeroCaso", "cedula", "telefono", "mismoBeneficiario"]);
+  const NO_CAP = new Set<keyof SocialCaseData>(["numeroCaso", "cedula", "telefono", "mismoBeneficiario", "esMilitar"]);
   const TITLE_CAP = new Set<keyof SocialCaseData>(["nombre"]);
 
   const capFirst = (f: keyof SocialCaseData, v: string) => {
@@ -492,6 +495,7 @@ export const SocialCaseForm = ({
         setCedulaNotFound(true);
         return;
       }
+      const esMilitarDetectado = Boolean(result.gradoMilitar || result.componente);
       const onfaloFields = {
         ...(result.nombre && { nombre: result.nombre }),
         ...(result.telefono && { telefono: result.telefono }),
@@ -499,6 +503,7 @@ export const SocialCaseForm = ({
         ...(result.parroquia && { parroquia: result.parroquia }),
         ...(result.municipio && { municipio: result.municipio }),
         ...(result.entidad && { entidad: result.entidad }),
+        ...(esMilitarDetectado && { esMilitar: "true" }),
         ...(result.gradoMilitar && { gradoMilitar: result.gradoMilitar }),
         ...(result.componente && { jornada: result.componente }),
       };
@@ -550,9 +555,11 @@ export const SocialCaseForm = ({
   // En create-no-save (modal) y en recibidos → solo referencia (solicitud/beneficio)
   const showFullSeguimiento = mode !== "create-no-save" && !isRecibido;
 
-  // Progreso recibido → proceso
-  const recibidoFilled = RECIBIDO_REQUIRED.filter(({ key }) => data[key]?.trim()).length;
-  const recibidoComplete = recibidoFilled === RECIBIDO_REQUIRED.length;
+  // Progreso recibido → proceso (Componente solo requerido si es Militar)
+  const effectiveRecibidoRequired =
+    data.esMilitar === "true" ? RECIBIDO_REQUIRED : RECIBIDO_REQUIRED.filter(({ key }) => key !== "jornada");
+  const recibidoFilled = effectiveRecibidoRequired.filter(({ key }) => data[key]?.trim()).length;
+  const recibidoComplete = recibidoFilled === effectiveRecibidoRequired.length;
 
   // Progreso proceso → articulación (beneficiario obligatorio si persona diferente)
   const procesoMissingBenef =
@@ -739,7 +746,7 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Fila 2: Nombre | Grado militar */}
+            {/* Fila 2: Nombre | Tipo de caso */}
             <div className="grid grid-cols-2 gap-x-6">
               <div>
                 <label htmlFor="sc-nombre" className={labelClass}>
@@ -756,57 +763,98 @@ export const SocialCaseForm = ({
                 />
               </div>
               <div>
-                <label htmlFor="sc-grado" className={labelClass}>
-                  Grado militar
+                <label htmlFor="sc-tipo" className={labelClass}>
+                  Tipo de caso
                 </label>
-                <input
-                  id="sc-grado"
+                <select
+                  id="sc-tipo"
                   disabled={!isEditable}
-                  autoCapitalize="words"
                   className={fc(isEditable)}
-                  placeholder="Ej: Teniente, Sargento..."
-                  value={data.gradoMilitar}
-                  onChange={(e) => update("gradoMilitar", e.target.value)}
-                />
+                  value={data.esMilitar === "true" ? "true" : ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setData((prev) => {
+                      const next = {
+                        ...prev,
+                        esMilitar: val,
+                        ...(val !== "true" ? { gradoMilitar: "", jornada: "", unidadDependencia: "" } : {}),
+                      };
+                      if (mode === "create-no-save") {
+                        try {
+                          localStorage.setItem(PENDING_KEY, JSON.stringify(next));
+                        } catch (_) {}
+                        onDataChange?.(next);
+                      }
+                      return next;
+                    });
+                    setSaved(false);
+                    scheduleAutoSave();
+                  }}
+                >
+                  <option value="">Civil</option>
+                  <option value="true">Militar</option>
+                </select>
               </div>
             </div>
 
-            {/* Fila 3: Componente | Unidad / Dependencia */}
-            <div className="grid grid-cols-2 gap-x-6">
-              <div>
-                <label htmlFor="sc-jornada" className={labelClass}>
-                  Componente
-                </label>
-                <select
-                  id="sc-jornada"
-                  disabled={!isEditable}
-                  className={fc(isEditable)}
-                  value={data.jornada}
-                  onChange={(e) => update("jornada", e.target.value)}
-                >
-                  <option value="">-- Seleccionar componente --</option>
-                  <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
-                  <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
-                  <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
-                  <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
-                  <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
-                </select>
+            {/* Fila 3: Grado | Componente — solo si es Militar */}
+            {data.esMilitar === "true" && (
+              <div className="grid grid-cols-2 gap-x-6">
+                <div>
+                  <label htmlFor="sc-grado" className={labelClass}>
+                    Grado militar
+                  </label>
+                  <input
+                    id="sc-grado"
+                    disabled={!isEditable}
+                    autoCapitalize="words"
+                    className={fc(isEditable)}
+                    placeholder="Ej: Teniente, Sargento..."
+                    value={data.gradoMilitar}
+                    onChange={(e) => update("gradoMilitar", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="sc-jornada" className={labelClass}>
+                    Componente
+                  </label>
+                  <select
+                    id="sc-jornada"
+                    disabled={!isEditable}
+                    className={fc(isEditable)}
+                    value={data.jornada}
+                    onChange={(e) => update("jornada", e.target.value)}
+                  >
+                    <option value="">-- Seleccionar componente --</option>
+                    <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
+                    <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
+                    <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
+                    <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
+                    <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label htmlFor="sc-unidad" className={labelClass}>
-                  Unidad / Dependencia
-                </label>
-                <input
-                  id="sc-unidad"
-                  disabled={!isEditable}
-                  autoCapitalize="sentences"
-                  className={fc(isEditable)}
-                  placeholder="Nombre de la unidad o dependencia"
-                  value={data.unidadDependencia}
-                  onChange={(e) => update("unidadDependencia", e.target.value)}
-                />
+            )}
+
+            {/* Fila 4: Unidad / Dependencia — solo si es Militar */}
+            {data.esMilitar === "true" && (
+              <div className="grid grid-cols-2 gap-x-6">
+                <div>
+                  <label htmlFor="sc-unidad" className={labelClass}>
+                    Unidad / Dependencia
+                  </label>
+                  <input
+                    id="sc-unidad"
+                    disabled={!isEditable}
+                    autoCapitalize="sentences"
+                    className={fc(isEditable)}
+                    placeholder="Nombre de la unidad o dependencia"
+                    value={data.unidadDependencia}
+                    onChange={(e) => update("unidadDependencia", e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Fila 4: Teléfono (media fila) */}
             <div className="grid grid-cols-2 gap-x-6">
@@ -1146,7 +1194,8 @@ export const SocialCaseForm = ({
                       {!recibidoComplete && (
                         <span className="text-xs text-custom-text-400">
                           Falta:{" "}
-                          {RECIBIDO_REQUIRED.filter(({ key }) => !data[key]?.trim())
+                          {effectiveRecibidoRequired
+                            .filter(({ key }) => !data[key]?.trim())
                             .map(({ label }) => label)
                             .join(", ")}
                         </span>
