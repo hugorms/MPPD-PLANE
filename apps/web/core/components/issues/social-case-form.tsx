@@ -841,23 +841,21 @@ export const SocialCaseForm = ({
               </div>
             )}
 
-            {/* Fila 4: Unidad / Dependencia — solo si es Militar */}
+            {/* Unidad / Dependencia — solo si es Militar */}
             {data.esMilitar === "true" && (
-              <div className="grid grid-cols-2 gap-x-6">
-                <div>
-                  <label htmlFor="sc-unidad" className={labelClass}>
-                    Unidad / Dependencia
-                  </label>
-                  <input
-                    id="sc-unidad"
-                    disabled={!isEditable}
-                    autoCapitalize="sentences"
-                    className={fc(isEditable)}
-                    placeholder="Nombre de la unidad o dependencia"
-                    value={data.unidadDependencia}
-                    onChange={(e) => update("unidadDependencia", e.target.value)}
-                  />
-                </div>
+              <div>
+                <label htmlFor="sc-unidad" className={labelClass}>
+                  Unidad / Dependencia
+                </label>
+                <input
+                  id="sc-unidad"
+                  disabled={!isEditable}
+                  autoCapitalize="sentences"
+                  className={fc(isEditable)}
+                  placeholder="Nombre de la unidad o dependencia"
+                  value={data.unidadDependencia}
+                  onChange={(e) => update("unidadDependencia", e.target.value)}
+                />
               </div>
             )}
 
