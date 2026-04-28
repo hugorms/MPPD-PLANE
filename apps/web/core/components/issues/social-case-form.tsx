@@ -669,38 +669,25 @@ export const SocialCaseForm = ({
           className="group flex min-w-0 items-center gap-2 text-left"
         >
           <span className="text-sm font-normal text-custom-text-200 group-hover:text-custom-text-100 whitespace-nowrap transition-colors">
-            Datos del ciudadano
+            Ficha del caso
           </span>
           <span className="text-xs text-custom-text-400 group-hover:text-custom-text-300 whitespace-nowrap transition-colors">
             {open ? "Ocultar" : "Mostrar"}
           </span>
         </button>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <span className="text-xs text-custom-text-400 whitespace-nowrap">N° Caso</span>
-          <input
-            disabled={!isEditable}
-            type="text"
-            placeholder="000"
-            value={data.numeroCaso}
-            onChange={(e) => update("numeroCaso", e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            className={cn(
-              "text-xs w-20 rounded-md border-[0.5px] px-2 py-1 text-center transition-colors",
-              isEditable
-                ? "border-subtle bg-surface-2 text-primary placeholder:text-placeholder focus:border-strong focus:outline-none"
-                : "cursor-default border-subtle bg-surface-1 text-primary opacity-75 outline-none"
-            )}
-          />
-        </div>
       </div>
 
       {open && (
         <div className="mt-3 space-y-5">
-          <div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+          {/* SECCION 1: RECIBIDO — Identificación */}
+          <div className="space-y-3">
+            <span className={sectionHeadClass}>Identificación</span>
+
+            {/* Fila 1: Cédula | N° Caso */}
+            <div className="grid grid-cols-2 gap-x-6">
               <div>
                 <label htmlFor="sc-cedula" className={labelClass}>
-                  Cedula de identidad
+                  Cédula de identidad
                   {cedulaLooking && (
                     <span className="ml-2 animate-pulse text-[10px] text-placeholder">consultando...</span>
                   )}
@@ -735,6 +722,24 @@ export const SocialCaseForm = ({
                 </div>
               </div>
               <div>
+                <label htmlFor="sc-numero" className={labelClass}>
+                  N° Caso
+                </label>
+                <input
+                  id="sc-numero"
+                  disabled={!isEditable}
+                  type="text"
+                  placeholder="000"
+                  value={data.numeroCaso}
+                  onChange={(e) => update("numeroCaso", e.target.value)}
+                  className={fc(isEditable)}
+                />
+              </div>
+            </div>
+
+            {/* Fila 2: Nombre | Grado militar */}
+            <div className="grid grid-cols-2 gap-x-6">
+              <div>
                 <label htmlFor="sc-nombre" className={labelClass}>
                   Nombre completo
                 </label>
@@ -749,35 +754,6 @@ export const SocialCaseForm = ({
                 />
               </div>
               <div>
-                <label htmlFor="sc-telefono" className={labelClass}>
-                  Telefono
-                </label>
-                <input
-                  id="sc-telefono"
-                  disabled={!isEditable}
-                  className={fc(isEditable)}
-                  placeholder="0424-000.00.00"
-                  value={data.telefono}
-                  onChange={(e) => update("telefono", e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="sc-direccion" className={labelClass}>
-                  Dirección de habitación
-                </label>
-                <input
-                  id="sc-direccion"
-                  disabled={!isEditable}
-                  autoCapitalize="sentences"
-                  className={fc(isEditable)}
-                  placeholder="Barrio, sector, calle..."
-                  value={data.direccion}
-                  onChange={(e) => update("direccion", e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3">
-              <div>
                 <label htmlFor="sc-grado" className={labelClass}>
                   Grado militar
                 </label>
@@ -790,6 +766,29 @@ export const SocialCaseForm = ({
                   value={data.gradoMilitar}
                   onChange={(e) => update("gradoMilitar", e.target.value)}
                 />
+              </div>
+            </div>
+
+            {/* Fila 3: Componente | Unidad / Dependencia */}
+            <div className="grid grid-cols-2 gap-x-6">
+              <div>
+                <label htmlFor="sc-jornada" className={labelClass}>
+                  Componente
+                </label>
+                <select
+                  id="sc-jornada"
+                  disabled={!isEditable}
+                  className={fc(isEditable)}
+                  value={data.jornada}
+                  onChange={(e) => update("jornada", e.target.value)}
+                >
+                  <option value="">-- Seleccionar componente --</option>
+                  <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
+                  <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
+                  <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
+                  <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
+                  <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
+                </select>
               </div>
               <div>
                 <label htmlFor="sc-unidad" className={labelClass}>
@@ -806,7 +805,42 @@ export const SocialCaseForm = ({
                 />
               </div>
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-x-6 gap-y-3">
+
+            {/* Fila 4: Teléfono (media fila) */}
+            <div className="grid grid-cols-2 gap-x-6">
+              <div>
+                <label htmlFor="sc-telefono" className={labelClass}>
+                  Teléfono
+                </label>
+                <input
+                  id="sc-telefono"
+                  disabled={!isEditable}
+                  className={fc(isEditable)}
+                  placeholder="0424-000.00.00"
+                  value={data.telefono}
+                  onChange={(e) => update("telefono", e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Fila 5: Dirección (fila completa) */}
+            <div>
+              <label htmlFor="sc-direccion" className={labelClass}>
+                Dirección de habitación
+              </label>
+              <input
+                id="sc-direccion"
+                disabled={!isEditable}
+                autoCapitalize="sentences"
+                className={fc(isEditable)}
+                placeholder="Barrio, sector, calle..."
+                value={data.direccion}
+                onChange={(e) => update("direccion", e.target.value)}
+              />
+            </div>
+
+            {/* Fila 6: Parroquia | Municipio | Estado */}
+            <div className="grid grid-cols-3 gap-x-6">
               <div>
                 <label htmlFor="sc-parroquia" className={labelClass}>
                   Parroquia
@@ -855,86 +889,60 @@ export const SocialCaseForm = ({
                 </select>
               </div>
             </div>
-          </div>
 
-          {/* SECCION 2: DATOS DEL CASO */}
-          <div>
-            <span className={sectionHeadClass}>Datos del caso</span>
+            {/* Fila 7: Solicitud / Beneficio (fila completa) */}
             <div>
-              <label htmlFor="sc-jornada" className={labelClass}>
-                Componente
+              <label htmlFor="sc-referencia" className={labelClass}>
+                Solicitud / Beneficio
               </label>
-              <select
-                id="sc-jornada"
+              <textarea
+                id="sc-referencia"
                 disabled={!isEditable}
-                className={fc(isEditable)}
-                value={data.jornada}
-                onChange={(e) => update("jornada", e.target.value)}
-              >
-                <option value="">-- Seleccionar componente --</option>
-                <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
-                <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
-                <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
-                <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
-                <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
-              </select>
+                autoCapitalize="sentences"
+                className={cn(fc(isEditable), "min-h-[64px] resize-y leading-relaxed")}
+                placeholder="Describe por qué llegó el caso y qué solicitó el ciudadano..."
+                value={data.referencia}
+                onChange={(e) => update("referencia", e.target.value)}
+              />
             </div>
           </div>
 
-          {/* SECCION 3: SEGUIMIENTO */}
-          <div>
-            <span className={sectionHeadClass}>Seguimiento</span>
+          {/* SECCION 2: EN PROCESO */}
+          {showFullSeguimiento && (
             <div className="space-y-3">
+              <span className={sectionHeadClass}>En proceso</span>
               <div>
-                <label htmlFor="sc-referencia" className={labelClass}>
-                  Solicitud / Beneficio
+                <label htmlFor="sc-accion" className={labelClass}>
+                  Acción tomada
                 </label>
                 <textarea
-                  id="sc-referencia"
+                  id="sc-accion"
                   disabled={!isEditable}
                   autoCapitalize="sentences"
                   className={cn(fc(isEditable), "min-h-[64px] resize-y leading-relaxed")}
-                  placeholder="Describe por que llego el caso y que solicito el ciudadano..."
-                  value={data.referencia}
-                  onChange={(e) => update("referencia", e.target.value)}
+                  placeholder="Describe qué se hizo para atender el caso..."
+                  value={data.accionTomada}
+                  onChange={(e) => update("accionTomada", e.target.value)}
                 />
               </div>
-              {showFullSeguimiento && (
-                <div>
-                  <label htmlFor="sc-accion" className={labelClass}>
-                    Accion tomada
-                  </label>
-                  <textarea
-                    id="sc-accion"
-                    disabled={!isEditable}
-                    autoCapitalize="sentences"
-                    className={cn(fc(isEditable), "min-h-[64px] resize-y leading-relaxed")}
-                    placeholder="Describe que se hizo para atender el caso..."
-                    value={data.accionTomada}
-                    onChange={(e) => update("accionTomada", e.target.value)}
-                  />
-                </div>
-              )}
-              {showFullSeguimiento && (
-                <div>
-                  <label htmlFor="sc-resultado" className={labelClass}>
-                    Resultado / Beneficio otorgado
-                  </label>
-                  <textarea
-                    id="sc-resultado"
-                    disabled={!isEditable}
-                    autoCapitalize="sentences"
-                    className={cn(fc(isEditable), "min-h-[52px] resize-y leading-relaxed")}
-                    placeholder="Que se otorgo o por que no se pudo resolver..."
-                    value={data.resultado}
-                    onChange={(e) => update("resultado", e.target.value)}
-                  />
-                </div>
-              )}
+              <div>
+                <label htmlFor="sc-resultado" className={labelClass}>
+                  Resultado / Beneficio otorgado
+                </label>
+                <textarea
+                  id="sc-resultado"
+                  disabled={!isEditable}
+                  autoCapitalize="sentences"
+                  className={cn(fc(isEditable), "min-h-[52px] resize-y leading-relaxed")}
+                  placeholder="Qué se otorgó o por qué no se pudo resolver..."
+                  value={data.resultado}
+                  onChange={(e) => update("resultado", e.target.value)}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* SECCION 4: EN PROCESO — visible en "En proceso", articulación y resuelto */}
+          {/* SECCION 3: BENEFICIARIO — visible en "En proceso", articulación y resuelto */}
           {(isEnProceso || isArticulacion || isClosed) && (
             <div className="space-y-3">
               <span className={sectionHeadClass}>Identificación del beneficiario</span>
