@@ -139,7 +139,7 @@ export class OnfaloService {
       };
     } catch (err: any) {
       const httpStatus = err?.response?.status;
-      if (httpStatus === 404)
+      if (httpStatus === 404 || httpStatus === 503 || httpStatus === 502 || httpStatus === 500)
         return {
           nombre: "",
           telefono: "",
