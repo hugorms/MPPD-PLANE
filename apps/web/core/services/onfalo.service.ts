@@ -17,6 +17,40 @@ export type OnfaloPersonData = {
 
 const ONFALO_PHOTO_BASE = `${API_BASE_URL}/api/cedula-photo`;
 
+const FANB_COMPONENTES = [
+  "Ejército Nacional Bolivariano",
+  "Armada Bolivariana de Venezuela",
+  "Aviación Militar Bolivariana",
+  "Guardia Nacional Bolivariana",
+  "Milicia Nacional Bolivariana",
+];
+
+const COMPONENTE_MAP: Record<string, string> = {
+  EJ: "Ejército Nacional Bolivariano",
+  AV: "Aviación Militar Bolivariana",
+  AR: "Armada Bolivariana de Venezuela",
+  GN: "Guardia Nacional Bolivariana",
+  MI: "Milicia Nacional Bolivariana",
+};
+
+const normalizeStr = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+
+const matchComponente = (raw: string): string => {
+  if (!raw) return "";
+  const n = normalizeStr(raw);
+  return (
+    FANB_COMPONENTES.find((c) =>
+      normalizeStr(c)
+        .split(" ")
+        .every((w) => n.includes(w))
+    ) ?? ""
+  );
+};
+
 const firstNonEmptyAll = (...vals: (string | null | undefined)[]): string => {
   for (const v of vals) {
     if (!v) continue;
@@ -81,22 +115,15 @@ export class OnfaloService {
       const photoFile: string | undefined = d.photos?.[0] ?? d.photoPersons?.[0]?.photo?.url;
       const fotoUrl = photoFile ? `${ONFALO_PHOTO_BASE}/${photoFile}` : null;
 
-      const COMPONENTE_MAP: Record<string, string> = {
-        EJ: "Ejército Nacional Bolivariano",
-        AV: "Aviación Militar Bolivariana",
-        AR: "Armada Bolivariana de Venezuela",
-        GN: "Guardia Nacional Bolivariana",
-        MI: "Milicia Nacional Bolivariana",
-      };
       const mil = d.militaryData ?? d.militarData ?? {};
       const gradoRaw: string = mil.Grado?.descripcion ?? d.Grado?.descripcion ?? "";
       const gradoMilitar = gradoRaw
         .split(" ")
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
         .join(" ");
-      const componenteDesc: string = mil.Componente?.descripcion ?? d.Tif?.Componente?.descripcion ?? "";
+      const componenteRaw: string = mil.Componente?.descripcion ?? d.Tif?.Componente?.descripcion ?? "";
       const componenteAbr: string = mil.Componente?.abreviatura ?? d.HistorialMilitar?.[0]?.componente ?? "";
-      const componente = componenteDesc || COMPONENTE_MAP[componenteAbr.toUpperCase()] || "";
+      const componente = matchComponente(componenteRaw) || COMPONENTE_MAP[componenteAbr.toUpperCase()] || "";
 
       return {
         nombre,
