@@ -297,19 +297,32 @@ export function SocialCaseFichaPDF({
 
         {/* ── TABLA DE CAMPOS ── */}
         <View style={S.table}>
-          <Row label="Solicitante" value={data.solicitante || data.nombre} />
+          <Row label="N° de caso" value={numeroCaso} />
+          <Row label="Cédula" value={data.cedula} />
+          <Row label="Nombre" value={data.solicitante || data.nombre} />
+          <Row label="Teléfono" value={data.telefono} />
+          {data.telefono2 ? <Row label="Teléfono 2" value={data.telefono2} /> : null}
+          <Row label="Dirección de habitación" value={data.direccion} />
+          <Row label="Parroquia" value={data.parroquia} />
+          <Row label="Municipio" value={data.municipio} />
+          <Row label="Estado" value={data.entidad} />
+          {data.esMilitar === "true" ? <Row label="Grado militar" value={data.gradoMilitar} /> : null}
+          {data.esMilitar === "true" ? <Row label="Componente" value={data.jornada} /> : null}
+          {data.esMilitar === "true" ? <Row label="Unidad / Dependencia" value={data.unidadDependencia} /> : null}
+          <Row label="Solicitud / Beneficio" value={data.referencia} />
+          <Row label="Acción tomada" value={data.accionTomada} />
+          <Row label="Resultado / Beneficio otorgado" value={data.resultado} />
           <Row label="Beneficiario" value={data.nombreBeneficiario || data.nombre} />
           <Row label="C.I. Beneficiario" value={data.cedulaBeneficiario || data.cedula} />
-          <Row label="Solicitud / Beneficio" value={data.resultado} />
-          <Row label="Actividad" value={data.jornada} />
-          <Row label="Fecha de actividad" value={formatDate(startDate ?? "")} />
-          <Row label="Dirección de habitación" value={data.direccion} />
-          <Row label="Acción tomada" value={data.accionTomada} />
+          {data.institucionContactada ? (
+            <Row label="Órgano / Institución contactada" value={data.institucionContactada} />
+          ) : null}
+          <Row label="Fecha de inicio" value={formatDate(startDate ?? "")} />
           <Row
             label="Estado del caso"
             value={data.fechaCierre ? `${stateName} (${formatDate(data.fechaCierre)})` : stateName}
+            last
           />
-          <Row label="Número de caso" value={numeroCaso} last />
         </View>
 
         {/* ── TABLA DE 4 FOTOS ── */}
