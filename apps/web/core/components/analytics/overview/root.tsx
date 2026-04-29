@@ -1295,40 +1295,6 @@ const Overview = observer(function Overview() {
                       <p className="mt-0.5 text-11 text-tertiary">Militares</p>
                     </div>
                   </div>
-
-                  {/* Civil / Militar — barra proporcional */}
-                  {rows.length > 0 && (cantCiviles > 0 || cantMilitares > 0) && (
-                    <div className="rounded-lg border border-subtle bg-surface-2 px-4 py-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-11 text-tertiary">Civil</span>
-                        <span className="text-11 text-tertiary">Militar</span>
-                      </div>
-                      <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-1">
-                        <div
-                          className="h-full rounded-l-full transition-all duration-300"
-                          style={{
-                            width: `${Math.round((cantCiviles / rows.length) * 100)}%`,
-                            backgroundColor: "#6b7280",
-                          }}
-                        />
-                        <div
-                          className="h-full rounded-r-full transition-all duration-300"
-                          style={{
-                            width: `${Math.round((cantMilitares / rows.length) * 100)}%`,
-                            backgroundColor: "#1d4ed8",
-                          }}
-                        />
-                      </div>
-                      <div className="mt-1.5 flex items-center justify-between">
-                        <span className="text-10 text-tertiary">
-                          {cantCiviles} ({Math.round((cantCiviles / rows.length) * 100)}%)
-                        </span>
-                        <span className="text-10 text-tertiary">
-                          {cantMilitares} ({Math.round((cantMilitares / rows.length) * 100)}%)
-                        </span>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
 
