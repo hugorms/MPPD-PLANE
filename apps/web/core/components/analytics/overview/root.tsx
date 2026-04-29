@@ -416,7 +416,7 @@ const Overview = observer(function Overview() {
   }, [preset, customFrom, customTo]);
 
   // ── Filas + estadísticas ─────────────────────────────────────────────────────
-  const { rows, byState, byComponente, byCondicion, byEntidad, byMonth, conResultado } = useMemo(() => {
+  const { rows, byState, byComponente, byCondicion, byEntidad, byMonth, byLabel, conResultado } = useMemo(() => {
     const parsedRows: ParsedIssueRow[] = [];
     const parsedByState: Record<string, number> = {};
     const parsedByComponente: Record<string, number> = {};
