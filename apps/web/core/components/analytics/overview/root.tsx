@@ -54,6 +54,14 @@ type Preset = "today" | "week" | "month" | "3months" | "all" | "custom";
 
 const CONDICION_OPTIONS = ["Civil", "Militar"] as const;
 
+const FANB_COMPONENTES = [
+  "Ejército Nacional Bolivariano",
+  "Armada Bolivariana de Venezuela",
+  "Aviación Militar Bolivariana",
+  "Guardia Nacional Bolivariana",
+  "Milicia Nacional Bolivariana",
+] as const;
+
 const toUpperOrDash = (v: string | undefined | null) => (v ?? "-").toUpperCase();
 
 async function urlToBase64(url: string): Promise<string> {
@@ -272,7 +280,7 @@ const Overview = observer(function Overview() {
   const { workspaceSlug } = useParams();
   const { workspaceProjectIds, getProjectById } = useProject();
   const { getProjectStates } = useProjectState();
-  const { getProjectLabels } = useLabel();
+  const { getProjectLabels, fetchProjectLabels } = useLabel();
   const memberRoot = useMember();
 
   // ── Estado GCS ───────────────────────────────────────────────────────────────
@@ -313,14 +321,14 @@ const Overview = observer(function Overview() {
   }, [workspaceSlug, selectedProjectId]);
 
   // ── Etiquetas del proyecto ───────────────────────────────────────────────────
-  const projectLabels = useMemo(
-    () => getProjectLabels(selectedProjectId) ?? [],
-    [getProjectLabels, selectedProjectId]
-  );
-  const labelNames = useMemo(
-    () => projectLabels.map((l) => l.name),
-    [projectLabels]
-  );
+  useEffect(() => {
+    const ws = workspaceSlug?.toString();
+    if (!ws || !selectedProjectId) return;
+    fetchProjectLabels(ws, selectedProjectId).catch(() => {});
+  }, [workspaceSlug, selectedProjectId, fetchProjectLabels]);
+
+  const projectLabels = useMemo(() => getProjectLabels(selectedProjectId) ?? [], [getProjectLabels, selectedProjectId]);
+  const labelNames = useMemo(() => projectLabels.map((l) => l.name), [projectLabels]);
 
   // ── Estados del proyecto ─────────────────────────────────────────────────────
   const states = useMemo(
@@ -352,24 +360,6 @@ const Overview = observer(function Overview() {
     }
     return { fromDate: null, toDate: null };
   }, [preset, customFrom, customTo]);
-
-  // ── Componentes únicos — solo del período activo ─────────────────────────────
-  const componentesUnicos = useMemo(() => {
-    const set = new Set<string>();
-    for (const issue of allIssues) {
-      if (fromDate || toDate) {
-        const created = issue.created_at ? new Date(issue.created_at) : null;
-        if (!created) continue;
-        if (fromDate && created < fromDate) continue;
-        if (toDate && created > toDate) continue;
-      }
-      const d = extractFromHtml(issue?.description_html ?? "");
-      const jornada = d?.jornada?.trim();
-      if (jornada) set.add(jornada);
-    }
-    // oxlint-disable-next-line unicorn/no-array-sort
-    return [...set].sort((a, b) => a.localeCompare(b, "es"));
-  }, [allIssues, fromDate, toDate]);
 
   // ── Filas + estadísticas ─────────────────────────────────────────────────────
   const { rows, byState, byComponente, byCondicion, byEntidad, byMonth, conResultado } = useMemo(() => {
@@ -417,9 +407,7 @@ const Overview = observer(function Overview() {
 
       // Filtro por etiquetas (label_ids nativos de Plane)
       if (labelFilter.length > 0) {
-        const matchingIds = projectLabels
-          .filter((l) => labelFilter.includes(l.name))
-          .map((l) => l.id);
+        const matchingIds = projectLabels.filter((l) => labelFilter.includes(l.name)).map((l) => l.id);
         const issueLabelIds: string[] = issue.label_ids ?? [];
         if (!matchingIds.some((id) => issueLabelIds.includes(id))) continue;
       }
@@ -492,7 +480,18 @@ const Overview = observer(function Overview() {
       byMonth: monthEntries,
       conResultado: parsedConResultado,
     };
-  }, [allIssues, stateNames, fromDate, toDate, memberRoot, estadosFilter, componenteFilter, condicionFilter, labelFilter, projectLabels]);
+  }, [
+    allIssues,
+    stateNames,
+    fromDate,
+    toDate,
+    memberRoot,
+    estadosFilter,
+    componenteFilter,
+    condicionFilter,
+    labelFilter,
+    projectLabels,
+  ]);
 
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
@@ -990,7 +989,7 @@ const Overview = observer(function Overview() {
                 {/* Dropdowns de filtro */}
                 <FilterDropdown
                   label="Componente FANB"
-                  options={componentesUnicos}
+                  options={FANB_COMPONENTES}
                   selected={componenteFilter}
                   onChange={(v) => setComponenteFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
                   onClear={() => setComponenteFilter([])}
