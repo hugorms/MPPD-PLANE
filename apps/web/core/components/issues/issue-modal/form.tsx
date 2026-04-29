@@ -299,9 +299,11 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     }
   };
 
+  const isDescriptionEditorReady = () => !editorRef.current || editorRef.current.isEditorReadyToDiscard();
+
   const handleFormSubmit = async (formData: Partial<TIssue>, is_draft_issue = false) => {
     // Check if the editor is ready to discard — ANTES de cualquier upload
-    if (!editorRef.current?.isEditorReadyToDiscard()) {
+    if (!isDescriptionEditorReady()) {
       setToast({
         type: TOAST_TYPE.ERROR,
         title: t("error"),
@@ -657,7 +659,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                         variant="secondary"
                         size="lg"
                         onClick={() => {
-                          if (editorRef.current?.isEditorReadyToDiscard()) {
+                          if (isDescriptionEditorReady()) {
                             onClose();
                           } else {
                             setToast({
