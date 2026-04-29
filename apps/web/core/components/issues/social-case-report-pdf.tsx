@@ -283,7 +283,9 @@ function PdfHBar({ label, count, total, color }: { label: string; count: number;
     <View style={{ marginBottom: 6 }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
         <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color, marginRight: 5 }} />
-        <Text style={{ fontSize: 7.5, color: C.gray700, flex: 1 }} numberOfLines={1}>{label}</Text>
+        <Text style={{ fontSize: 7.5, color: C.gray700, flex: 1 }} numberOfLines={1}>
+          {label}
+        </Text>
         <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 4 }}>{count}</Text>
         <Text style={{ fontSize: 6.5, color: C.gray500, marginLeft: 3 }}>{pct}%</Text>
       </View>
@@ -339,8 +341,7 @@ function GraphicPage({
 
   // Solo los 5 FANB canónicos con count > 0
   // oxlint-disable-next-line unicorn/no-array-sort
-  const fanbEntries = PDF_FANB_COMPONENTES
-    .map((c) => [c, byComponente[c] ?? 0] as [string, number])
+  const fanbEntries = PDF_FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number])
     .filter(([, count]) => count > 0)
     .toSorted(([, a], [, b]) => b - a);
 
@@ -353,7 +354,15 @@ function GraphicPage({
   return (
     <Page size="A4" style={S.page}>
       {/* Encabezado */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: `2px solid ${C.blue}` }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 12,
+          paddingBottom: 8,
+          borderBottom: `2px solid ${C.blue}`,
+        }}
+      >
         {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 34, objectFit: "contain", marginRight: 10 }} />}
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{projectName}</Text>
@@ -366,12 +375,20 @@ function GraphicPage({
         {(
           [
             { label: "Total de fichas", value: total, color: C.blue, pct: "" },
-            { label: "Con resultado", value: conResultado, color: "#16a34a", pct: total > 0 ? ` ${Math.round((conResultado / total) * 100)}%` : "" },
+            {
+              label: "Con resultado",
+              value: conResultado,
+              color: "#16a34a",
+              pct: total > 0 ? ` ${Math.round((conResultado / total) * 100)}%` : "",
+            },
             { label: "Civiles", value: cantCiviles, color: C.gray700, pct: ` ${civPct}%` },
             { label: "Militares", value: cantMilitares, color: "#1d4ed8", pct: ` ${milPct}%` },
           ] as const
         ).map((k) => (
-          <View key={k.label} style={{ flex: 1, backgroundColor: C.gray100, padding: 8, borderLeft: `3px solid ${k.color}` }}>
+          <View
+            key={k.label}
+            style={{ flex: 1, backgroundColor: C.gray100, padding: 8, borderLeft: `3px solid ${k.color}` }}
+          >
             <View style={{ flexDirection: "row", alignItems: "baseline" }}>
               <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{k.value}</Text>
               {k.pct ? <Text style={{ fontSize: 7, color: C.gray500, marginLeft: 3 }}>{k.pct}</Text> : null}
@@ -385,12 +402,17 @@ function GraphicPage({
       <View style={{ flexDirection: "row", gap: 10 }}>
         {/* Columna izquierda */}
         <View style={{ flex: 1, gap: 10 }}>
-
           {/* Componentes FANB */}
           <View style={{ backgroundColor: C.gray50, padding: 9 }}>
             <SectionHeader title="COMPONENTES FANB" sub="Distribución por rama militar" />
             {fanbEntries.map(([name, count]) => (
-              <PdfHBar key={name} label={name} count={count} total={total} color={PDF_FANB_COLOR_MAP[name] ?? C.gray500} />
+              <PdfHBar
+                key={name}
+                label={name}
+                count={count}
+                total={total}
+                color={PDF_FANB_COLOR_MAP[name] ?? C.gray500}
+              />
             ))}
           </View>
 
@@ -400,20 +422,21 @@ function GraphicPage({
             {byEntidad.length === 0 ? (
               <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos registrados</Text>
             ) : (
-              byEntidad.slice(0, 6).map(([name, count]) => (
-                <PdfHBar key={name} label={name} count={count} total={total} color="#7c3aed" />
-              ))
+              byEntidad
+                .slice(0, 6)
+                .map(([name, count]) => <PdfHBar key={name} label={name} count={count} total={total} color="#7c3aed" />)
             )}
           </View>
-
         </View>
 
         {/* Columna derecha */}
         <View style={{ flex: 1, gap: 10 }}>
-
           {/* Estado del caso — colores reales */}
           <View style={{ backgroundColor: C.gray50, padding: 9 }}>
-            <SectionHeader title="ESTADO DEL CASO" sub={`${stateEntries.length} estado${stateEntries.length !== 1 ? "s" : ""}`} />
+            <SectionHeader
+              title="ESTADO DEL CASO"
+              sub={`${stateEntries.length} estado${stateEntries.length !== 1 ? "s" : ""}`}
+            />
             {stateEntries.map(([name, count]) => (
               <PdfHBar key={name} label={name} count={count} total={total} color={stateColorMap[name] ?? C.gray500} />
             ))}
@@ -425,9 +448,9 @@ function GraphicPage({
             {byLabel.length === 0 ? (
               <Text style={{ fontSize: 7, color: C.gray500 }}>Sin etiquetas asignadas</Text>
             ) : (
-              byLabel.slice(0, 6).map(([name, count]) => (
-                <PdfHBar key={name} label={name} count={count} total={total} color={C.blue} />
-              ))
+              byLabel
+                .slice(0, 6)
+                .map(([name, count]) => <PdfHBar key={name} label={name} count={count} total={total} color={C.blue} />)
             )}
           </View>
 
@@ -454,7 +477,6 @@ function GraphicPage({
               </View>
             )}
           </View>
-
         </View>
       </View>
 
@@ -522,6 +544,8 @@ export const SocialCaseReportPDF = ({
   byCondicion,
   byEntidad = [],
   byMonth = [],
+  byLabel = [],
+  stateColorMap = {},
   conResultado,
   generatedAtLabel,
   stateFlow,
