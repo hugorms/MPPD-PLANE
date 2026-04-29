@@ -422,6 +422,7 @@ const Overview = observer(function Overview() {
     const parsedByComponente: Record<string, number> = {};
     const parsedByEntidad: Record<string, number> = {};
     const parsedByMonth: Record<string, number> = {};
+    const parsedByLabel: Record<string, number> = {};
     let parsedCiviles = 0;
     let parsedMilitares = 0;
     let parsedConResultado = 0;
@@ -505,6 +506,12 @@ const Overview = observer(function Overview() {
       parsedByComponente[componente] = (parsedByComponente[componente] ?? 0) + 1;
       if (entidad) parsedByEntidad[entidad] = (parsedByEntidad[entidad] ?? 0) + 1;
 
+      // Etiquetas nativas de Plane
+      for (const labelId of issue.label_ids ?? []) {
+        const labelName = projectLabels.find((l) => l.id === labelId)?.name;
+        if (labelName) parsedByLabel[labelName] = (parsedByLabel[labelName] ?? 0) + 1;
+      }
+
       if (issue.created_at) {
         const dt = new Date(issue.created_at);
         const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
@@ -531,6 +538,9 @@ const Overview = observer(function Overview() {
       .toSorted(([a], [b]) => a.localeCompare(b))
       .slice(-12);
 
+    // oxlint-disable-next-line unicorn/no-array-sort
+    const topLabel = Object.entries(parsedByLabel).sort(([, a], [, b]) => b - a);
+
     return {
       rows: parsedRows,
       byState: parsedByState,
@@ -538,6 +548,7 @@ const Overview = observer(function Overview() {
       byCondicion: parsedByCondicion,
       byEntidad: topEntidad,
       byMonth: monthEntries,
+      byLabel: topLabel,
       conResultado: parsedConResultado,
     };
   }, [
@@ -556,6 +567,12 @@ const Overview = observer(function Overview() {
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
   const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, c]) => c)) : 1;
+
+  // Solo los 5 componentes FANB canónicos, ordenados por cantidad
+  const byFANBComponente = useMemo(() => {
+    // oxlint-disable-next-line unicorn/no-array-sort
+    return FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number]).sort(([, a], [, b]) => b - a);
+  }, [byComponente]);
 
   const dateRangeLabel = useMemo(() => {
     if (!fromDate && !toDate) return "Todos los registros";
@@ -1322,38 +1339,73 @@ const Overview = observer(function Overview() {
                 </div>
               )}
 
-              {/* ── Gráficas ── */}
+              {/* ── Contenedores individuales de estadísticas ── */}
               {!loadingIssues && rows.length > 0 && (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {/* Por componente FANB */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-1 text-12 font-medium text-secondary">Por componente FANB</p>
-                    <p className="mb-4 text-11 text-tertiary">
-                      {Object.keys(byComponente).length} componente{Object.keys(byComponente).length !== 1 ? "s" : ""}{" "}
-                      activo{Object.keys(byComponente).length !== 1 ? "s" : ""}
-                    </p>
+                <div className="space-y-4">
+                  {/* 1 — Componentes FANB (solo los 5 canónicos) */}
+                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-13 font-medium text-secondary">Componentes FANB</p>
+                        <p className="text-11 text-tertiary">Distribución por rama militar</p>
+                      </div>
+                      <span className="text-12 font-semibold text-secondary">{cantMilitares} militares</span>
+                    </div>
                     <div className="space-y-3">
-                      {Object.entries(byComponente)
-                        // oxlint-disable-next-line unicorn/no-array-sort
-                        .sort(([, a], [, b]) => b - a)
-                        .map(([name, count]) => (
-                          <HBar
-                            key={name}
-                            label={name}
-                            count={count}
-                            total={rows.length}
-                            hexColor={FANB_COLOR_MAP[name] ?? "#6b7280"}
-                          />
-                        ))}
+                      {byFANBComponente.map(([name, count]) => (
+                        <HBar
+                          key={name}
+                          label={name}
+                          count={count}
+                          total={rows.length}
+                          hexColor={FANB_COLOR_MAP[name]}
+                        />
+                      ))}
                     </div>
                   </div>
 
-                  {/* Por estado del caso — usa el color real del estado en Plane */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-1 text-12 font-medium text-secondary">Por estado del caso</p>
-                    <p className="mb-4 text-11 text-tertiary">
-                      {Object.keys(byState).length} estado{Object.keys(byState).length !== 1 ? "s" : ""}
-                    </p>
+                  {/* 2 — Civil / Militar */}
+                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-13 font-medium text-secondary">Civil / Militar</p>
+                        <p className="text-11 text-tertiary">Distribución por condición</p>
+                      </div>
+                      <span className="text-12 font-semibold text-secondary">{rows.length} casos</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <HBar label="Civil" count={cantCiviles} total={rows.length} hexColor="#6b7280" />
+                      <HBar label="Militar" count={cantMilitares} total={rows.length} hexColor="#1d4ed8" />
+                    </div>
+                    <div className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-surface-1">
+                      <div
+                        className="h-full transition-all duration-300"
+                        style={{
+                          width: `${Math.round((cantCiviles / rows.length) * 100)}%`,
+                          backgroundColor: "#6b7280",
+                        }}
+                      />
+                      <div
+                        className="h-full transition-all duration-300"
+                        style={{
+                          width: `${Math.round((cantMilitares / rows.length) * 100)}%`,
+                          backgroundColor: "#1d4ed8",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3 — Estado del caso */}
+                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-13 font-medium text-secondary">Estado del caso</p>
+                        <p className="text-11 text-tertiary">
+                          {Object.keys(byState).length} estado{Object.keys(byState).length !== 1 ? "s" : ""} en el
+                          período
+                        </p>
+                      </div>
+                    </div>
                     <div className="space-y-3">
                       {Object.entries(byState)
                         // oxlint-disable-next-line unicorn/no-array-sort
@@ -1370,48 +1422,89 @@ const Overview = observer(function Overview() {
                     </div>
                   </div>
 
-                  {/* Por estado de Venezuela */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-1 text-12 font-medium text-secondary">Por estado de Venezuela</p>
-                    <p className="mb-4 text-11 text-tertiary">
-                      Top {byEntidad.length} estado{byEntidad.length !== 1 ? "s" : ""}
-                    </p>
+                  {/* 4 — Etiquetas */}
+                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-13 font-medium text-secondary">Etiquetas</p>
+                        <p className="text-11 text-tertiary">
+                          {byLabel.length} etiqueta{byLabel.length !== 1 ? "s" : ""} asignada
+                          {byLabel.length !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    </div>
+                    {byLabel.length === 0 ? (
+                      <p className="text-12 text-tertiary">Sin etiquetas asignadas en el período</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {byLabel.map(([name, count]) => (
+                          <HBar
+                            key={name}
+                            label={name}
+                            count={count}
+                            total={rows.length}
+                            color="bg-accent-primary/70"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 5 — Estado de Venezuela */}
+                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-13 font-medium text-secondary">Estado de Venezuela</p>
+                        <p className="text-11 text-tertiary">Top {byEntidad.length} con mayor registro</p>
+                      </div>
+                    </div>
                     <div className="space-y-3">
                       {byEntidad.map(([name, count]) => (
-                        <HBar key={name} label={name} count={count} total={rows.length} color="bg-accent-primary/60" />
+                        <HBar key={name} label={name} count={count} total={rows.length} color="bg-accent-primary/50" />
                       ))}
                     </div>
                   </div>
 
-                  {/* Evolución mensual */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-1 text-12 font-medium text-secondary">Evolución mensual</p>
-                    <p className="mb-4 text-11 text-tertiary">
-                      Últimos {byMonth.length} mes{byMonth.length !== 1 ? "es" : ""}
-                    </p>
+                  {/* 6 — Evolución mensual */}
+                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-13 font-medium text-secondary">Evolución mensual</p>
+                        <p className="text-11 text-tertiary">
+                          Últimos {byMonth.length} mes{byMonth.length !== 1 ? "es" : ""}
+                        </p>
+                      </div>
+                      {byMonth.length >= 2 &&
+                        (() => {
+                          const last = byMonth[byMonth.length - 1][1];
+                          const prev = byMonth[byMonth.length - 2][1];
+                          const delta = last - prev;
+                          return (
+                            <span className={cn("text-12 font-medium", delta >= 0 ? "text-green-600" : "text-red-500")}>
+                              {delta >= 0 ? "+" : ""}
+                              {delta} vs mes anterior
+                            </span>
+                          );
+                        })()}
+                    </div>
                     {byMonth.length === 0 ? (
                       <p className="text-12 text-tertiary">Sin datos en el período</p>
                     ) : (
-                      <div className="flex h-28 items-end gap-1">
-                        {byMonth.map(([month, count], idx) => {
-                          const isLast = idx === byMonth.length - 1;
-                          return (
-                            <div key={month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                              <span className="text-10 font-medium text-secondary">{count}</span>
-                              <div
-                                className="w-full rounded-t transition-all duration-300"
-                                style={{
-                                  height: `${Math.max(4, Math.round((count / maxMonth) * 80))}px`,
-                                  backgroundColor: isLast
-                                    ? "var(--color-accent-primary)"
-                                    : "var(--color-accent-primary)",
-                                  opacity: isLast ? 1 : 0.5 + (idx / byMonth.length) * 0.4,
-                                }}
-                              />
-                              <span className="truncate text-10 text-tertiary">{formatMonthLabel(month)}</span>
-                            </div>
-                          );
-                        })}
+                      <div className="flex h-32 items-end gap-1.5">
+                        {byMonth.map(([month, count], idx) => (
+                          <div key={month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                            <span className="text-10 font-medium text-secondary">{count}</span>
+                            <div
+                              className="w-full rounded-t transition-all duration-300"
+                              style={{
+                                height: `${Math.max(4, Math.round((count / maxMonth) * 96))}px`,
+                                backgroundColor: "var(--color-accent-primary)",
+                                opacity: 0.4 + (idx / Math.max(byMonth.length - 1, 1)) * 0.6,
+                              }}
+                            />
+                            <span className="truncate text-10 text-tertiary">{formatMonthLabel(month)}</span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
