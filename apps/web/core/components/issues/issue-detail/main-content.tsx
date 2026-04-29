@@ -35,14 +35,7 @@ import { IssueDetailWidgets } from "../issue-detail-widgets";
 import { NameDescriptionUpdateStatus } from "../issue-update-status";
 import { PeekOverviewProperties } from "../peek-overview/properties";
 import { IssueTitleInput } from "../title-input";
-import {
-  SocialCaseForm,
-  stripSocialCaseFromHtml,
-  injectSocialCaseIntoHtml,
-  extractFromHtml,
-  extractProfilePhotoFromHtml,
-  injectProfilePhotoIntoHtml,
-} from "@/components/issues/social-case-form";
+import { SocialCaseForm, extractFromHtml } from "@/components/issues/social-case-form";
 import { useSocialCaseStateChange } from "@/hooks/use-social-case-state-change";
 import { useSocialCaseFichaExport } from "@/hooks/use-social-case-ficha-export";
 import { invalidateSocialCaseActividades } from "@/hooks/use-social-case-actividades";
@@ -277,33 +270,28 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           </div>
         )}
 
-        <DescriptionInput
-          issueSequenceId={issue.sequence_id}
-          containerClassName="-ml-6 border-none p-0! pl-6!"
-          disabled={isArchived || !isEditable}
-          editorRef={editorRef}
-          entityId={issue.id}
-          fileAssetType={EFileAssetType.ISSUE_DESCRIPTION}
-          initialValue={stripSocialCaseFromHtml(issue.description_html ?? "")}
-          key={issue.id}
-          onSubmit={async (value, isMigrationUpdate) => {
-            if (!issue.id || !issue.project_id) return;
-            // Re-inyectar la ficha y la foto de perfil en el HTML antes de guardar
-            const existingData = extractFromHtml(issue.description_html ?? "");
-            const existingPhotoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
-            let finalHtml = existingData
-              ? injectSocialCaseIntoHtml(value.description_html ?? "<p></p>", existingData)
-              : (value.description_html ?? "<p></p>");
-            if (existingPhotoUrl) finalHtml = injectProfilePhotoIntoHtml(finalHtml, existingPhotoUrl);
-            await issueOperations.update(workspaceSlug, issue.project_id, issue.id, {
-              description_html: finalHtml,
-              ...(isMigrationUpdate ? { skip_activity: "true" } : {}),
-            });
-          }}
-          projectId={issue.project_id}
-          setIsSubmitting={(value) => setIsSubmitting(value)}
-          workspaceSlug={workspaceSlug}
-        />
+        {!isSocialCase && (
+          <DescriptionInput
+            issueSequenceId={issue.sequence_id}
+            containerClassName="-ml-6 border-none p-0! pl-6!"
+            disabled={isArchived || !isEditable}
+            editorRef={editorRef}
+            entityId={issue.id}
+            fileAssetType={EFileAssetType.ISSUE_DESCRIPTION}
+            initialValue={issue.description_html ?? ""}
+            key={issue.id}
+            onSubmit={async (value, isMigrationUpdate) => {
+              if (!issue.id || !issue.project_id) return;
+              await issueOperations.update(workspaceSlug, issue.project_id, issue.id, {
+                description_html: value.description_html ?? "<p></p>",
+                ...(isMigrationUpdate ? { skip_activity: "true" } : {}),
+              });
+            }}
+            projectId={issue.project_id}
+            setIsSubmitting={(value) => setIsSubmitting(value)}
+            workspaceSlug={workspaceSlug}
+          />
+        )}
 
         <div className="flex items-center justify-between gap-2">
           {currentUser && (

@@ -32,6 +32,9 @@ python manage.py create_bucket
 # Clear Cache before starting to remove stale values
 python manage.py clear_cache
 
+# Migrar descripciones nativas de casos sociales → campo referencia
+python manage.py migrate_social_descriptions
+
 # Collect static files
 python manage.py collectstatic --noinput
 
