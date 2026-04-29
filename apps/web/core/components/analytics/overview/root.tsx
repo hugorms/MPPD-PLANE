@@ -24,6 +24,7 @@ import { VENEZUELA_ESTADOS } from "@/components/issues/social-case-estados";
 import { APIService } from "@/services/api.service";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
 import { useMember } from "@/hooks/store/use-member";
+import { useLabel } from "@/hooks/store/use-label";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import AnalyticsWrapper from "../analytics-wrapper";
@@ -271,6 +272,7 @@ const Overview = observer(function Overview() {
   const { workspaceSlug } = useParams();
   const { workspaceProjectIds, getProjectById } = useProject();
   const { getProjectStates } = useProjectState();
+  const { getProjectLabels } = useLabel();
   const memberRoot = useMember();
 
   // ── Estado GCS ───────────────────────────────────────────────────────────────
@@ -281,6 +283,7 @@ const Overview = observer(function Overview() {
   const [componenteFilter, setComponenteFilter] = useState<string[]>([]);
   const [condicionFilter, setCondicionFilter] = useState<string[]>([]);
   const [estadosFilter, setEstadosFilter] = useState<string[]>([]);
+  const [labelFilter, setLabelFilter] = useState<string[]>([]);
 
   const [allIssues, setAllIssues] = useState<any[]>([]);
   const [loadingIssues, setLoadingIssues] = useState(false);
@@ -308,6 +311,16 @@ const Overview = observer(function Overview() {
       .then((list) => setAllIssues(list))
       .finally(() => setLoadingIssues(false));
   }, [workspaceSlug, selectedProjectId]);
+
+  // ── Etiquetas del proyecto ───────────────────────────────────────────────────
+  const projectLabels = useMemo(
+    () => getProjectLabels(selectedProjectId) ?? [],
+    [getProjectLabels, selectedProjectId]
+  );
+  const labelNames = useMemo(
+    () => projectLabels.map((l) => l.name),
+    [projectLabels]
+  );
 
   // ── Estados del proyecto ─────────────────────────────────────────────────────
   const states = useMemo(
@@ -402,6 +415,15 @@ const Overview = observer(function Overview() {
         if (!matchesMilitar && !matchesCivil) continue;
       }
 
+      // Filtro por etiquetas (label_ids nativos de Plane)
+      if (labelFilter.length > 0) {
+        const matchingIds = projectLabels
+          .filter((l) => labelFilter.includes(l.name))
+          .map((l) => l.id);
+        const issueLabelIds: string[] = issue.label_ids ?? [];
+        if (!matchingIds.some((id) => issueLabelIds.includes(id))) continue;
+      }
+
       const photoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
       const stateName = stateNames[issue.state_id ?? ""] ?? "Sin estado";
       const isMilitar = d?.esMilitar === "true";
@@ -458,7 +480,7 @@ const Overview = observer(function Overview() {
 
     // oxlint-disable-next-line unicorn/no-array-sort
     const monthEntries = Object.entries(parsedByMonth)
-      .sort(([a], [b]) => a.localeCompare(b))
+      .toSorted(([a], [b]) => a.localeCompare(b))
       .slice(-12);
 
     return {
@@ -470,7 +492,7 @@ const Overview = observer(function Overview() {
       byMonth: monthEntries,
       conResultado: parsedConResultado,
     };
-  }, [allIssues, stateNames, fromDate, toDate, memberRoot, estadosFilter, componenteFilter, condicionFilter]);
+  }, [allIssues, stateNames, fromDate, toDate, memberRoot, estadosFilter, componenteFilter, condicionFilter, labelFilter, projectLabels]);
 
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
@@ -909,6 +931,7 @@ const Overview = observer(function Overview() {
                   setComponenteFilter([]);
                   setCondicionFilter([]);
                   setEstadosFilter([]);
+                  setLabelFilter([]);
                 }}
                 className="focus:border-accent-primary rounded-md border border-subtle bg-surface-2 px-3 py-1.5 text-12 text-secondary outline-none"
               >
@@ -966,11 +989,19 @@ const Overview = observer(function Overview() {
                 </div>
                 {/* Dropdowns de filtro */}
                 <FilterDropdown
-                  label="Componente"
+                  label="Componente FANB"
                   options={componentesUnicos}
                   selected={componenteFilter}
                   onChange={(v) => setComponenteFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
                   onClear={() => setComponenteFilter([])}
+                  disabled={generating}
+                />
+                <FilterDropdown
+                  label="Etiquetas"
+                  options={labelNames}
+                  selected={labelFilter}
+                  onChange={(v) => setLabelFilter((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]))}
+                  onClear={() => setLabelFilter([])}
                   disabled={generating}
                 />
                 <FilterDropdown
