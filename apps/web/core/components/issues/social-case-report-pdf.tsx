@@ -229,6 +229,22 @@ export type ParsedIssueRow = {
 
 export type StateFlowStep = { id: string; name: string };
 
+const PDF_FANB_COMPONENTES = [
+  "Ejército Nacional Bolivariano",
+  "Armada Bolivariana de Venezuela",
+  "Aviación Militar Bolivariana",
+  "Guardia Nacional Bolivariana",
+  "Milicia Nacional Bolivariana",
+] as const;
+
+const PDF_FANB_COLOR_MAP: Record<string, string> = {
+  "Ejército Nacional Bolivariano": "#15803d",
+  "Armada Bolivariana de Venezuela": "#1d4ed8",
+  "Aviación Militar Bolivariana": "#0369a1",
+  "Guardia Nacional Bolivariana": "#4d7c0f",
+  "Milicia Nacional Bolivariana": "#b91c1c",
+};
+
 type Props = {
   rows: ParsedIssueRow[];
   projectName: string;
@@ -238,6 +254,8 @@ type Props = {
   byCondicion?: Record<string, number>;
   byEntidad?: [string, number][];
   byMonth?: [string, number][];
+  byLabel?: [string, number][];
+  stateColorMap?: Record<string, string>;
   conResultado: number;
   generatedAtLabel: string;
   stateFlow: StateFlowStep[];
@@ -262,16 +280,25 @@ function pdfMonthLabel(yyyyMM: string): string {
 function PdfHBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
   const pct = total > 0 ? Math.max(2, Math.round((count / total) * 100)) : 2;
   return (
-    <View style={{ marginBottom: 5 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
-        <Text style={{ fontSize: 7.5, color: C.gray700, flex: 1 }} numberOfLines={1}>
-          {label}
-        </Text>
-        <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 6 }}>{count}</Text>
+    <View style={{ marginBottom: 6 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
+        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color, marginRight: 5 }} />
+        <Text style={{ fontSize: 7.5, color: C.gray700, flex: 1 }} numberOfLines={1}>{label}</Text>
+        <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 4 }}>{count}</Text>
+        <Text style={{ fontSize: 6.5, color: C.gray500, marginLeft: 3 }}>{pct}%</Text>
       </View>
-      <View style={{ width: "100%", height: 7, backgroundColor: C.gray100 }}>
-        <View style={{ width: `${pct}%`, height: 7, backgroundColor: color }} />
+      <View style={{ width: "100%", height: 5, backgroundColor: C.gray100 }}>
+        <View style={{ width: `${pct}%`, height: 5, backgroundColor: color, opacity: 0.85 }} />
       </View>
+    </View>
+  );
+}
+
+function SectionHeader({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <View style={{ marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${C.border}` }}>
+      <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{title}</Text>
+      {sub ? <Text style={{ fontSize: 6.5, color: C.gray500, marginTop: 1 }}>{sub}</Text> : null}
     </View>
   );
 }
@@ -289,6 +316,8 @@ function GraphicPage({
   byState,
   byEntidad,
   byMonth,
+  byLabel,
+  stateColorMap,
 }: {
   projectName: string;
   dateRange: string;
@@ -302,27 +331,28 @@ function GraphicPage({
   byState: Record<string, number>;
   byEntidad: [string, number][];
   byMonth: [string, number][];
+  byLabel: [string, number][];
+  stateColorMap: Record<string, string>;
 }) {
   const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, c]) => c)) : 1;
-  const CHART_H = 70;
+  const CHART_H = 60;
+
+  // Solo los 5 FANB canónicos
+  // oxlint-disable-next-line unicorn/no-array-sort
+  const fanbEntries = PDF_FANB_COMPONENTES
+    .map((c) => [c, byComponente[c] ?? 0] as [string, number])
+    .toSorted(([, a], [, b]) => b - a);
 
   // oxlint-disable-next-line unicorn/no-array-sort
-  const compEntries = Object.entries(byComponente).sort(([, a], [, b]) => b - a);
-  // oxlint-disable-next-line unicorn/no-array-sort
   const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a);
+
+  const civPct = total > 0 ? Math.round((cantCiviles / total) * 100) : 0;
+  const milPct = total > 0 ? Math.round((cantMilitares / total) * 100) : 0;
 
   return (
     <Page size="A4" style={S.page}>
       {/* Encabezado */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          marginBottom: 14,
-          paddingBottom: 10,
-          borderBottom: `2px solid ${C.blue}`,
-        }}
-      >
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12, paddingBottom: 8, borderBottom: `2px solid ${C.blue}` }}>
         {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 34, objectFit: "contain", marginRight: 10 }} />}
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{projectName}</Text>
@@ -331,94 +361,102 @@ function GraphicPage({
       </View>
 
       {/* KPIs */}
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
+      <View style={{ flexDirection: "row", gap: 6, marginBottom: 12 }}>
         {(
           [
-            { label: "Total de fichas", value: total, color: C.blue },
-            { label: "Con resultado", value: conResultado, color: "#16a34a" },
-            { label: "Civiles", value: cantCiviles, color: C.gray700 },
-            { label: "Militares", value: cantMilitares, color: "#7c3aed" },
+            { label: "Total de fichas", value: total, color: C.blue, pct: "" },
+            { label: "Con resultado", value: conResultado, color: "#16a34a", pct: total > 0 ? ` ${Math.round((conResultado / total) * 100)}%` : "" },
+            { label: "Civiles", value: cantCiviles, color: C.gray700, pct: ` ${civPct}%` },
+            { label: "Militares", value: cantMilitares, color: "#1d4ed8", pct: ` ${milPct}%` },
           ] as const
         ).map((k) => (
-          <View
-            key={k.label}
-            style={{
-              flex: 1,
-              backgroundColor: C.gray100,
-              padding: 10,
-              borderLeft: `3px solid ${k.color}`,
-            }}
-          >
-            <Text style={{ fontSize: 20, fontFamily: "Helvetica-Bold", color: k.color }}>{k.value}</Text>
-            <Text style={{ fontSize: 7, color: C.gray500, marginTop: 2 }}>{k.label}</Text>
+          <View key={k.label} style={{ flex: 1, backgroundColor: C.gray100, padding: 8, borderLeft: `3px solid ${k.color}` }}>
+            <View style={{ flexDirection: "row", alignItems: "baseline" }}>
+              <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{k.value}</Text>
+              {k.pct ? <Text style={{ fontSize: 7, color: C.gray500, marginLeft: 3 }}>{k.pct}</Text> : null}
+            </View>
+            <Text style={{ fontSize: 7, color: C.gray500, marginTop: 1 }}>{k.label}</Text>
           </View>
         ))}
       </View>
 
-      {/* Gráficas 2×2 */}
-      <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
-        {/* Por componente FANB */}
-        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
-          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
-            POR COMPONENTE FANB
-          </Text>
-          {compEntries.slice(0, 7).map(([name, count]) => (
-            <PdfHBar key={name} label={name} count={count} total={total} color={C.blue} />
-          ))}
+      {/* 2 columnas */}
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        {/* Columna izquierda */}
+        <View style={{ flex: 1, gap: 10 }}>
+
+          {/* Componentes FANB */}
+          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+            <SectionHeader title="COMPONENTES FANB" sub="Distribución por rama militar" />
+            {fanbEntries.map(([name, count]) => (
+              <PdfHBar key={name} label={name} count={count} total={total} color={PDF_FANB_COLOR_MAP[name] ?? C.gray500} />
+            ))}
+          </View>
+
+          {/* Estado de Venezuela */}
+          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+            <SectionHeader title="ESTADO DE VENEZUELA" sub={`Top ${byEntidad.length}`} />
+            {byEntidad.length === 0 ? (
+              <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos registrados</Text>
+            ) : (
+              byEntidad.slice(0, 6).map(([name, count]) => (
+                <PdfHBar key={name} label={name} count={count} total={total} color="#7c3aed" />
+              ))
+            )}
+          </View>
+
         </View>
 
-        {/* Por estado del caso */}
-        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
-          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
-            POR ESTADO DEL CASO
-          </Text>
-          {stateEntries.map(([name, count]) => (
-            <PdfHBar key={name} label={name} count={count} total={total} color="#16a34a" />
-          ))}
+        {/* Columna derecha */}
+        <View style={{ flex: 1, gap: 10 }}>
+
+          {/* Estado del caso — colores reales */}
+          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+            <SectionHeader title="ESTADO DEL CASO" sub={`${stateEntries.length} estado${stateEntries.length !== 1 ? "s" : ""}`} />
+            {stateEntries.map(([name, count]) => (
+              <PdfHBar key={name} label={name} count={count} total={total} color={stateColorMap[name] ?? C.gray500} />
+            ))}
+          </View>
+
+          {/* Etiquetas */}
+          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+            <SectionHeader title="ETIQUETAS" sub={`${byLabel.length} etiqueta${byLabel.length !== 1 ? "s" : ""}`} />
+            {byLabel.length === 0 ? (
+              <Text style={{ fontSize: 7, color: C.gray500 }}>Sin etiquetas asignadas</Text>
+            ) : (
+              byLabel.slice(0, 6).map(([name, count]) => (
+                <PdfHBar key={name} label={name} count={count} total={total} color={C.blue} />
+              ))
+            )}
+          </View>
+
+          {/* Evolución mensual */}
+          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+            <SectionHeader title="EVOLUCIÓN MENSUAL" sub={`Últimos ${byMonth.length} meses`} />
+            {byMonth.length === 0 ? (
+              <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H, gap: 2, marginTop: 4 }}>
+                {byMonth.map(([month, count], idx) => {
+                  const barH = Math.max(4, Math.round((count / maxMonth) * (CHART_H - 16)));
+                  const opacity = 0.4 + (idx / Math.max(byMonth.length - 1, 1)) * 0.6;
+                  return (
+                    <View key={month} style={{ flex: 1, alignItems: "center" }}>
+                      <Text style={{ fontSize: 5.5, color: C.gray700, marginBottom: 1 }}>{count}</Text>
+                      <View style={{ width: "100%", height: barH, backgroundColor: C.blue, opacity }} />
+                      <Text style={{ fontSize: 5, color: C.gray500, marginTop: 1 }} numberOfLines={1}>
+                        {pdfMonthLabel(month)}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
         </View>
       </View>
 
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        {/* Por estado de Venezuela */}
-        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
-          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
-            POR ESTADO DE VENEZUELA
-          </Text>
-          {byEntidad.slice(0, 8).map(([name, count]) => (
-            <PdfHBar key={name} label={name} count={count} total={total} color="#7c3aed" />
-          ))}
-          {byEntidad.length === 0 && (
-            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos de estado registrados</Text>
-          )}
-        </View>
-
-        {/* Evolución mensual — barras verticales */}
-        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
-          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
-            EVOLUCIÓN MENSUAL
-          </Text>
-          {byMonth.length === 0 ? (
-            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
-          ) : (
-            <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H, gap: 3 }}>
-              {byMonth.map(([month, count]) => {
-                const barH = Math.max(4, Math.round((count / maxMonth) * (CHART_H - 18)));
-                return (
-                  <View key={month} style={{ flex: 1, alignItems: "center" }}>
-                    <Text style={{ fontSize: 6, color: C.gray700, marginBottom: 2 }}>{count}</Text>
-                    <View style={{ width: "100%", height: barH, backgroundColor: C.blue }} />
-                    <Text style={{ fontSize: 5.5, color: C.gray500, marginTop: 2 }} numberOfLines={1}>
-                      {pdfMonthLabel(month)}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Footer */}
       <View style={S.footer} fixed>
         <Text style={S.footerText}>{projectName} · Análisis de Casos Sociales</Text>
         <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
@@ -582,6 +620,8 @@ export const SocialCaseReportPDF = ({
           byState={byState}
           byEntidad={byEntidad}
           byMonth={byMonth}
+          byLabel={byLabel ?? []}
+          stateColorMap={stateColorMap ?? {}}
         />
       )}
 
