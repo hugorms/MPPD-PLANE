@@ -269,7 +269,12 @@ def _minio_client():
             "ONFALO_MINIO_TOKEN",
             "797099740b424dc188bc12e71f1ea63118d3e84508583232372f74c763cfabbb",
         ),
-        config=BotocoreConfig(signature_version="s3v4"),
+        config=BotocoreConfig(
+            signature_version="s3v4",
+            connect_timeout=5,
+            read_timeout=10,
+            retries={"max_attempts": 1},
+        ),
         region_name="us-east-1",
     )
 
@@ -288,7 +293,9 @@ class CedulaPhotoView(BaseAPIView):
             return HttpResponse(obj["Body"].read(), content_type=content_type, status=200)
         except Exception as e:
             log_exception(e)
-            return Response({"error": "Error al obtener foto"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            response = Response({"error": "Error al obtener foto"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            response["Access-Control-Allow-Origin"] = "*"
+            return response
 
 
 class UnsplashEndpoint(BaseAPIView):

@@ -62,6 +62,8 @@ export const TrackFileRestorationPlugin = (editor: Editor, restoreHandler: TFile
           // if the src is just a id (private bucket), then we don't need to handle restore from here but
           // only while it fails to load
           if (nodeType === CORE_EXTENSIONS.CUSTOM_IMAGE && !node.attrs.src?.startsWith("http")) return;
+          // skip Onfalo cedula-photo proxy URLs — these are not Plane file assets
+          if (nodeType === CORE_EXTENSIONS.CUSTOM_IMAGE && node.attrs.src?.includes("/api/cedula-photo/")) return;
           addedFiles.push(node as TFileNode);
         });
 
