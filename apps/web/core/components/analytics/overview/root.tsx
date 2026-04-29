@@ -54,6 +54,14 @@ type Preset = "today" | "week" | "month" | "3months" | "all" | "custom";
 
 const CONDICION_OPTIONS = ["Civil", "Militar"] as const;
 
+const FANB_COLOR_MAP: Record<string, string> = {
+  "Ejército Nacional Bolivariano": "#15803d",
+  "Armada Bolivariana de Venezuela": "#1d4ed8",
+  "Aviación Militar Bolivariana": "#0369a1",
+  "Guardia Nacional Bolivariana": "#4d7c0f",
+  "Milicia Nacional Bolivariana": "#b91c1c",
+};
+
 const FANB_COMPONENTES = [
   "Ejército Nacional Bolivariano",
   "Armada Bolivariana de Venezuela",
@@ -270,17 +278,41 @@ function FilterDropdown({ label, options, selected, onChange, onClear, disabled 
 
 // ── Barra horizontal CSS ──────────────────────────────────────────────────────
 
-function HBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+function HBar({
+  label,
+  count,
+  total,
+  color,
+  hexColor,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color?: string;
+  hexColor?: string;
+}) {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
   return (
     <div className="flex items-center gap-2">
       <div className="min-w-0 flex-1">
-        <div className="mb-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-11 text-secondary">{label}</span>
+        <div className="mb-1 flex items-center gap-1.5">
+          {hexColor && <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: hexColor }} />}
+          <span className="min-w-0 flex-1 truncate text-11 text-secondary">{label}</span>
           <span className="shrink-0 text-11 font-semibold text-secondary">{count}</span>
+          <span className="shrink-0 text-10 text-tertiary">{pct}%</span>
         </div>
-        <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-1">
-          <div className={cn("h-full rounded-full transition-all", color)} style={{ width: `${pct}%` }} />
+        <div className="h-1 w-full overflow-hidden rounded-full bg-surface-1">
+          {hexColor ? (
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{ width: `${pct}%`, backgroundColor: hexColor, opacity: 0.8 }}
+            />
+          ) : (
+            <div
+              className={cn("h-full rounded-full transition-all duration-300", color)}
+              style={{ width: `${pct}%` }}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -356,6 +388,14 @@ const Overview = observer(function Overview() {
     const map: Record<string, string> = {};
     (states ?? []).forEach((s) => {
       map[s.id] = s.name;
+    });
+    return map;
+  }, [states]);
+
+  const stateColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    (states ?? []).forEach((s) => {
+      map[s.name] = s.color;
     });
     return map;
   }, [states]);
@@ -1187,28 +1227,92 @@ const Overview = observer(function Overview() {
               {loadingIssues ? (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {(["kpi-0", "kpi-1", "kpi-2", "kpi-3"] as const).map((k) => (
-                    <div key={k} className="h-20 animate-pulse rounded-lg border border-subtle bg-surface-2" />
+                    <div key={k} className="h-24 animate-pulse rounded-lg border border-subtle bg-surface-2" />
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="text-26 font-bold text-secondary">{rows.length}</p>
-                    <p className="text-11 text-tertiary">Total de fichas</p>
+                <>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {/* Total */}
+                    <div className="rounded-lg border border-subtle bg-surface-2 p-4">
+                      <p className="text-26 font-bold text-secondary">{rows.length}</p>
+                      <p className="mt-0.5 text-11 text-tertiary">Total de fichas</p>
+                    </div>
+                    {/* Con resultado */}
+                    <div
+                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                      style={{ borderLeftColor: "#16a34a" }}
+                    >
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-26 font-bold text-secondary">{conResultado}</p>
+                        {rows.length > 0 && (
+                          <p className="text-12 text-tertiary">{Math.round((conResultado / rows.length) * 100)}%</p>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-11 text-tertiary">Con resultado</p>
+                    </div>
+                    {/* Civiles */}
+                    <div
+                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                      style={{ borderLeftColor: "#6b7280" }}
+                    >
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-26 font-bold text-secondary">{cantCiviles}</p>
+                        {rows.length > 0 && (
+                          <p className="text-12 text-tertiary">{Math.round((cantCiviles / rows.length) * 100)}%</p>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-11 text-tertiary">Civiles</p>
+                    </div>
+                    {/* Militares */}
+                    <div
+                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                      style={{ borderLeftColor: "#1d4ed8" }}
+                    >
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-26 font-bold text-secondary">{cantMilitares}</p>
+                        {rows.length > 0 && (
+                          <p className="text-12 text-tertiary">{Math.round((cantMilitares / rows.length) * 100)}%</p>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-11 text-tertiary">Militares</p>
+                    </div>
                   </div>
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="text-26 text-green-600 font-bold">{conResultado}</p>
-                    <p className="text-11 text-tertiary">Con resultado</p>
-                  </div>
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="text-26 font-bold text-secondary">{cantCiviles}</p>
-                    <p className="text-11 text-tertiary">Civiles</p>
-                  </div>
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="text-26 text-blue-600 font-bold">{cantMilitares}</p>
-                    <p className="text-11 text-tertiary">Militares</p>
-                  </div>
-                </div>
+
+                  {/* Civil / Militar — barra proporcional */}
+                  {rows.length > 0 && (cantCiviles > 0 || cantMilitares > 0) && (
+                    <div className="rounded-lg border border-subtle bg-surface-2 px-4 py-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-11 text-tertiary">Civil</span>
+                        <span className="text-11 text-tertiary">Militar</span>
+                      </div>
+                      <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-1">
+                        <div
+                          className="h-full rounded-l-full transition-all duration-300"
+                          style={{
+                            width: `${Math.round((cantCiviles / rows.length) * 100)}%`,
+                            backgroundColor: "#6b7280",
+                          }}
+                        />
+                        <div
+                          className="h-full rounded-r-full transition-all duration-300"
+                          style={{
+                            width: `${Math.round((cantMilitares / rows.length) * 100)}%`,
+                            backgroundColor: "#1d4ed8",
+                          }}
+                        />
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between">
+                        <span className="text-10 text-tertiary">
+                          {cantCiviles} ({Math.round((cantCiviles / rows.length) * 100)}%)
+                        </span>
+                        <span className="text-10 text-tertiary">
+                          {cantMilitares} ({Math.round((cantMilitares / rows.length) * 100)}%)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* ── Sin resultados ── */}
@@ -1223,8 +1327,12 @@ const Overview = observer(function Overview() {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {/* Por componente FANB */}
                   <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-4 text-13 font-semibold text-secondary">Por componente FANB</p>
-                    <div className="space-y-2.5">
+                    <p className="mb-1 text-12 font-medium text-secondary">Por componente FANB</p>
+                    <p className="mb-4 text-11 text-tertiary">
+                      {Object.keys(byComponente).length} componente{Object.keys(byComponente).length !== 1 ? "s" : ""}{" "}
+                      activo{Object.keys(byComponente).length !== 1 ? "s" : ""}
+                    </p>
+                    <div className="space-y-3">
                       {Object.entries(byComponente)
                         // oxlint-disable-next-line unicorn/no-array-sort
                         .sort(([, a], [, b]) => b - a)
@@ -1234,52 +1342,76 @@ const Overview = observer(function Overview() {
                             label={name}
                             count={count}
                             total={rows.length}
-                            color="bg-accent-primary/70"
+                            hexColor={FANB_COLOR_MAP[name] ?? "#6b7280"}
                           />
                         ))}
                     </div>
                   </div>
 
-                  {/* Por estado del caso */}
+                  {/* Por estado del caso — usa el color real del estado en Plane */}
                   <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-4 text-13 font-semibold text-secondary">Por estado del caso</p>
-                    <div className="space-y-2.5">
+                    <p className="mb-1 text-12 font-medium text-secondary">Por estado del caso</p>
+                    <p className="mb-4 text-11 text-tertiary">
+                      {Object.keys(byState).length} estado{Object.keys(byState).length !== 1 ? "s" : ""}
+                    </p>
+                    <div className="space-y-3">
                       {Object.entries(byState)
                         // oxlint-disable-next-line unicorn/no-array-sort
                         .sort(([, a], [, b]) => b - a)
                         .map(([name, count]) => (
-                          <HBar key={name} label={name} count={count} total={rows.length} color="bg-green-500/70" />
+                          <HBar
+                            key={name}
+                            label={name}
+                            count={count}
+                            total={rows.length}
+                            hexColor={stateColorMap[name] ?? "#6b7280"}
+                          />
                         ))}
                     </div>
                   </div>
 
-                  {/* Por estado de Venezuela (top 8) */}
+                  {/* Por estado de Venezuela */}
                   <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-4 text-13 font-semibold text-secondary">Por estado de Venezuela</p>
-                    <div className="space-y-2.5">
+                    <p className="mb-1 text-12 font-medium text-secondary">Por estado de Venezuela</p>
+                    <p className="mb-4 text-11 text-tertiary">
+                      Top {byEntidad.length} estado{byEntidad.length !== 1 ? "s" : ""}
+                    </p>
+                    <div className="space-y-3">
                       {byEntidad.map(([name, count]) => (
-                        <HBar key={name} label={name} count={count} total={rows.length} color="bg-purple-500/70" />
+                        <HBar key={name} label={name} count={count} total={rows.length} color="bg-accent-primary/60" />
                       ))}
                     </div>
                   </div>
 
                   {/* Evolución mensual */}
                   <div className="rounded-lg border border-subtle bg-surface-2 p-4">
-                    <p className="mb-4 text-13 font-semibold text-secondary">Evolución mensual</p>
+                    <p className="mb-1 text-12 font-medium text-secondary">Evolución mensual</p>
+                    <p className="mb-4 text-11 text-tertiary">
+                      Últimos {byMonth.length} mes{byMonth.length !== 1 ? "es" : ""}
+                    </p>
                     {byMonth.length === 0 ? (
                       <p className="text-12 text-tertiary">Sin datos en el período</p>
                     ) : (
-                      <div className="flex h-32 items-end gap-1.5">
-                        {byMonth.map(([month, count]) => (
-                          <div key={month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                            <span className="text-10 font-medium text-secondary">{count}</span>
-                            <div
-                              className="w-full rounded-t bg-accent-primary/60"
-                              style={{ height: `${Math.max(4, Math.round((count / maxMonth) * 96))}px` }}
-                            />
-                            <span className="truncate text-9 text-tertiary">{formatMonthLabel(month)}</span>
-                          </div>
-                        ))}
+                      <div className="flex h-28 items-end gap-1">
+                        {byMonth.map(([month, count], idx) => {
+                          const isLast = idx === byMonth.length - 1;
+                          return (
+                            <div key={month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+                              <span className="text-10 font-medium text-secondary">{count}</span>
+                              <div
+                                className="w-full rounded-t transition-all duration-300"
+                                style={{
+                                  height: `${Math.max(4, Math.round((count / maxMonth) * 80))}px`,
+                                  backgroundColor: isLast
+                                    ? "var(--color-accent-primary)"
+                                    : "var(--color-accent-primary)",
+                                  opacity: isLast ? 1 : 0.5 + (idx / byMonth.length) * 0.4,
+                                }}
+                              />
+                              <span className="truncate text-10 text-tertiary">{formatMonthLabel(month)}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
