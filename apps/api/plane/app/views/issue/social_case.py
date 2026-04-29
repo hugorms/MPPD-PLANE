@@ -67,8 +67,8 @@ class SocialCaseReportEndpoint(BaseAPIView):
                 ),
                 label_ids=Coalesce(
                     ArrayAgg(
-                        "issue_label__label_id",
-                        filter=Q(issue_label__label_id__isnull=False),
+                        "label_issue__label_id",
+                        filter=Q(label_issue__label_id__isnull=False),
                         distinct=True,
                     ),
                     [],
