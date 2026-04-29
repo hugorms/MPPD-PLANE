@@ -205,18 +205,24 @@ export type AttachmentInfo = {
 export type ParsedIssueRow = {
   id: string;
   sequenceId: number;
+  numeroCaso: string;
   stateId: string | null;
   stateName: string;
   photoUrl: string | null;
   responsable: string;
   nombre: string;
   cedula: string;
+  telefono: string;
   municipio: string;
+  entidad: string;
   componente: string;
   esMilitar: boolean;
   referencia: string;
   accionTomada: string;
   resultado: string;
+  institucionContactada: string;
+  fechaCierre: string;
+  observacionCierre: string;
   beneficiado: boolean;
   attachments?: AttachmentInfo[];
 };
@@ -698,18 +704,28 @@ export const SocialCaseReportPDF = ({
                       <View style={S.metaCol}>
                         <Text style={S.metaLabel}>Cédula</Text>
                         <Text style={S.metaValue}>{row.cedula}</Text>
+                        <Text style={S.metaLabel}>Teléfono</Text>
+                        <Text style={S.metaValue}>{row.telefono || "—"}</Text>
                         <Text style={S.metaLabel}>Municipio</Text>
                         <Text style={S.metaValue}>{row.municipio}</Text>
                       </View>
                       <View style={S.metaCol}>
                         <Text style={S.metaLabel}>Componente</Text>
                         <Text style={S.metaValue}>{row.componente}</Text>
+                        <Text style={S.metaLabel}>Estado (Vzla.)</Text>
+                        <Text style={S.metaValue}>{row.entidad || "—"}</Text>
                         <Text style={S.metaLabel}>Responsable</Text>
                         <Text style={S.metaValue}>{row.responsable}</Text>
                       </View>
                       <View style={S.metaCol}>
-                        <Text style={S.metaLabel}>Estado actual</Text>
+                        <Text style={S.metaLabel}>Estado del caso</Text>
                         <Text style={S.metaValue}>{row.stateName}</Text>
+                        {row.fechaCierre ? (
+                          <>
+                            <Text style={S.metaLabel}>Fecha de cierre</Text>
+                            <Text style={S.metaValue}>{row.fechaCierre}</Text>
+                          </>
+                        ) : null}
                         <Text style={S.metaLabel}>Beneficiado</Text>
                         <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
                           {row.beneficiado ? "Sí" : "No"}
@@ -733,6 +749,18 @@ export const SocialCaseReportPDF = ({
                   <Text style={S.detailSectionTitle}>RESULTADO</Text>
                   <Text style={S.detailText}>{row.resultado || "—"}</Text>
                 </View>
+                {row.institucionContactada && row.institucionContactada !== "-" && (
+                  <View style={S.detailSection}>
+                    <Text style={S.detailSectionTitle}>ÓRGANO / INSTITUCIÓN CONTACTADA</Text>
+                    <Text style={S.detailText}>{row.institucionContactada}</Text>
+                  </View>
+                )}
+                {row.observacionCierre && row.observacionCierre !== "-" && (
+                  <View style={S.detailSection}>
+                    <Text style={S.detailSectionTitle}>OBSERVACIÓN DE CIERRE</Text>
+                    <Text style={S.detailText}>{row.observacionCierre}</Text>
+                  </View>
+                )}
 
                 {stateFlow.length > 0 && <Timeline stateFlow={stateFlow} currentStateId={row.stateId} />}
 

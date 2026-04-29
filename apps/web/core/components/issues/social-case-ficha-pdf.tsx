@@ -317,6 +317,7 @@ export function SocialCaseFichaPDF({
           {data.institucionContactada ? (
             <Row label="Órgano / Institución contactada" value={data.institucionContactada} />
           ) : null}
+          {data.observacionCierre ? <Row label="Observación de cierre" value={data.observacionCierre} /> : null}
           <Row label="Fecha de inicio" value={formatDate(startDate ?? "")} />
           <Row
             label="Estado del caso"

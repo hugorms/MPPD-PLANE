@@ -389,18 +389,24 @@ export const SocialCaseReportModal = observer(function SocialCaseReportModal({ o
       parsedRows.push({
         id: issue.id,
         sequenceId: issue.sequence_id,
+        numeroCaso: d?.numeroCaso ? `#${d.numeroCaso}` : `GCS-${issue.sequence_id}`,
         stateId: issue.state_id ?? null,
         stateName,
         photoUrl,
         responsable,
         nombre: d?.nombre || "-",
         cedula: d?.cedula || "-",
+        telefono: [d?.telefono, d?.telefono2].filter(Boolean).join(" / ") || "-",
         municipio: d?.municipio || "-",
+        entidad: d?.entidad || "-",
         componente,
         esMilitar: isMilitar,
         referencia: d?.referencia || "-",
         accionTomada,
         resultado,
+        institucionContactada: d?.institucionContactada || "-",
+        fechaCierre: d?.fechaCierre ? formatDate(new Date(d.fechaCierre)) : "-",
+        observacionCierre: d?.observacionCierre || "-",
         beneficiado,
       });
 
@@ -682,17 +688,18 @@ export const SocialCaseReportModal = observer(function SocialCaseReportModal({ o
         const isEven = i % 2 === 0;
         const ROW_BG = isEven ? "FFF3F4F6" : "FFFFFFFF";
         const BORDER_DATA = { style: "thin" as const, color: { argb: "FFd1d5db" } };
+        const telefonoCombinado = [d?.telefono, d?.telefono2].filter(Boolean).join(" / ");
         const cellValues = [
-          toUpperOrDash(d?.numeroCaso),
+          toUpperOrDash(d?.numeroCaso ? `#${d.numeroCaso}` : `GCS-${row.sequenceId}`),
           toUpperOrDash(row.nombre),
           toUpperOrDash(row.cedula),
-          toUpperOrDash(d?.telefono),
+          toUpperOrDash(telefonoCombinado),
           toUpperOrDash(d?.direccion),
           toUpperOrDash(issue?.name),
           toUpperOrDash(row.referencia),
           "",
           "",
-          toUpperOrDash(row.responsable),
+          toUpperOrDash(d?.institucionContactada),
           toUpperOrDash(d?.observacionCierre),
         ];
         cellValues.forEach((val, idx) => {
