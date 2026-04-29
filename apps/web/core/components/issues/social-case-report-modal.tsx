@@ -316,6 +316,14 @@ export const SocialCaseReportModal = observer(function SocialCaseReportModal({ o
     return map;
   }, [states]);
 
+  const stateColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    (states ?? []).forEach((s) => {
+      map[s.name] = s.color;
+    });
+    return map;
+  }, [states]);
+
   const { fromDate, toDate } = useMemo(() => {
     if (preset !== "all" && preset !== "custom") {
       const range = presetRange(preset);
@@ -531,6 +539,7 @@ export const SocialCaseReportModal = observer(function SocialCaseReportModal({ o
           byState={byState}
           byComponente={byComponente}
           byCondicion={byCondicion}
+          stateColorMap={stateColorMap}
           conResultado={conResultado}
           generatedAtLabel={generatedAtLabel}
           stateFlow={stateFlow}

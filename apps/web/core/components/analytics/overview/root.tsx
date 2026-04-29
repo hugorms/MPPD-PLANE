@@ -566,12 +566,14 @@ const Overview = observer(function Overview() {
 
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
-  const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, c]) => c)) : 1;
+  const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
 
-  // Solo los 5 componentes FANB canónicos, ordenados por cantidad
+  // Solo los 5 FANB canónicos con count > 0, ordenados por cantidad
   const byFANBComponente = useMemo(() => {
     // oxlint-disable-next-line unicorn/no-array-sort
-    return FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number]).sort(([, a], [, b]) => b - a);
+    return FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number])
+      .filter(([, count]) => count > 0)
+      .toSorted(([, a], [, b]) => b - a);
   }, [byComponente]);
 
   const dateRangeLabel = useMemo(() => {
@@ -807,6 +809,11 @@ const Overview = observer(function Overview() {
           4
         );
 
+        if (byLabel.length > 0) {
+          summary.addRow([]);
+          addBreakdown("Etiquetas", byLabel, 1);
+        }
+
         summary.columns = [{ width: 36 }, { width: 14 }, { width: 2 }, { width: 36 }, { width: 14 }];
       }
 
@@ -879,11 +886,7 @@ const Overview = observer(function Overview() {
 
       sheet.mergeCells("A3:K3");
       const firstCaseStartDate = rows
-        .map(
-          (r) =>
-            allIssues.find((is) => is.id === r.id)?.start_date ??
-            allIssues.find((is) => is.id === r.id)?.created_at?.slice(0, 10)
-        )
+        .map((r) => issueMap.get(r.id)?.start_date ?? issueMap.get(r.id)?.created_at?.slice(0, 10))
         .filter(Boolean)
         // oxlint-disable-next-line unicorn/no-array-sort
         .sort()[0];
@@ -920,17 +923,18 @@ const Overview = observer(function Overview() {
 
       const PHOTO_ROW_H_PT = Math.ceil((PHOTO_H_PX / 96) * 2.54 * 28.35);
 
+      // Map para lookup O(1) en lugar de find() O(n) dentro del loop
+      const issueMap = new Map(allIssues.map((is) => [is.id, is]));
+
       // oxlint-disable-next-line unicorn/no-array-sort
-      const sortedRows = [...rows].sort((a, b) => {
-        const ia = allIssues.find((is) => is.id === a.id);
-        const ib = allIssues.find((is) => is.id === b.id);
-        return (ia?.created_at ?? "").localeCompare(ib?.created_at ?? "");
-      });
+      const sortedRows = [...rows].sort((a, b) =>
+        (issueMap.get(a.id)?.created_at ?? "").localeCompare(issueMap.get(b.id)?.created_at ?? "")
+      );
       let done = 0;
 
       for (let i = 0; i < sortedRows.length; i++) {
         const row = sortedRows[i];
-        const issue = allIssues.find((is) => is.id === row.id);
+        const issue = issueMap.get(row.id);
         const d = issue ? extractFromHtml(issue.description_html ?? "") : null;
         const isEven = i % 2 === 0;
         const ROW_BG = isEven ? "FFF3F4F6" : "FFFFFFFF";
