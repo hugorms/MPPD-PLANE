@@ -306,9 +306,13 @@ export function SocialCaseFichaPDF({
           <Row label="Parroquia" value={data.parroquia} />
           <Row label="Municipio" value={data.municipio} />
           <Row label="Estado" value={data.entidad} />
-          {data.esMilitar === "true" ? <Row label="Grado militar" value={data.gradoMilitar} /> : null}
-          {data.esMilitar === "true" ? <Row label="Componente" value={data.jornada} /> : null}
-          {data.esMilitar === "true" ? <Row label="Unidad / Dependencia" value={data.unidadDependencia} /> : null}
+          {data.esMilitar === "true" && data.gradoMilitar ? (
+            <Row label="Grado militar" value={data.gradoMilitar} />
+          ) : null}
+          {data.esMilitar === "true" && data.jornada ? <Row label="Componente" value={data.jornada} /> : null}
+          {data.esMilitar === "true" && data.unidadDependencia ? (
+            <Row label="Unidad / Dependencia" value={data.unidadDependencia} />
+          ) : null}
           <Row label="Solicitud / Beneficio" value={data.referencia} />
           <Row label="Acción tomada" value={data.accionTomada} />
           <Row label="Resultado / Beneficio otorgado" value={data.resultado} />

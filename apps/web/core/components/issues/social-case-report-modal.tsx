@@ -69,7 +69,6 @@ const socialCaseService = new SocialCaseService();
 const attachmentService = new IssueAttachmentService();
 const toUpperOrDash = (v: string | undefined | null) => (v ?? "-").toUpperCase();
 
-// Convierte una URL directa (sin credenciales) a base64
 async function urlToBase64(url: string): Promise<string> {
   const res = await fetch(url, { credentials: "omit" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -82,9 +81,20 @@ async function urlToBase64(url: string): Promise<string> {
   });
 }
 
-// Obtiene la URL pre-firmada de MinIO a través del API de Django (que requiere auth)
-// y luego descarga el archivo SIN credenciales (evita CORS wildcard+credentials)
+async function urlToBase64Authed(url: string): Promise<string> {
+  const res = await fetch(url, { credentials: "include" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("loadend", () => resolve(reader.result as string));
+    reader.addEventListener("error", () => reject(new Error("FileReader error")));
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function fetchBase64WithAuth(apiUrl: string): Promise<string> {
+  if (apiUrl.includes("/api/cedula-photo/")) return urlToBase64Authed(apiUrl);
   const sep = apiUrl.includes("?") ? "&" : "?";
   const jsonRes = await fetch(`${apiUrl}${sep}as_url=1`, { credentials: "include" });
   if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status} al obtener URL`);
@@ -452,9 +462,13 @@ export const SocialCaseReportModal = observer(function SocialCaseReportModal({ o
 
       let logoUrl: string | null = null;
       try {
-        logoUrl = await urlToBase64(`${window.location.origin}/venezuela-logo.png`);
+        logoUrl = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
       } catch {
-        logoUrl = null;
+        try {
+          logoUrl = await urlToBase64Authed(`${window.location.origin}/logo-mppd.png`);
+        } catch {
+          logoUrl = null;
+        }
       }
 
       const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
@@ -594,7 +608,7 @@ export const SocialCaseReportModal = observer(function SocialCaseReportModal({ o
 
       let logoId: number | null = null;
       try {
-        const logoFull = await urlToBase64(`${window.location.origin}/venezuela-logo.png`);
+        const logoFull = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
         const mimeMatch = logoFull.match(/^data:image\/(\w+);base64,/);
         const ext = (mimeMatch?.[1] ?? "png") as "png" | "jpeg" | "gif";
         logoId = workbook.addImage({ base64: logoFull.split(",")[1], extension: ext });
