@@ -29,7 +29,6 @@ import {
 // components
 import {
   IssueDefaultProperties,
-  IssueDescriptionEditor,
   IssueParentTag,
   IssueProjectSelect,
   IssueTitleInput,
@@ -117,7 +116,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   } = props;
 
   // states
-  const [gptAssistantModal, setGptAssistantModal] = useState(false);
+  const [_gptAssistantModal, setGptAssistantModal] = useState(false);
   const [isMoving, setIsMoving] = useState<boolean>(false);
   const [socialFormKey, setSocialFormKey] = useState(0);
   // Archivo seleccionado (pendiente de subir al guardar)
@@ -605,26 +604,6 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                     onPhotoFound={(url) => setProfilePhotoUrl(url)}
                   />
                 )}
-                <IssueDescriptionEditor
-                  control={control}
-                  isDraft={isDraft}
-                  issueName={watch("name")}
-                  issueId={data?.id}
-                  descriptionHtmlData={data?.description_html}
-                  editorRef={editorRef}
-                  submitBtnRef={submitBtnRef}
-                  gptAssistantModal={gptAssistantModal}
-                  workspaceSlug={workspaceSlug?.toString()}
-                  projectId={projectId}
-                  handleFormChange={handleFormChange}
-                  handleDescriptionHTMLDataChange={(description_html) =>
-                    setValue<"description_html">("description_html", description_html)
-                  }
-                  setGptAssistantModal={setGptAssistantModal}
-                  handleGptAssistantClose={() => reset(getValues())}
-                  onAssetUpload={onAssetUpload}
-                  onClose={onClose}
-                />
               </div>
               <WorkItemModalAdditionalProperties
                 isDraft={isDraft}

@@ -44,7 +44,11 @@
       "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/icons/icon-180x180.png\")",
       "Bash(cp /c/Users/rober/Downloads/LOGO.png \"/c/Users/rober/Desktop/MPPD-GCS/apps/web/app/assets/icons/icon-512x512.png\")",
       "Bash(magick --version)",
-      "Bash(convert --version)"
+      "Bash(convert --version)",
+      "Bash(git -C \"c:\\\\Users\\\\rober\\\\Desktop\\\\MPPD-GCS\" status)",
+      "Bash(git -C \"c:\\\\Users\\\\rober\\\\Desktop\\\\MPPD-GCS\" log --oneline -3)",
+      "Bash(git -C \"c:\\\\Users\\\\rober\\\\Desktop\\\\MPPD-GCS\" add apps/web/core/components/issues/issue-modal/form.tsx)",
+      "Bash(git -C 'c:\\\\Users\\\\rober\\\\Desktop\\\\MPPD-GCS' commit -m ' *)"
     ]
   }
 }
