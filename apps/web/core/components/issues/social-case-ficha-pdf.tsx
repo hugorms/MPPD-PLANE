@@ -313,7 +313,8 @@ export function SocialCaseFichaPDF({
           {data.esMilitar === "true" && data.unidadDependencia ? (
             <Row label="Unidad / Dependencia" value={data.unidadDependencia} />
           ) : null}
-          <Row label="Solicitud / Beneficio" value={data.referencia} />
+          <Row label="Solicitud" value={data.referencia} />
+          {data.descripcionCaso ? <Row label="Descripción del caso" value={data.descripcionCaso} /> : null}
           <Row label="Acción tomada" value={data.accionTomada} />
           <Row label="Resultado / Beneficio otorgado" value={data.resultado} />
           <Row label="Beneficiario" value={data.nombreBeneficiario || data.nombre} />

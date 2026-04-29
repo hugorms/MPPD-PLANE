@@ -153,6 +153,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
         unidadDependencia: "",
         jornada: "",
         referencia: "",
+        descripcionCaso: "",
         accionTomada: "",
         resultado: "",
         institucionContactada: "",

@@ -16,7 +16,7 @@ const FIELDS_PROCESO: { key: string; label: string }[] = [
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
   { key: "jornada", label: "Actividad" },
-  { key: "referencia", label: "Solicitud / Beneficio" },
+  { key: "referencia", label: "Solicitud" },
 ];
 
 // Para pasar a "Articulación" (incluye los de proceso + PROCESO_REQUIRED del formulario)

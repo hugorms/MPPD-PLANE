@@ -24,6 +24,7 @@ export type SocialCaseData = {
   jornada: string;
   telefono2: string;
   referencia: string;
+  descripcionCaso: string;
   accionTomada: string;
   resultado: string;
   institucionContactada: string;
@@ -91,6 +92,7 @@ const EMPTY: SocialCaseData = {
   jornada: "",
   telefono2: "",
   referencia: "",
+  descripcionCaso: "",
   accionTomada: "",
   resultado: "",
   institucionContactada: "",
@@ -128,7 +130,8 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "jornada", label: "Jornada" },
   { key: "telefono2", label: "Telefono 2" },
-  { key: "referencia", label: "Referencia" },
+  { key: "referencia", label: "Solicitud" },
+  { key: "descripcionCaso", label: "Descripcion del caso" },
   { key: "accionTomada", label: "Accion tomada" },
   { key: "resultado", label: "Resultado" },
   { key: "institucionContactada", label: "Órgano / Institución contactada" },
@@ -268,7 +271,7 @@ const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "direccion", label: "Dirección" },
   { key: "jornada", label: "Componente" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
-  { key: "referencia", label: "Solicitud / Beneficio" },
+  { key: "referencia", label: "Solicitud" },
 ];
 
 // Campos requeridos para enviar a articulación (proceso → articulación)
@@ -968,10 +971,10 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Solicitud / Beneficio (fila completa, auto-resize) */}
+            {/* Solicitud (fila completa, auto-resize) */}
             <div>
               <label htmlFor="sc-referencia" className={labelClass}>
-                Solicitud / Beneficio
+                Solicitud
               </label>
               <textarea
                 id="sc-referencia"
@@ -988,6 +991,33 @@ export const SocialCaseForm = ({
                 }}
                 onChange={(e) => {
                   update("referencia", e.target.value);
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
+              />
+            </div>
+
+            {/* Descripcion del caso (fila completa, auto-resize) */}
+            <div>
+              <label htmlFor="sc-descripcion-caso" className={labelClass}>
+                Descripción del caso
+              </label>
+              <textarea
+                id="sc-descripcion-caso"
+                disabled={!isEditable}
+                autoCapitalize="sentences"
+                rows={3}
+                className={cn(fc(isEditable), "min-h-[64px] resize-none overflow-hidden leading-relaxed")}
+                placeholder="Describe el contexto y los detalles principales del caso..."
+                value={data.descripcionCaso}
+                onInput={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
+                onChange={(e) => {
+                  update("descripcionCaso", e.target.value);
                   const el = e.currentTarget;
                   el.style.height = "auto";
                   el.style.height = `${el.scrollHeight}px`;

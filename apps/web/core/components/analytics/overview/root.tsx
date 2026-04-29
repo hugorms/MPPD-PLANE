@@ -494,6 +494,7 @@ const Overview = observer(function Overview() {
         componente,
         esMilitar: isMilitar,
         referencia: d?.referencia || "-",
+        descripcionCaso: d?.descripcionCaso || "-",
         accionTomada: d?.accionTomada || "-",
         resultado: d?.resultado || "-",
         institucionContactada: d?.institucionContactada || "-",

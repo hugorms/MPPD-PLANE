@@ -218,6 +218,7 @@ export type ParsedIssueRow = {
   componente: string;
   esMilitar: boolean;
   referencia: string;
+  descripcionCaso: string;
   accionTomada: string;
   resultado: string;
   institucionContactada: string;
@@ -803,9 +804,15 @@ export const SocialCaseReportPDF = ({
                 <View style={S.divider} />
 
                 <View style={S.detailSection}>
-                  <Text style={S.detailSectionTitle}>MOTIVO / REFERENCIA</Text>
+                  <Text style={S.detailSectionTitle}>SOLICITUD</Text>
                   <Text style={S.detailText}>{row.referencia || "—"}</Text>
                 </View>
+                {row.descripcionCaso && row.descripcionCaso !== "-" && (
+                  <View style={S.detailSection}>
+                    <Text style={S.detailSectionTitle}>DESCRIPCIÓN DEL CASO</Text>
+                    <Text style={S.detailText}>{row.descripcionCaso}</Text>
+                  </View>
+                )}
                 <View style={S.detailSection}>
                   <Text style={S.detailSectionTitle}>ACCIÓN TOMADA</Text>
                   <Text style={S.detailText}>{row.accionTomada || "—"}</Text>
