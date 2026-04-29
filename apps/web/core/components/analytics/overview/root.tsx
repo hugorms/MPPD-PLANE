@@ -300,6 +300,7 @@ const Overview = observer(function Overview() {
   const generating = generatingType !== null;
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [includeCover, setIncludeCover] = useState(true);
+  const [includeGraphicSheet, setIncludeGraphicSheet] = useState(true);
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeDetails, setIncludeDetails] = useState(false);
   const [includeAttachments, setIncludeAttachments] = useState(true);
@@ -580,10 +581,13 @@ const Overview = observer(function Overview() {
           byState={byState}
           byComponente={byComponente}
           byCondicion={byCondicion}
+          byEntidad={byEntidad}
+          byMonth={byMonth}
           conResultado={conResultado}
           generatedAtLabel={generatedAtLabel}
           stateFlow={stateFlow}
           includeCover={includeCover}
+          includeGraphicSheet={includeGraphicSheet}
           includePhotos={includePhotos}
           includeDetails={includeDetails}
           includeAttachments={includeAttachments}
@@ -621,6 +625,109 @@ const Overview = observer(function Overview() {
     try {
       const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
+
+      // ── Hoja de resumen gráfico ──────────────────────────────────────────────
+      if (includeGraphicSheet) {
+        const summary = workbook.addWorksheet("Resumen");
+        const HBG = "FF1e3a5f";
+        const WHT = "FFFFFFFF";
+        const THIN = { style: "thin" as const, color: { argb: "FFd1d5db" } };
+
+        // Título
+        summary.mergeCells("A1:D1");
+        summary.getCell("A1").value = projectName.toUpperCase();
+        summary.getCell("A1").font = { bold: true, size: 16, name: "Arial", color: { argb: HBG } };
+        summary.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
+        summary.getRow(1).height = 36;
+
+        summary.mergeCells("A2:D2");
+        summary.getCell("A2").value = `Análisis de Casos Sociales · ${dateRangeLabel}`;
+        summary.getCell("A2").font = { size: 11, name: "Arial", color: { argb: "FF6b7280" } };
+        summary.getCell("A2").alignment = { vertical: "middle", horizontal: "center" };
+        summary.getRow(2).height = 22;
+
+        // KPIs
+        const kpis = [
+          { label: "Total de fichas", value: rows.length },
+          { label: "Con resultado", value: conResultado },
+          { label: "Civiles", value: byCondicion["Civil"] ?? 0 },
+          { label: "Militares", value: byCondicion["Militar"] ?? 0 },
+        ];
+        summary.addRow([]);
+        const kpiLabelRow = summary.addRow(kpis.map((k) => k.label));
+        const kpiValueRow = summary.addRow(kpis.map((k) => k.value));
+        summary.getRow(3).height = 14;
+        summary.getRow(4).height = 28;
+        summary.getRow(5).height = 36;
+        kpiLabelRow.eachCell((cell) => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HBG } };
+          cell.font = { bold: true, size: 11, name: "Arial", color: { argb: WHT } };
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+          cell.border = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+        });
+        kpiValueRow.eachCell((cell) => {
+          cell.font = { bold: true, size: 20, name: "Arial", color: { argb: HBG } };
+          cell.alignment = { vertical: "middle", horizontal: "center" };
+          cell.border = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+        });
+
+        summary.addRow([]);
+
+        // Función local para agregar tabla de desglose
+        const addBreakdown = (title: string, entries: [string, number][], colOffset: number) => {
+          const startRow = summary.rowCount + 1;
+          const titleCell = summary.getRow(startRow).getCell(colOffset);
+          titleCell.value = title;
+          titleCell.font = { bold: true, size: 11, name: "Arial", color: { argb: WHT } };
+          titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HBG } };
+          titleCell.alignment = { vertical: "middle", horizontal: "center" };
+          titleCell.border = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+          const countTitleCell = summary.getRow(startRow).getCell(colOffset + 1);
+          countTitleCell.value = "Casos";
+          countTitleCell.font = { bold: true, size: 11, name: "Arial", color: { argb: WHT } };
+          countTitleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HBG } };
+          countTitleCell.alignment = { vertical: "middle", horizontal: "center" };
+          countTitleCell.border = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+          summary.getRow(startRow).height = 22;
+
+          entries.forEach(([name, count], i) => {
+            const r = summary.getRow(startRow + 1 + i);
+            const c1 = r.getCell(colOffset);
+            const c2 = r.getCell(colOffset + 1);
+            const bg = i % 2 === 0 ? "FFF3F4F6" : "FFFFFFFF";
+            c1.value = name;
+            c1.font = { size: 10, name: "Arial" };
+            c1.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+            c1.alignment = { vertical: "middle" };
+            c1.border = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+            c2.value = count;
+            c2.font = { bold: true, size: 10, name: "Arial" };
+            c2.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+            c2.alignment = { vertical: "middle", horizontal: "center" };
+            c2.border = { top: THIN, bottom: THIN, left: THIN, right: THIN };
+            r.height = 20;
+          });
+        };
+
+        // oxlint-disable-next-line unicorn/no-array-sort
+        const compEntries = Object.entries(byComponente).sort(([, a], [, b]) => b - a) as [string, number][];
+        // oxlint-disable-next-line unicorn/no-array-sort
+        const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a) as [string, number][];
+
+        addBreakdown("Componente FANB", compEntries, 1);
+        addBreakdown("Estado del caso", stateEntries, 4);
+
+        summary.addRow([]);
+        addBreakdown("Estado de Venezuela (top 8)", byEntidad.slice(0, 8), 1);
+        addBreakdown(
+          "Evolución mensual",
+          byMonth.map(([m, c]) => [m, c] as [string, number]),
+          4
+        );
+
+        summary.columns = [{ width: 36 }, { width: 14 }, { width: 2 }, { width: 36 }, { width: 14 }];
+      }
+
       const sheet = workbook.addWorksheet("Reporte");
       const ws = workspaceSlug?.toString() ?? "";
       const pid = selectedProjectId;
@@ -1169,6 +1276,17 @@ const Overview = observer(function Overview() {
                       <Checkbox
                         checked={includeCover}
                         onChange={() => setIncludeCover((v) => !v)}
+                        disabled={generating}
+                      />
+                    </div>
+                    <div className="flex cursor-pointer items-center justify-between gap-3">
+                      <div>
+                        <p className="text-13 text-secondary">Incluir hoja gráfica</p>
+                        <p className="text-11 text-tertiary">Página con KPIs y gráficas según el filtrado activo.</p>
+                      </div>
+                      <Checkbox
+                        checked={includeGraphicSheet}
+                        onChange={() => setIncludeGraphicSheet((v) => !v)}
                         disabled={generating}
                       />
                     </div>

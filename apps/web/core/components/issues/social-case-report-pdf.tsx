@@ -230,6 +230,8 @@ type Props = {
   byState: Record<string, number>;
   byComponente: Record<string, number>;
   byCondicion?: Record<string, number>;
+  byEntidad?: [string, number][];
+  byMonth?: [string, number][];
   conResultado: number;
   generatedAtLabel: string;
   stateFlow: StateFlowStep[];
@@ -237,8 +239,187 @@ type Props = {
   includePhotos?: boolean;
   includeDetails?: boolean;
   includeAttachments?: boolean;
+  includeGraphicSheet?: boolean;
   logoUrl?: string | null;
 };
+
+// ── Helpers gráfica ───────────────────────────────────────────────────────────
+
+function pdfMonthLabel(yyyyMM: string): string {
+  const parts = yyyyMM.split("-");
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, 1)
+    .toLocaleDateString("es-VE", { month: "short" })
+    .replace(".", "")
+    .toUpperCase();
+}
+
+function PdfHBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
+  const pct = total > 0 ? Math.max(2, Math.round((count / total) * 100)) : 2;
+  return (
+    <View style={{ marginBottom: 5 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 2 }}>
+        <Text style={{ fontSize: 7.5, color: C.gray700, flex: 1 }} numberOfLines={1}>
+          {label}
+        </Text>
+        <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 6 }}>{count}</Text>
+      </View>
+      <View style={{ width: "100%", height: 7, backgroundColor: C.gray100 }}>
+        <View style={{ width: `${pct}%`, height: 7, backgroundColor: color }} />
+      </View>
+    </View>
+  );
+}
+
+function GraphicPage({
+  projectName,
+  dateRange,
+  generatedAtLabel,
+  logoUrl,
+  total,
+  conResultado,
+  cantCiviles,
+  cantMilitares,
+  byComponente,
+  byState,
+  byEntidad,
+  byMonth,
+}: {
+  projectName: string;
+  dateRange: string;
+  generatedAtLabel: string;
+  logoUrl?: string | null;
+  total: number;
+  conResultado: number;
+  cantCiviles: number;
+  cantMilitares: number;
+  byComponente: Record<string, number>;
+  byState: Record<string, number>;
+  byEntidad: [string, number][];
+  byMonth: [string, number][];
+}) {
+  const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, c]) => c)) : 1;
+  const CHART_H = 70;
+
+  // oxlint-disable-next-line unicorn/no-array-sort
+  const compEntries = Object.entries(byComponente).sort(([, a], [, b]) => b - a);
+  // oxlint-disable-next-line unicorn/no-array-sort
+  const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a);
+
+  return (
+    <Page size="A4" style={S.page}>
+      {/* Encabezado */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: 14,
+          paddingBottom: 10,
+          borderBottom: `2px solid ${C.blue}`,
+        }}
+      >
+        {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 34, objectFit: "contain", marginRight: 10 }} />}
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{projectName}</Text>
+          <Text style={{ fontSize: 8, color: C.gray500, marginTop: 2 }}>Análisis de Casos Sociales · {dateRange}</Text>
+        </View>
+      </View>
+
+      {/* KPIs */}
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
+        {(
+          [
+            { label: "Total de fichas", value: total, color: C.blue },
+            { label: "Con resultado", value: conResultado, color: "#16a34a" },
+            { label: "Civiles", value: cantCiviles, color: C.gray700 },
+            { label: "Militares", value: cantMilitares, color: "#7c3aed" },
+          ] as const
+        ).map((k) => (
+          <View
+            key={k.label}
+            style={{
+              flex: 1,
+              backgroundColor: C.gray100,
+              padding: 10,
+              borderLeft: `3px solid ${k.color}`,
+            }}
+          >
+            <Text style={{ fontSize: 20, fontFamily: "Helvetica-Bold", color: k.color }}>{k.value}</Text>
+            <Text style={{ fontSize: 7, color: C.gray500, marginTop: 2 }}>{k.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Gráficas 2×2 */}
+      <View style={{ flexDirection: "row", gap: 12, marginBottom: 12 }}>
+        {/* Por componente FANB */}
+        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
+          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
+            POR COMPONENTE FANB
+          </Text>
+          {compEntries.slice(0, 7).map(([name, count]) => (
+            <PdfHBar key={name} label={name} count={count} total={total} color={C.blue} />
+          ))}
+        </View>
+
+        {/* Por estado del caso */}
+        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
+          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
+            POR ESTADO DEL CASO
+          </Text>
+          {stateEntries.map(([name, count]) => (
+            <PdfHBar key={name} label={name} count={count} total={total} color="#16a34a" />
+          ))}
+        </View>
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 12 }}>
+        {/* Por estado de Venezuela */}
+        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
+          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
+            POR ESTADO DE VENEZUELA
+          </Text>
+          {byEntidad.slice(0, 8).map(([name, count]) => (
+            <PdfHBar key={name} label={name} count={count} total={total} color="#7c3aed" />
+          ))}
+          {byEntidad.length === 0 && (
+            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos de estado registrados</Text>
+          )}
+        </View>
+
+        {/* Evolución mensual — barras verticales */}
+        <View style={{ flex: 1, backgroundColor: C.gray50, padding: 10 }}>
+          <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 8 }}>
+            EVOLUCIÓN MENSUAL
+          </Text>
+          {byMonth.length === 0 ? (
+            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
+          ) : (
+            <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H, gap: 3 }}>
+              {byMonth.map(([month, count]) => {
+                const barH = Math.max(4, Math.round((count / maxMonth) * (CHART_H - 18)));
+                return (
+                  <View key={month} style={{ flex: 1, alignItems: "center" }}>
+                    <Text style={{ fontSize: 6, color: C.gray700, marginBottom: 2 }}>{count}</Text>
+                    <View style={{ width: "100%", height: barH, backgroundColor: C.blue }} />
+                    <Text style={{ fontSize: 5.5, color: C.gray500, marginTop: 2 }} numberOfLines={1}>
+                      {pdfMonthLabel(month)}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Footer */}
+      <View style={S.footer} fixed>
+        <Text style={S.footerText}>{projectName} · Análisis de Casos Sociales</Text>
+        <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
+      </View>
+    </Page>
+  );
+}
 
 // ── Timeline vertical de estados ─────────────────────────────────────────────
 
@@ -294,6 +475,8 @@ export const SocialCaseReportPDF = ({
   byState,
   byComponente,
   byCondicion,
+  byEntidad = [],
+  byMonth = [],
   conResultado,
   generatedAtLabel,
   stateFlow,
@@ -301,11 +484,14 @@ export const SocialCaseReportPDF = ({
   includePhotos = true,
   includeDetails = false,
   includeAttachments = false,
+  includeGraphicSheet = false,
   logoUrl,
 }: Props) => {
   const total = rows.length;
   const beneficiados = rows.filter((r) => r.beneficiado).length;
   const pctBenef = total > 0 ? Math.round((beneficiados / total) * 100) : 0;
+  const cantCiviles = byCondicion?.["Civil"] ?? rows.filter((r) => !r.esMilitar).length;
+  const cantMilitares = byCondicion?.["Militar"] ?? rows.filter((r) => r.esMilitar).length;
 
   return (
     <Document>
@@ -373,6 +559,24 @@ export const SocialCaseReportPDF = ({
 
           <Footer projectName={projectName} generatedAtLabel={generatedAtLabel} />
         </Page>
+      )}
+
+      {/* ══ HOJA GRÁFICA ════════════════════════════════════════════════════ */}
+      {includeGraphicSheet && total > 0 && (
+        <GraphicPage
+          projectName={projectName}
+          dateRange={dateRange}
+          generatedAtLabel={generatedAtLabel}
+          logoUrl={logoUrl}
+          total={total}
+          conResultado={conResultado}
+          cantCiviles={cantCiviles}
+          cantMilitares={cantMilitares}
+          byComponente={byComponente}
+          byState={byState}
+          byEntidad={byEntidad}
+          byMonth={byMonth}
+        />
       )}
 
       {/* ══ TABLA DE CASOS ═══════════════════════════════════════════════════ */}
