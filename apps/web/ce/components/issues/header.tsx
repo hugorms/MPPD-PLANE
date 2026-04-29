@@ -4,11 +4,11 @@
  * See the LICENSE file for details.
  */
 
-import { useState, lazy, Suspense } from "react";
+import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { Circle, FileText, MapPin } from "lucide-react";
+import { Circle, MapPin } from "lucide-react";
 // plane imports
 import {
   EUserPermissions,
@@ -26,15 +26,11 @@ import { Breadcrumbs, Header } from "@plane/ui";
 // components
 import { BreadcrumbLink } from "@/components/common/breadcrumb-link";
 import { CountChip } from "@/components/common/count-chip";
-const SocialCaseReportModal = lazy(() =>
-  import("@/components/issues/social-case-report-modal").then((m) => ({ default: m.SocialCaseReportModal }))
-);
 import { VENEZUELA_ESTADOS } from "@/components/issues/social-case-estados";
 import { useSocialCaseEstadoFilter } from "@/components/issues/social-case-estado-provider";
 import { FiltersDropdown } from "@/components/issues/issue-layouts/filters";
 // constants
 import { HeaderFilters } from "@/components/issues/filters";
-// helpers
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useIssues } from "@/hooks/store/use-issues";
@@ -65,7 +61,6 @@ export const IssuesHeader = observer(function IssuesHeader() {
   const SPACE_APP_URL = (SPACE_BASE_URL.trim() === "" ? window.location.origin : SPACE_BASE_URL) + SPACE_BASE_PATH;
   const publishedURL = `${SPACE_APP_URL}/issues/${currentProjectDetails?.anchor}`;
 
-  const [showReportModal, setShowReportModal] = useState(false);
   const { estadosFilter, toggleEstado, clearEstados, loadingFilter } = useSocialCaseEstadoFilter();
 
   const issuesCount = getGroupIssueCount(undefined, undefined, false);
@@ -117,14 +112,9 @@ export const IssuesHeader = observer(function IssuesHeader() {
           <></>
         )}
       </Header.LeftItem>
-      {showReportModal && (
-        <Suspense fallback={null}>
-          <SocialCaseReportModal onClose={() => setShowReportModal(false)} />
-        </Suspense>
-      )}
       <Header.RightItem>
         <div className="hidden items-center gap-2 md:flex">
-          {/* Filtro por estado de Venezuela — usa el mismo FiltersDropdown que Plane */}
+          {/* Filtro por estado de Venezuela */}
           <FiltersDropdown
             miniIcon={<MapPin className="size-3.5" />}
             title={
@@ -192,15 +182,6 @@ export const IssuesHeader = observer(function IssuesHeader() {
             canUserCreateIssue={canUserCreateIssue}
           />
         </div>
-        <Button
-          variant="secondary"
-          size="lg"
-          onClick={() => setShowReportModal(true)}
-          className="hidden items-center gap-1.5 md:flex"
-        >
-          <FileText className="h-3.5 w-3.5" />
-          Reporte General
-        </Button>
         {canUserCreateIssue && (
           <Button
             variant="primary"
