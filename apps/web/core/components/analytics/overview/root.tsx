@@ -340,17 +340,23 @@ const Overview = observer(function Overview() {
     return { fromDate: null, toDate: null };
   }, [preset, customFrom, customTo]);
 
-  // ── Componentes únicos para el filtro ────────────────────────────────────────
+  // ── Componentes únicos — solo del período activo ─────────────────────────────
   const componentesUnicos = useMemo(() => {
     const set = new Set<string>();
     for (const issue of allIssues) {
+      if (fromDate || toDate) {
+        const created = issue.created_at ? new Date(issue.created_at) : null;
+        if (!created) continue;
+        if (fromDate && created < fromDate) continue;
+        if (toDate && created > toDate) continue;
+      }
       const d = extractFromHtml(issue?.description_html ?? "");
       const jornada = d?.jornada?.trim();
       if (jornada) set.add(jornada);
     }
     // oxlint-disable-next-line unicorn/no-array-sort
     return [...set].sort((a, b) => a.localeCompare(b, "es"));
-  }, [allIssues]);
+  }, [allIssues, fromDate, toDate]);
 
   // ── Filas + estadísticas ─────────────────────────────────────────────────────
   const { rows, byState, byComponente, byCondicion, byEntidad, byMonth, conResultado } = useMemo(() => {
@@ -400,7 +406,7 @@ const Overview = observer(function Overview() {
       const stateName = stateNames[issue.state_id ?? ""] ?? "Sin estado";
       const isMilitar = d?.esMilitar === "true";
       const componente = d?.jornada || (isMilitar ? "Militar / Sin componente" : "Civil");
-      const entidad = d?.entidad?.trim() || "Sin estado";
+      const entidad = d?.entidad?.trim() || "";
       const assignees = (issue.assignee_ids ?? [])
         .map((id: string) => memberRoot.getUserDetails(id)?.display_name || memberRoot.getUserDetails(id)?.first_name)
         .filter(Boolean) as string[];
@@ -427,7 +433,7 @@ const Overview = observer(function Overview() {
 
       parsedByState[stateName] = (parsedByState[stateName] ?? 0) + 1;
       parsedByComponente[componente] = (parsedByComponente[componente] ?? 0) + 1;
-      parsedByEntidad[entidad] = (parsedByEntidad[entidad] ?? 0) + 1;
+      if (entidad) parsedByEntidad[entidad] = (parsedByEntidad[entidad] ?? 0) + 1;
 
       if (issue.created_at) {
         const dt = new Date(issue.created_at);
@@ -451,7 +457,9 @@ const Overview = observer(function Overview() {
       .slice(0, 8);
 
     // oxlint-disable-next-line unicorn/no-array-sort
-    const monthEntries = Object.entries(parsedByMonth).sort(([a], [b]) => a.localeCompare(b));
+    const monthEntries = Object.entries(parsedByMonth)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-12);
 
     return {
       rows: parsedRows,
@@ -896,7 +904,12 @@ const Overview = observer(function Overview() {
               <select
                 id="gcs-project-select"
                 value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
+                onChange={(e) => {
+                  setSelectedProjectId(e.target.value);
+                  setComponenteFilter([]);
+                  setCondicionFilter([]);
+                  setEstadosFilter([]);
+                }}
                 className="focus:border-accent-primary rounded-md border border-subtle bg-surface-2 px-3 py-1.5 text-12 text-secondary outline-none"
               >
                 <option value="">Selecciona un proyecto</option>
@@ -1011,7 +1024,7 @@ const Overview = observer(function Overview() {
 
               {/* ── KPIs ── */}
               {loadingIssues ? (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {(["kpi-0", "kpi-1", "kpi-2", "kpi-3"] as const).map((k) => (
                     <div key={k} className="h-20 animate-pulse rounded-lg border border-subtle bg-surface-2" />
                   ))}
@@ -1034,6 +1047,13 @@ const Overview = observer(function Overview() {
                     <p className="text-26 text-blue-600 font-bold">{cantMilitares}</p>
                     <p className="text-11 text-tertiary">Militares</p>
                   </div>
+                </div>
+              )}
+
+              {/* ── Sin resultados ── */}
+              {!loadingIssues && rows.length === 0 && (
+                <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-subtle">
+                  <p className="text-13 text-tertiary">No hay casos en el período y filtros seleccionados</p>
                 </div>
               )}
 
