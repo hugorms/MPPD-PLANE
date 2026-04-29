@@ -316,8 +316,8 @@ function GraphicPage({
   byState,
   byEntidad,
   byMonth,
-  byLabel,
-  stateColorMap,
+  byLabel = [],
+  stateColorMap = {},
 }: {
   projectName: string;
   dateRange: string;
@@ -331,16 +331,17 @@ function GraphicPage({
   byState: Record<string, number>;
   byEntidad: [string, number][];
   byMonth: [string, number][];
-  byLabel: [string, number][];
-  stateColorMap: Record<string, string>;
+  byLabel?: [string, number][];
+  stateColorMap?: Record<string, string>;
 }) {
-  const maxMonth = byMonth.length > 0 ? Math.max(...byMonth.map(([, c]) => c)) : 1;
+  const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
   const CHART_H = 60;
 
-  // Solo los 5 FANB canónicos
+  // Solo los 5 FANB canónicos con count > 0
   // oxlint-disable-next-line unicorn/no-array-sort
   const fanbEntries = PDF_FANB_COMPONENTES
     .map((c) => [c, byComponente[c] ?? 0] as [string, number])
+    .filter(([, count]) => count > 0)
     .toSorted(([, a], [, b]) => b - a);
 
   // oxlint-disable-next-line unicorn/no-array-sort
