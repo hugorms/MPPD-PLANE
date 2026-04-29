@@ -1330,38 +1330,7 @@ const Overview = observer(function Overview() {
                     </div>
                   </div>
 
-                  {/* 2 — Civil / Militar */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-13 font-medium text-secondary">Civil / Militar</p>
-                        <p className="text-11 text-tertiary">Distribución por condición</p>
-                      </div>
-                      <span className="text-12 font-semibold text-secondary">{rows.length} casos</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <HBar label="Civil" count={cantCiviles} total={rows.length} hexColor="#6b7280" />
-                      <HBar label="Militar" count={cantMilitares} total={rows.length} hexColor="#1d4ed8" />
-                    </div>
-                    <div className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-surface-1">
-                      <div
-                        className="h-full transition-all duration-300"
-                        style={{
-                          width: `${Math.round((cantCiviles / rows.length) * 100)}%`,
-                          backgroundColor: "#6b7280",
-                        }}
-                      />
-                      <div
-                        className="h-full transition-all duration-300"
-                        style={{
-                          width: `${Math.round((cantMilitares / rows.length) * 100)}%`,
-                          backgroundColor: "#1d4ed8",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* 3 — Estado del caso */}
+                  {/* 2 — Estado del caso */}
                   <div className="rounded-lg border border-subtle bg-surface-2 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>

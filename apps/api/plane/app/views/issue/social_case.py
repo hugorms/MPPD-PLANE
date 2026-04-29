@@ -18,6 +18,7 @@ from plane.db.models import (
     FileAsset,
     Issue,
     IssueAssignee,
+    IssueLabel,
     IssueLink,
 )
 from plane.utils.timezone_converter import user_timezone_converter
@@ -56,7 +57,6 @@ class SocialCaseReportEndpoint(BaseAPIView):
         queryset = (
             queryset
             .annotate(
-                # assignee_ids no es columna directa — es una relación M2M
                 assignee_ids=Coalesce(
                     ArrayAgg(
                         "issue_assignee__assignee_id",
@@ -64,7 +64,15 @@ class SocialCaseReportEndpoint(BaseAPIView):
                         distinct=True,
                     ),
                     [],
-                )
+                ),
+                label_ids=Coalesce(
+                    ArrayAgg(
+                        "issue_label__label_id",
+                        filter=Q(issue_label__label_id__isnull=False),
+                        distinct=True,
+                    ),
+                    [],
+                ),
             )
             .order_by("-created_at")
             .values(
@@ -75,6 +83,7 @@ class SocialCaseReportEndpoint(BaseAPIView):
                 "state_id",
                 "priority",
                 "assignee_ids",
+                "label_ids",
                 "project_id",
                 "created_at",
                 "updated_at",
