@@ -15,6 +15,7 @@ Usage:
 import json
 import re
 from html.parser import HTMLParser
+from typing import Optional
 
 from django.core.management.base import BaseCommand
 
@@ -67,7 +68,7 @@ def _extract_native_text(description_html: str) -> str:
     return parser.text.strip()
 
 
-def _get_caption_json(description_html: str) -> dict | None:
+def _get_caption_json(description_html: str) -> Optional[dict]:
     """Extrae el JSON del <caption> de la tabla social."""
     caption_match = re.search(
         r'<caption[^>]*>([\s\S]*?)</caption>', description_html or "", re.IGNORECASE
