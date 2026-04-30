@@ -6,6 +6,7 @@ import re
 import uuid
 from datetime import timedelta
 
+from django.db.models import Q
 from django.utils import timezone
 
 # The date from pattern
@@ -461,3 +462,21 @@ def issue_filters(query_params, method, prefix=""):
             func = value
             func(query_params, issue_filter, method, prefix)
     return issue_filter
+
+
+def apply_filters_with_social_search(queryset, filter_dict, extra=None):
+    """Apply issue_filters dict to queryset.
+
+    Expands name__icontains into an OR across title, cédula, and nombre
+    so the native Plane search bar also finds social cases by citizen data.
+    """
+    extra = extra or {}
+    name_query = filter_dict.pop(f"name__icontains", None)
+    queryset = queryset.filter(**filter_dict, **extra)
+    if name_query:
+        queryset = queryset.filter(
+            Q(name__icontains=name_query)
+            | Q(social_case_cedula__icontains=name_query)
+            | Q(social_case_nombre__icontains=name_query)
+        )
+    return queryset

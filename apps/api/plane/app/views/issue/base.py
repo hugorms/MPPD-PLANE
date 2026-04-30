@@ -69,7 +69,7 @@ from plane.utils.grouper import (
     issue_queryset_grouper,
 )
 from plane.utils.host import base_host
-from plane.utils.issue_filters import issue_filters
+from plane.utils.issue_filters import apply_filters_with_social_search, issue_filters
 from plane.utils.order_queryset import order_issue_queryset
 from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
 from plane.utils.timezone_converter import user_timezone_converter
@@ -266,8 +266,8 @@ class IssueViewSet(BaseViewSet):
         # Apply rich filters
         issue_queryset = self.filter_queryset(issue_queryset)
 
-        # Apply legacy filters
-        issue_queryset = issue_queryset.filter(**filters, **extra_filters)
+        # Apply legacy filters — name search expands to social case fields
+        issue_queryset = apply_filters_with_social_search(issue_queryset, filters, extra_filters)
 
         # Keeping a copy of the queryset before applying annotations
         filtered_issue_queryset = copy.deepcopy(issue_queryset)
