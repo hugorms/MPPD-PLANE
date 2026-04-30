@@ -12,7 +12,7 @@ type Props = {
   onSlotUpload: (slotPrefix: string, file: File) => Promise<void>;
 };
 
-const SLOT_PREFIXES_LIST = ["[CI_SOL]", "[CI_BEN]", "[ENTREGA]"];
+const SLOT_PREFIXES_LIST = ["[CI_BEN]", "[ENTREGA]"];
 
 function SlotButton({
   label,
@@ -109,7 +109,6 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
   const isArticulacion = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("articulaci"));
 
   const data = extractFromHtml(issue?.description_html ?? "");
-  const mismoBeneficiario = data?.mismoBeneficiario ?? "false";
 
   if (!hasSocialCaseWorkflow || !data || isClosed || isSinResolucion || (!isEnProceso && !isArticulacion)) {
     return null;
@@ -127,7 +126,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
 
   return (
     <>
-      {EVIDENCE_SLOTS.filter((slot) => slot.prefix !== "[CI_SOL]" || mismoBeneficiario !== "true").map((slot) => {
+      {EVIDENCE_SLOTS.map((slot) => {
         const isRegistro = slot.prefix === "[ENTREGA]";
         const registroCount = isRegistro ? Object.keys(slotFiles).filter((k) => k.startsWith("[ENTREGA]")).length : 0;
         const isDone = isRegistro ? registroCount > 0 : !!slotFiles[slot.prefix];

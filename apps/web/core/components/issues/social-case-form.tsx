@@ -28,12 +28,6 @@ export type SocialCaseData = {
   accionTomada: string;
   resultado: string;
   institucionContactada: string;
-  // Campos de proceso (se activan en "En proceso")
-  mismoBeneficiario: string; // "true" | ""
-  // Campos de cierre (se activan al resolver el caso)
-  solicitante: string;
-  nombreBeneficiario: string;
-  cedulaBeneficiario: string;
   observacionCierre: string;
   fechaCierre: string;
 };
@@ -96,10 +90,6 @@ const EMPTY: SocialCaseData = {
   accionTomada: "",
   resultado: "",
   institucionContactada: "",
-  mismoBeneficiario: "true",
-  solicitante: "",
-  nombreBeneficiario: "",
-  cedulaBeneficiario: "",
   observacionCierre: "",
   fechaCierre: "",
 };
@@ -135,10 +125,6 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "accionTomada", label: "Accion tomada" },
   { key: "resultado", label: "Resultado" },
   { key: "institucionContactada", label: "Órgano / Institución contactada" },
-  { key: "mismoBeneficiario", label: "Mismo beneficiario" },
-  { key: "solicitante", label: "Solicitante" },
-  { key: "nombreBeneficiario", label: "Nombre del beneficiario" },
-  { key: "cedulaBeneficiario", label: "Cedula del beneficiario" },
   { key: "observacionCierre", label: "Observacion de cierre" },
   { key: "fechaCierre", label: "Fecha de cierre" },
 ];
@@ -247,21 +233,11 @@ const fieldReadonly = "border-subtle bg-surface-1 text-primary cursor-default ou
 // ── Component ────────────────────────────────────────────────────────────────
 
 export const EVIDENCE_SLOTS = [
-  { prefix: "[CI_SOL]", label: "Adj. C.I. Solicitante" },
-  { prefix: "[CI_BEN]", label: "Adj. C.I. Beneficiario" },
+  { prefix: "[CI_BEN]", label: "Adj. C.I." },
   { prefix: "[ENTREGA]", label: "Adj. Registro Fotográfico" },
 ] as const;
 
-const ARTICULACION_REQUIRED: (keyof SocialCaseData)[] = [
-  "nombre",
-  "cedula",
-  "resultado",
-  "accionTomada",
-  "referencia",
-  "solicitante",
-  "nombreBeneficiario",
-  "cedulaBeneficiario",
-];
+const ARTICULACION_REQUIRED: (keyof SocialCaseData)[] = ["nombre", "cedula", "resultado", "accionTomada", "referencia"];
 
 // Campos requeridos para iniciar el proceso (recibido → proceso)
 const FANB_INSTITUCIONES = [
@@ -352,11 +328,6 @@ export const SocialCaseForm = ({
     // modo view: leer desde description_html
     const extracted = extractFromHtml(descriptionHtml);
     if (extracted) {
-      // Si es la misma persona y los campos de beneficiario están vacíos → sincronizar con el ciudadano
-      if (extracted.mismoBeneficiario === "true") {
-        if (!extracted.nombreBeneficiario) extracted.nombreBeneficiario = extracted.nombre;
-        if (!extracted.cedulaBeneficiario) extracted.cedulaBeneficiario = extracted.cedula;
-      }
       // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por datos militares
       if (!extracted.esMilitar && (extracted.gradoMilitar || extracted.jornada)) {
         extracted.esMilitar = "true";
@@ -404,7 +375,6 @@ export const SocialCaseForm = ({
     "jornada",
     "entidad",
     "esMilitar",
-    "mismoBeneficiario",
     "fechaCierre",
     "descripcionCaso",
   ]);
@@ -569,16 +539,10 @@ export const SocialCaseForm = ({
     }
   };
 
-  // En articulación, si es la misma persona se eximen los campos de beneficiario
-  // (igual que hace el hook de cierre en el servidor)
-  const effectiveArticulacionRequired =
-    isArticulacion && data.mismoBeneficiario === "true"
-      ? ARTICULACION_REQUIRED.filter((k) => k !== "nombreBeneficiario" && k !== "cedulaBeneficiario")
-      : ARTICULACION_REQUIRED;
+  const effectiveArticulacionRequired = ARTICULACION_REQUIRED;
   const articulacionComplete = isArticulacion ? effectiveArticulacionRequired.every((k) => data[k]?.trim()) : false;
 
   // accionTomada y resultado solo se muestran en proceso, articulación o resuelto
-  // En create-no-save (modal) y en recibidos → solo referencia (solicitud/beneficio)
   const showFullSeguimiento = mode !== "create-no-save" && !isRecibido;
 
   // Progreso recibido → proceso (Componente solo requerido si es Militar)
@@ -589,12 +553,7 @@ export const SocialCaseForm = ({
   const recibidoFilled = effectiveRecibidoRequired.filter(({ key }) => data[key]?.trim()).length;
   const recibidoComplete = recibidoFilled === effectiveRecibidoRequired.length;
 
-  // Progreso proceso → articulación (beneficiario obligatorio si persona diferente)
-  const procesoMissingBenef =
-    data.mismoBeneficiario !== "true"
-      ? (!data.nombreBeneficiario?.trim() ? 1 : 0) + (!data.cedulaBeneficiario?.trim() ? 1 : 0)
-      : 0;
-  const procesoComplete = PROCESO_REQUIRED.every((k) => data[k]?.trim()) && procesoMissingBenef === 0;
+  const procesoComplete = PROCESO_REQUIRED.every((k) => data[k]?.trim());
 
   const isEditable = mode === "create-no-save" || editing || isArticulacion || isEnProceso || isRecibido;
 
@@ -1069,88 +1028,6 @@ export const SocialCaseForm = ({
             </div>
           )}
 
-          {/* SECCION 3: BENEFICIARIO — visible en "En proceso", articulación y resuelto */}
-          {(isEnProceso || isArticulacion || isClosed) && (
-            <div className="space-y-3">
-              <span className={sectionHeadClass}>Identificación del beneficiario</span>
-
-              {/* Checkbox: solicitante diferente */}
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  disabled={isClosed}
-                  checked={data.mismoBeneficiario !== "true"}
-                  onChange={(e) => {
-                    const diferente = e.target.checked;
-                    setData((prev) => {
-                      const next = {
-                        ...prev,
-                        mismoBeneficiario: diferente ? "" : "true",
-                        // Al volver a "misma persona" → restaurar los datos del ciudadano
-                        ...(diferente ? {} : { nombreBeneficiario: prev.nombre, cedulaBeneficiario: prev.cedula }),
-                      };
-                      if (mode === "create-no-save") {
-                        try {
-                          localStorage.setItem(PENDING_KEY, JSON.stringify(next));
-                        } catch (_) {}
-                        onDataChange?.(next);
-                      }
-                      return next;
-                    });
-                    setSaved(false);
-                    scheduleAutoSave();
-                  }}
-                  className="accent-custom-primary h-4 w-4 rounded border-subtle"
-                />
-                <span className="text-sm text-custom-text-200">
-                  El solicitante es una persona diferente al beneficiario
-                </span>
-              </label>
-
-              {/* Misma persona → mostrar datos del ciudadano como referencia */}
-              {data.mismoBeneficiario === "true" && (
-                <div className="bg-custom-background-90 text-sm text-custom-text-300 rounded-md px-3 py-2">
-                  <span className="text-custom-text-200 font-medium">{data.nombre || "—"}</span>
-                  <span className="mx-2">·</span>
-                  <span>{data.cedula || "—"}</span>
-                </div>
-              )}
-
-              {/* Persona diferente → campos editables */}
-              {data.mismoBeneficiario !== "true" && (
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  <div>
-                    <label htmlFor="sc-nombre-beneficiario2" className={labelClass}>
-                      Nombre del beneficiario
-                    </label>
-                    <input
-                      id="sc-nombre-beneficiario2"
-                      disabled={isClosed}
-                      autoCapitalize="words"
-                      className={fc(!isClosed)}
-                      placeholder="Nombre y apellido"
-                      value={data.nombreBeneficiario}
-                      onChange={(e) => update("nombreBeneficiario", e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="sc-cedula-beneficiario2" className={labelClass}>
-                      Cédula del beneficiario
-                    </label>
-                    <input
-                      id="sc-cedula-beneficiario2"
-                      disabled={isClosed}
-                      className={fc(!isClosed)}
-                      placeholder="V-00.000.000"
-                      value={data.cedulaBeneficiario}
-                      onChange={(e) => update("cedulaBeneficiario", e.target.value)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Institución contactada — acceso rápido en En proceso */}
           {isEnProceso && !isArticulacion && !isClosed && (
             <div>
@@ -1208,20 +1085,6 @@ export const SocialCaseForm = ({
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                <div>
-                  <label htmlFor="sc-solicitante" className={labelClass}>
-                    Solicitante
-                  </label>
-                  <input
-                    id="sc-solicitante"
-                    disabled={!isEditable}
-                    autoCapitalize="words"
-                    className={fc(isEditable)}
-                    placeholder="Nombre del solicitante"
-                    value={data.solicitante}
-                    onChange={(e) => update("solicitante", e.target.value)}
-                  />
-                </div>
                 {!isArticulacion && (
                   <div>
                     <label htmlFor="sc-fecha-cierre" className={labelClass}>

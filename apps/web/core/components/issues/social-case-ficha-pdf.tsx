@@ -240,26 +240,17 @@ export function SocialCaseFichaPDF({
   logoUrl,
   startDate,
 }: SocialCaseFichaProps) {
-  // Matching por prefijo de nombre de archivo
-  const KNOWN_PREFIXES = ["[CI_SOL]", "[CI_BEN]", "[ENTREGA]"];
+  const KNOWN_PREFIXES = ["[CI_BEN]", "[ENTREGA]"];
   const byPrefix = (prefix: string) => attachments.find((a) => a.isImage && a.base64 && a.name.startsWith(prefix));
-  // SOLICITUD: primer adjunto imagen sin prefijo reservado
   const solicitudImg = attachments.find(
     (a) => a.isImage && a.base64 && !KNOWN_PREFIXES.some((p) => a.name.startsWith(p))
   );
-  // REGISTRO FOTOGRÁFICO: todos los adjuntos con prefijo [ENTREGA]
   const registroImgs = attachments.filter((a) => a.isImage && a.base64 && a.name.startsWith("[ENTREGA]"));
-
-  // Si mismoBeneficiario="true" → 3 columnas (sin C.I. SOLICITANTE)
-  const mismoBeneficiario = data.mismoBeneficiario === "true";
 
   type FotoSlot = { label: string; imgs: (typeof attachments)[number][] };
   const fotoSlots: FotoSlot[] = [
     { label: "SOLICITUD", imgs: solicitudImg ? [solicitudImg] : [] },
-    ...(mismoBeneficiario
-      ? []
-      : [{ label: "C.I. DEL SOLICITANTE", imgs: byPrefix("[CI_SOL]") ? [byPrefix("[CI_SOL]")!] : [] }]),
-    { label: "C.I. DEL BENEFICIARIO", imgs: byPrefix("[CI_BEN]") ? [byPrefix("[CI_BEN]")!] : [] },
+    { label: "C.I.", imgs: byPrefix("[CI_BEN]") ? [byPrefix("[CI_BEN]")!] : [] },
     { label: "REGISTRO FOTOGRÁFICO", imgs: registroImgs },
   ];
 
@@ -299,7 +290,7 @@ export function SocialCaseFichaPDF({
         <View style={S.table}>
           <Row label="N° de caso" value={numeroCaso} />
           <Row label="Cédula" value={data.cedula} />
-          <Row label="Nombre" value={data.solicitante || data.nombre} />
+          <Row label="Nombre" value={data.nombre} />
           <Row label="Teléfono" value={data.telefono} />
           {data.telefono2 ? <Row label="Teléfono 2" value={data.telefono2} /> : null}
           <Row label="Dirección de habitación" value={data.direccion} />
@@ -317,8 +308,6 @@ export function SocialCaseFichaPDF({
           {data.descripcionCaso ? <Row label="Descripción del caso" value={data.descripcionCaso} /> : null}
           <Row label="Acción tomada" value={data.accionTomada} />
           <Row label="Resultado / Beneficio otorgado" value={data.resultado} />
-          <Row label="Beneficiario" value={data.nombreBeneficiario || data.nombre} />
-          <Row label="C.I. Beneficiario" value={data.cedulaBeneficiario || data.cedula} />
           {data.institucionContactada ? (
             <Row label="Órgano / Institución contactada" value={data.institucionContactada} />
           ) : null}

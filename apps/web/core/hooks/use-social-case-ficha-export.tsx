@@ -157,10 +157,6 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
         accionTomada: "",
         resultado: "",
         institucionContactada: "",
-        mismoBeneficiario: "true",
-        solicitante: "",
-        nombreBeneficiario: "",
-        cedulaBeneficiario: "",
         observacionCierre: "",
         fechaCierre: "",
       };
