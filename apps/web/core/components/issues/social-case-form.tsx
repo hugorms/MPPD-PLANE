@@ -45,7 +45,7 @@ type Props = {
   isClosed?: boolean;
   /** Si true, el caso está marcado como sin resolución (grupo cancelled) */
   isSinResolucion?: boolean;
-  /** Si true, el caso está en proceso — muestra sección de beneficiario y evidencia */
+  /** Si true, el caso está en proceso — muestra sección de seguimiento y acceso rápido a institución */
   isEnProceso?: boolean;
   /** Si true, el caso está en articulación — muestra sección cierre editable y botón "Resolver caso" */
   isArticulacion?: boolean;
@@ -341,8 +341,17 @@ export const SocialCaseForm = ({
     // modo view: leer desde description_html
     const extracted = extractFromHtml(descriptionHtml);
     if (extracted) {
-      // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por datos militares
-      if (!extracted.esMilitar && (extracted.gradoMilitar || extracted.jornada)) {
+      // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por grado o
+      // por componente FANB canónico. No usar jornada como texto libre porque casos civiles
+      // viejos podían tener cualquier valor allí (ej. "Jornada de salud").
+      const FANB_COMPONENTS = new Set([
+        "Ejército Nacional Bolivariano",
+        "Armada Bolivariana de Venezuela",
+        "Aviación Militar Bolivariana",
+        "Guardia Nacional Bolivariana",
+        "Milicia Nacional Bolivariana",
+      ]);
+      if (!extracted.esMilitar && (extracted.gradoMilitar || FANB_COMPONENTS.has(extracted.jornada))) {
         extracted.esMilitar = "true";
       }
       setData(extracted);
