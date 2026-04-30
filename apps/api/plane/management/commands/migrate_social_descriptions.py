@@ -121,8 +121,8 @@ class Command(BaseCommand):
                 skipped += 1
                 continue
 
-            # Solo migrar si referencia está vacío
-            if data.get("referencia", "").strip():
+            # Solo migrar si descripcionCaso está vacío
+            if data.get("descripcionCaso", "").strip():
                 skipped += 1
                 continue
 
@@ -131,15 +131,15 @@ class Command(BaseCommand):
                 skipped += 1
                 continue
 
-            # Inyectar el texto en referencia
-            data["referencia"] = native_text
+            # Inyectar el texto en descripcionCaso
+            data["descripcionCaso"] = native_text
             new_html = _update_caption_json(issue.description_html, data)
 
             if dry_run:
                 self.stdout.write(
-                    f"  [dry-run] Issue {issue.sequence_id}: referencia ← '{native_text[:80]}...'"
+                    f"  [dry-run] Issue {issue.sequence_id}: descripcionCaso ← '{native_text[:80]}...'"
                     if len(native_text) > 80
-                    else f"  [dry-run] Issue {issue.sequence_id}: referencia ← '{native_text}'"
+                    else f"  [dry-run] Issue {issue.sequence_id}: descripcionCaso ← '{native_text}'"
                 )
             else:
                 Issue.all_objects.filter(pk=issue.pk).update(description_html=new_html)
