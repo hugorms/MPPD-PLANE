@@ -702,57 +702,41 @@ export const SocialCaseForm = ({
           <div className="space-y-3">
             <span className={sectionHeadClass}>Identificación</span>
 
-            {/* Fila 1: Cédula | N° Caso */}
-            <div className="grid grid-cols-2 gap-x-6">
-              <div>
-                <label htmlFor="sc-cedula" className={labelClass}>
-                  Cédula de identidad
-                  {cedulaLooking && (
-                    <span className="ml-2 animate-pulse text-[10px] text-placeholder">consultando...</span>
-                  )}
-                  {cedulaNotFound && !cedulaLooking && (
-                    <span className="text-red-500 ml-2 text-[10px]">No encontrado</span>
-                  )}
-                </label>
-                <div className="flex items-center gap-1">
-                  <input
-                    id="sc-cedula"
-                    disabled={!isEditable || cedulaLooking}
-                    className={cn(fc(isEditable), "min-w-0 flex-1")}
-                    placeholder="V-00.000.000"
-                    value={data.cedula}
-                    onChange={(e) => {
-                      update("cedula", e.target.value);
-                      if (cedulaNotFound) setCedulaNotFound(false);
-                    }}
-                    onBlur={() => handleCedulaSearch()}
-                  />
-                  {isEditable && (
-                    <button
-                      type="button"
-                      disabled={cedulaLooking}
-                      onClick={() => handleCedulaSearch(true)}
-                      title="Buscar en SENIAT"
-                      className="text-custom-text-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-[0.5px] border-subtle bg-surface-2 transition-colors hover:border-strong hover:text-primary disabled:opacity-50"
-                    >
-                      <Search className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-              <div>
-                <label htmlFor="sc-numero" className={labelClass}>
-                  N° Caso
-                </label>
+            {/* Cédula — fila completa (N° de caso se genera automático del sequenceId) */}
+            <div>
+              <label htmlFor="sc-cedula" className={labelClass}>
+                Cédula de identidad
+                {cedulaLooking && (
+                  <span className="ml-2 animate-pulse text-[10px] text-placeholder">consultando...</span>
+                )}
+                {cedulaNotFound && !cedulaLooking && (
+                  <span className="text-red-500 ml-2 text-[10px]">No encontrado</span>
+                )}
+              </label>
+              <div className="flex items-center gap-1">
                 <input
-                  id="sc-numero"
-                  disabled={!isEditable}
-                  type="text"
-                  placeholder="000"
-                  value={data.numeroCaso}
-                  onChange={(e) => update("numeroCaso", e.target.value)}
-                  className={fc(isEditable)}
+                  id="sc-cedula"
+                  disabled={!isEditable || cedulaLooking}
+                  className={cn(fc(isEditable), "min-w-0 flex-1")}
+                  placeholder="V-00.000.000"
+                  value={data.cedula}
+                  onChange={(e) => {
+                    update("cedula", e.target.value);
+                    if (cedulaNotFound) setCedulaNotFound(false);
+                  }}
+                  onBlur={() => handleCedulaSearch()}
                 />
+                {isEditable && (
+                  <button
+                    type="button"
+                    disabled={cedulaLooking}
+                    onClick={() => handleCedulaSearch(true)}
+                    title="Buscar en SENIAT"
+                    className="text-custom-text-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-[0.5px] border-subtle bg-surface-2 transition-colors hover:border-strong hover:text-primary disabled:opacity-50"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
