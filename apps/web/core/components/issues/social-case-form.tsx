@@ -264,6 +264,12 @@ const ARTICULACION_REQUIRED: (keyof SocialCaseData)[] = [
 ];
 
 // Campos requeridos para iniciar el proceso (recibido → proceso)
+const FANB_INSTITUCIONES = [
+  { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
+  { short: "SEGUROS HORIZONTE", full: "SEGUROS HORIZONTE" },
+  { short: "DIGESALUD", full: "DIGESALUD — Dirección General de Salud de la FANB" },
+] as const;
+
 const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "cedula", label: "Cédula" },
   { key: "nombre", label: "Nombre" },
@@ -1145,6 +1151,42 @@ export const SocialCaseForm = ({
             </div>
           )}
 
+          {/* Institución contactada — acceso rápido en En proceso */}
+          {isEnProceso && !isArticulacion && !isClosed && (
+            <div className="space-y-2">
+              <label htmlFor="sc-institucion-proceso" className={labelClass}>
+                Órgano / Institución contactada
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {FANB_INSTITUCIONES.map((inst) => (
+                  <button
+                    key={inst.short}
+                    type="button"
+                    disabled={!isEditable}
+                    onClick={() => update("institucionContactada", inst.full)}
+                    className={cn(
+                      "rounded-md border px-2.5 py-1 text-11 font-medium transition-colors",
+                      data.institucionContactada === inst.full
+                        ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
+                        : "border-subtle bg-surface-2 text-secondary hover:bg-layer-1",
+                      !isEditable && "cursor-not-allowed opacity-60"
+                    )}
+                  >
+                    {inst.short}
+                  </button>
+                ))}
+              </div>
+              <input
+                id="sc-institucion-proceso"
+                disabled={!isEditable}
+                className={fc(isEditable)}
+                placeholder="Otra institución..."
+                value={data.institucionContactada}
+                onChange={(e) => update("institucionContactada", e.target.value)}
+              />
+            </div>
+          )}
+
           {/* SECCION 4: CIERRE DEL CASO — visible en articulación (editable) o resuelto (lectura) */}
           {(isClosed || isArticulacion) && (
             <div className="space-y-3">
@@ -1163,6 +1205,25 @@ export const SocialCaseForm = ({
                 <label htmlFor="sc-institucion" className={labelClass}>
                   Órgano / Institución contactada
                 </label>
+                <div className="mb-2 flex flex-wrap gap-2">
+                  {FANB_INSTITUCIONES.map((inst) => (
+                    <button
+                      key={inst.short}
+                      type="button"
+                      disabled={!isEditable}
+                      onClick={() => update("institucionContactada", inst.full)}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1 text-11 font-medium transition-colors",
+                        data.institucionContactada === inst.full
+                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
+                          : "border-subtle bg-surface-2 text-secondary hover:bg-layer-1",
+                        !isEditable && "cursor-not-allowed opacity-60"
+                      )}
+                    >
+                      {inst.short}
+                    </button>
+                  ))}
+                </div>
                 <input
                   id="sc-institucion"
                   disabled={!isEditable}
