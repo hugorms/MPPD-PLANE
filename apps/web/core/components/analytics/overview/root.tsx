@@ -830,7 +830,7 @@ const Overview = observer(function Overview() {
       const PHOTO_COL_W = 38;
       const RESENA_IMG_W = 94;
       const RESENA_IMG_H = 113;
-      const RESENA_COL_IDX = 8;
+      const RESENA_COL_IDX = 9;
       const RESENA_COL_W = 40;
       const RESENA_COL_W_PX = RESENA_COL_W * 7 + 5;
       const RESENA_GAP = 4;
@@ -845,12 +845,13 @@ const Overview = observer(function Overview() {
         { key: "direccion" },
         { key: "tipo" },
         { key: "descripcion" },
+        { key: "descripcion_caso" },
         { key: "foto", width: PHOTO_COL_W },
         { key: "resena", width: RESENA_COL_W },
         { key: "organismo" },
         { key: "observacion" },
       ];
-      const colMaxLen = [2, 38, 20, 14, 26, 14, 28, 0, 0, 22, 24];
+      const colMaxLen = [2, 38, 20, 14, 26, 14, 28, 28, 0, 0, 22, 24];
 
       let logoId: number | null = null;
       try {
@@ -872,14 +873,14 @@ const Overview = observer(function Overview() {
       sheet.getRow(2).height = 40;
       sheet.getRow(3).height = 28;
 
-      sheet.mergeCells("A1:K1");
+      sheet.mergeCells("A1:L1");
       sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
       if (logoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sheet.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 6.5, row: 1 } as any });
       }
 
-      sheet.mergeCells("A2:K2");
+      sheet.mergeCells("A2:L2");
       const componenteUnique =
         rows.length > 0 && rows[0].componente !== "-" && rows.every((r) => r.componente === rows[0].componente)
           ? rows[0].componente.toUpperCase()
@@ -888,7 +889,7 @@ const Overview = observer(function Overview() {
       sheet.getCell("A2").font = { bold: true, size: 18, name: "Arial", color: { argb: "FF000000" } };
       sheet.getCell("A2").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
 
-      sheet.mergeCells("A3:K3");
+      sheet.mergeCells("A3:L3");
       const firstCaseStartDate = rows
         .map((r) => issueMap.get(r.id)?.start_date ?? issueMap.get(r.id)?.created_at?.slice(0, 10))
         .filter(Boolean)
@@ -912,6 +913,7 @@ const Overview = observer(function Overview() {
         "DIRECCIÓN DE HABITACIÓN",
         "TIPO DE CASO",
         "DESCRIPCIÓN DE LA SOLICITUD",
+        "DESCRIPCIÓN DEL CASO",
         "CÉDULA DE IDENTIDAD",
         "RESEÑA FOTOGRÁFICA",
         "ORGANISMO COMPETENTE",
@@ -952,13 +954,14 @@ const Overview = observer(function Overview() {
           toUpperOrDash(d?.direccion),
           toUpperOrDash(issue?.name),
           toUpperOrDash(row.referencia),
+          toUpperOrDash(row.descripcionCaso),
           "",
           "",
           toUpperOrDash(d?.institucionContactada),
           toUpperOrDash(d?.observacionCierre),
         ];
         cellValues.forEach((val, idx) => {
-          if (idx !== 7 && idx !== 8) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
+          if (idx !== 8 && idx !== 9) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
         });
         const dataRow = sheet.addRow(cellValues);
         if (includePhotos) {
@@ -966,13 +969,13 @@ const Overview = observer(function Overview() {
           const CHARS_EST = 18;
           let maxLines = 1;
           cellValues.forEach((val, idx) => {
-            if (idx === 7 || idx === 8) return;
+            if (idx === 8 || idx === 9) return;
             maxLines = Math.max(maxLines, Math.ceil(val.length / CHARS_EST));
           });
           dataRow.height = Math.max(PHOTO_ROW_H_PT, maxLines * PT_PER_LINE);
         }
         dataRow.eachCell((cell, colNum) => {
-          if (colNum !== 8 && colNum !== 9) {
+          if (colNum !== 9 && colNum !== 10) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ROW_BG } };
           }
           cell.font = { size: 12, name: "Arial" };
@@ -997,7 +1000,7 @@ const Overview = observer(function Overview() {
               const imgId = workbook.addImage({ base64: base64Full.split(",")[1], extension: ext });
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               sheet.addImage(imgId, {
-                tl: { col: 7, row: rowZero } as any,
+                tl: { col: 8, row: rowZero } as any,
                 ext: { width: PHOTO_W_PX, height: PHOTO_H_PX },
               });
             }
@@ -1050,8 +1053,8 @@ const Overview = observer(function Overview() {
       }
 
       sheet.columns.forEach((col, idx) => {
-        if (idx === 7) return;
-        if (idx === 8) {
+        if (idx === 8) return;
+        if (idx === 9) {
           col.width = Math.max(Math.ceil((colMaxLen[idx] ?? 0) * 0.85) + 1, RESENA_COL_W);
           return;
         }
