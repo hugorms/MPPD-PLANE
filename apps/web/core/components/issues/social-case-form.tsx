@@ -272,6 +272,7 @@ const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "jornada", label: "Componente" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "referencia", label: "Solicitud" },
+  { key: "descripcionCaso", label: "Descripción del caso" },
 ];
 
 // Campos requeridos para enviar a articulación (proceso → articulación)
