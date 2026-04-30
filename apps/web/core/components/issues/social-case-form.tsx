@@ -131,7 +131,7 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "jornada", label: "Jornada" },
   { key: "telefono2", label: "Telefono 2" },
   { key: "referencia", label: "Solicitud" },
-  { key: "descripcionCaso", label: "Descripcion del caso" },
+  { key: "descripcionCaso", label: "Descripción del caso" },
   { key: "accionTomada", label: "Accion tomada" },
   { key: "resultado", label: "Resultado" },
   { key: "institucionContactada", label: "Órgano / Institución contactada" },
