@@ -794,8 +794,11 @@ const Overview = observer(function Overview() {
           });
         };
 
+        // Solo los 5 componentes FANB canónicos (excluye "Civil" y "Militar / Sin componente")
         // oxlint-disable-next-line unicorn/no-array-sort
-        const compEntries = Object.entries(byComponente).sort(([, a], [, b]) => b - a) as [string, number][];
+        const compEntries = FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number])
+          .filter(([, count]) => count > 0)
+          .toSorted(([, a], [, b]) => b - a);
         // oxlint-disable-next-line unicorn/no-array-sort
         const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a) as [string, number][];
 
