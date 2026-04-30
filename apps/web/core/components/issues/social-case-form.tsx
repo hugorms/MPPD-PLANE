@@ -237,7 +237,20 @@ export const EVIDENCE_SLOTS = [
   { prefix: "[ENTREGA]", label: "Adj. Registro Fotográfico" },
 ] as const;
 
-const ARTICULACION_REQUIRED: (keyof SocialCaseData)[] = ["nombre", "cedula", "resultado", "accionTomada", "referencia"];
+// Campos base requeridos para articulación/cierre (civiles y militares)
+const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
+  "cedula",
+  "nombre",
+  "telefono",
+  "direccion",
+  "referencia",
+  "descripcionCaso",
+  "resultado",
+  "accionTomada",
+];
+
+// Campos adicionales solo para militares (deben coincidir con FIELDS_MILITAR en use-social-case-state-change.ts)
+const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["jornada", "unidadDependencia"];
 
 // Campos requeridos para iniciar el proceso (recibido → proceso)
 const FANB_INSTITUCIONES = [
@@ -539,7 +552,8 @@ export const SocialCaseForm = ({
     }
   };
 
-  const effectiveArticulacionRequired = ARTICULACION_REQUIRED;
+  const effectiveArticulacionRequired: (keyof SocialCaseData)[] =
+    data.esMilitar === "true" ? [...ARTICULACION_BASE, ...ARTICULACION_MILITAR] : ARTICULACION_BASE;
   const articulacionComplete = isArticulacion ? effectiveArticulacionRequired.every((k) => data[k]?.trim()) : false;
 
   // accionTomada y resultado solo se muestran en proceso, articulación o resuelto
@@ -1060,7 +1074,7 @@ export const SocialCaseForm = ({
                 </span>
                 {isArticulacion && !isClosed && (
                   <span className="text-xs text-custom-text-400">
-                    {effectiveArticulacionRequired.filter((k) => data[k]?.trim()).length}/
+                    {effectiveArticulacionRequired.filter((k: keyof SocialCaseData) => data[k]?.trim()).length}/
                     {effectiveArticulacionRequired.length} campos
                   </span>
                 )}
