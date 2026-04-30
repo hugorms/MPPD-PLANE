@@ -61,10 +61,9 @@ export const IssueAttachmentsDetail = observer(function IssueAttachmentsDetail(p
 
   if (!attachment) return <></>;
 
-  // Badge de origen — detecta y limpia todos los prefijos encadenados (ej. [CI_BEN]_[CI_SOL]_...)
+  // Badge de origen — detecta y limpia todos los prefijos encadenados (ej. [CI_BEN]_[ENTREGA]_...)
   const SLOT_BADGE_MAP: Record<string, string> = {
-    "[CI_SOL]": "C.I. Solicitante",
-    "[CI_BEN]": "C.I. Beneficiario",
+    "[CI_BEN]": "Adj. C.I.",
     "[ENTREGA]": "Registro Fotográfico",
   };
   const SLOT_PREFIXES = Object.keys(SLOT_BADGE_MAP);

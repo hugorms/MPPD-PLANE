@@ -19,21 +19,15 @@ const FIELDS_PROCESO: { key: string; label: string }[] = [
   { key: "referencia", label: "Solicitud" },
 ];
 
-// Para pasar a "Articulación" (incluye los de proceso + PROCESO_REQUIRED del formulario)
-// Los campos de beneficiario se omiten si mismoBeneficiario === "true"
+// Para pasar a "Articulación" (incluye los de proceso + resultado + acción)
 const FIELDS_ARTICULACION: { key: string; label: string }[] = [
   ...FIELDS_PROCESO,
   { key: "resultado", label: "Solicitud / Beneficio otorgado" },
   { key: "accionTomada", label: "Acción tomada" },
-  { key: "nombreBeneficiario", label: "Beneficiario" },
-  { key: "cedulaBeneficiario", label: "Cédula del beneficiario" },
 ];
 
-// Para resolver/cerrar el caso (incluye todos los anteriores + solicitante)
-const FIELDS_CIERRE: { key: string; label: string }[] = [
-  ...FIELDS_ARTICULACION,
-  { key: "solicitante", label: "Solicitante" },
-];
+// Para resolver/cerrar el caso (mismos campos que articulación)
+const FIELDS_CIERRE: { key: string; label: string }[] = [...FIELDS_ARTICULACION];
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -49,8 +43,8 @@ type UseStateChangeParams = {
  *
  * Validación por capa según el estado destino:
  *   - → En Proceso:    cédula, nombre, teléfono, dirección, actividad, solicitud/beneficio
- *   - → Articulación:  los anteriores + resultado + acciónTomada + beneficiario (omite beneficiario si mismoBeneficiario)
- *   - → Resuelto:      todos los anteriores + solicitante
+ *   - → Articulación:  los anteriores + resultado + acciónTomada
+ *   - → Resuelto:      mismos campos que articulación + fechaCierre auto-inyectada
  *   - → Sin Resolución / Recibido / genérico: sin validación
  *
  * Si el issue no contiene tabla de caso social (data-social-case), el cambio
@@ -107,14 +101,7 @@ export function useSocialCaseStateChange({ workspaceSlug, projectId, issueId, is
     }
 
     // Validar campos requeridos
-    const mismoBeneficiario = data.mismoBeneficiario === "true";
-    // Los campos de beneficiario se omiten si el solicitante y beneficiario son la misma persona.
-    // Aplica tanto en articulación como en cierre, ya que ambos niveles los incluyen.
-    const needsBeneficiaryCheck = stateName.includes("articulaci") || stateGroup === "completed";
-    const fields =
-      needsBeneficiaryCheck && mismoBeneficiario
-        ? fieldsRequired.filter(({ key }) => key !== "nombreBeneficiario" && key !== "cedulaBeneficiario")
-        : fieldsRequired;
+    const fields = fieldsRequired;
 
     const missing = fields
       .filter(({ key }) => !(data as Record<string, string>)[key]?.trim())

@@ -82,8 +82,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
 
 // ── Slot badge helpers ────────────────────────────────────────────────────────
 const SLOT_BADGE_MAP: Record<string, string> = {
-  "[CI_SOL]": "C.I. Solicitante",
-  "[CI_BEN]": "C.I. Beneficiario",
+  "[CI_BEN]": "Adj. C.I.",
   "[ENTREGA]": "Registro Fotográfico",
 };
 const SLOT_PREFIXES = Object.keys(SLOT_BADGE_MAP);

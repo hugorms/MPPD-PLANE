@@ -832,7 +832,7 @@ const Overview = observer(function Overview() {
       const RESENA_COL_W_PX = RESENA_COL_W * 7 + 5;
       const RESENA_GAP = 4;
       const IMAGE_EXTS_XLS = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
-      const SLOT_PREFIXES_XLS = ["[CI_SOL]", "[CI_BEN]", "[ENTREGA]"];
+      const SLOT_PREFIXES_XLS = ["[CI_BEN]", "[ENTREGA]"];
 
       sheet.columns = [
         { key: "num" },
@@ -983,9 +983,7 @@ const Overview = observer(function Overview() {
             const attList = await attachmentService.getIssueAttachments(ws, pid, row.id);
             const rowZero = sheet.rowCount - 1;
 
-            const cedulaAtt =
-              attList?.find((a) => a.attributes?.name?.startsWith("[CI_BEN]")) ??
-              attList?.find((a) => a.attributes?.name?.startsWith("[CI_SOL]"));
+            const cedulaAtt = attList?.find((a) => a.attributes?.name?.startsWith("[CI_BEN]"));
             if (cedulaAtt) {
               const rawUrl = getFileURL(cedulaAtt.asset_url) ?? cedulaAtt.asset_url;
               const fullUrl = rawUrl.startsWith("http") ? rawUrl : `${window.location.origin}${rawUrl}`;
