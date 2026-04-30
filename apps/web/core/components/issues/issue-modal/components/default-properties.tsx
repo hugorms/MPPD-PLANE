@@ -4,36 +4,26 @@
  * See the LICENSE file for details.
  */
 
-import { useState } from "react";
 import { observer } from "mobx-react";
 import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { ETabIndices, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { ParentPropertyIcon } from "@plane/propel/icons";
 // types
 import type { ISearchIssueResponse, TIssue } from "@plane/types";
-// ui
-import { CustomMenu } from "@plane/ui";
 import { getDate, renderFormattedPayloadDate, getTabIndex } from "@plane/utils";
 // components
-import { CycleDropdown } from "@/components/dropdowns/cycle";
 import { DateDropdown } from "@/components/dropdowns/date";
 import { EstimateDropdown } from "@/components/dropdowns/estimate";
 import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
-import { ModuleDropdown } from "@/components/dropdowns/module/dropdown";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
-import { ParentIssuesListModal } from "@/components/issues/parent-issues-list-modal";
 import { IssueLabelSelect } from "@/components/issues/select";
 // helpers
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
-import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import { usePlatformOS } from "@/hooks/use-platform-os";
-// plane web components
-import { IssueIdentifier } from "@/plane-web/components/issues/issue-details/issue-identifier";
 
 type TIssueDefaultPropertiesProps = {
   control: Control<TIssue>;
@@ -50,29 +40,12 @@ type TIssueDefaultPropertiesProps = {
 };
 
 export const IssueDefaultProperties = observer(function IssueDefaultProperties(props: TIssueDefaultPropertiesProps) {
-  const {
-    control,
-    id,
-    projectId,
-    workspaceSlug,
-    selectedParentIssue,
-    startDate,
-    targetDate,
-    parentId,
-    isDraft,
-    handleFormChange,
-    setSelectedParentIssue,
-  } = props;
-  // states
-  const [parentIssueListModalOpen, setParentIssueListModalOpen] = useState(false);
+  const { control, id, projectId, workspaceSlug, startDate, targetDate, handleFormChange } = props;
   // store hooks
   const { t } = useTranslation();
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
-  const { getProjectById } = useProject();
   const { isMobile } = usePlatformOS();
   const { allowPermissions } = useUserPermissions();
-  // derived values
-  const projectDetails = getProjectById(projectId);
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 
@@ -200,50 +173,6 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           </div>
         )}
       />
-      {projectDetails?.cycle_view && (
-        <Controller
-          control={control}
-          name="cycle_id"
-          render={({ field: { value, onChange } }) => (
-            <div className="h-7">
-              <CycleDropdown
-                projectId={projectId ?? undefined}
-                onChange={(cycleId) => {
-                  onChange(cycleId);
-                  handleFormChange();
-                }}
-                placeholder={t("cycle.label", { count: 1 })}
-                value={value}
-                buttonVariant="border-with-text"
-                tabIndex={getIndex("cycle_id")}
-              />
-            </div>
-          )}
-        />
-      )}
-      {projectDetails?.module_view && workspaceSlug && (
-        <Controller
-          control={control}
-          name="module_ids"
-          render={({ field: { value, onChange } }) => (
-            <div className="h-7">
-              <ModuleDropdown
-                projectId={projectId ?? undefined}
-                value={value ?? []}
-                onChange={(moduleIds) => {
-                  onChange(moduleIds);
-                  handleFormChange();
-                }}
-                placeholder={t("modules")}
-                buttonVariant="border-with-text"
-                tabIndex={getIndex("module_ids")}
-                multiple
-                showCount
-              />
-            </div>
-          )}
-        />
-      )}
       {projectId && areEstimateEnabledByProjectId(projectId) && (
         <Controller
           control={control}
@@ -265,79 +194,6 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           )}
         />
       )}
-      <div className="h-7">
-        {parentId ? (
-          <CustomMenu
-            customButton={
-              <button
-                type="button"
-                className="flex h-full cursor-pointer items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong px-2 py-0.5 text-caption-sm-regular hover:bg-layer-1"
-              >
-                {selectedParentIssue?.project_id && (
-                  <IssueIdentifier
-                    projectId={selectedParentIssue.project_id}
-                    issueTypeId={selectedParentIssue.type_id}
-                    projectIdentifier={selectedParentIssue?.project__identifier}
-                    issueSequenceId={selectedParentIssue.sequence_id}
-                    size="xs"
-                  />
-                )}
-              </button>
-            }
-            placement="bottom-start"
-            className="h-full w-full"
-            customButtonClassName="h-full"
-            tabIndex={getIndex("parent_id")}
-          >
-            <>
-              <CustomMenu.MenuItem className="!p-1" onClick={() => setParentIssueListModalOpen(true)}>
-                {t("change_parent_issue")}
-              </CustomMenu.MenuItem>
-              <Controller
-                control={control}
-                name="parent_id"
-                render={({ field: { onChange } }) => (
-                  <CustomMenu.MenuItem
-                    className="!p-1"
-                    onClick={() => {
-                      onChange(null);
-                      handleFormChange();
-                    }}
-                  >
-                    {t("remove_parent_issue")}
-                  </CustomMenu.MenuItem>
-                )}
-              />
-            </>
-          </CustomMenu>
-        ) : (
-          <button
-            type="button"
-            className="flex h-full cursor-pointer items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong px-2 py-0.5 text-caption-sm-regular hover:bg-layer-1"
-            onClick={() => setParentIssueListModalOpen(true)}
-          >
-            <ParentPropertyIcon className="h-3 w-3 flex-shrink-0" />
-            <span className="whitespace-nowrap">{t("add_parent")}</span>
-          </button>
-        )}
-      </div>
-      <Controller
-        control={control}
-        name="parent_id"
-        render={({ field: { onChange } }) => (
-          <ParentIssuesListModal
-            isOpen={parentIssueListModalOpen}
-            handleClose={() => setParentIssueListModalOpen(false)}
-            onChange={(issue) => {
-              onChange(issue.id);
-              handleFormChange();
-              setSelectedParentIssue(issue);
-            }}
-            projectId={projectId ?? undefined}
-            issueId={isDraft ? undefined : id}
-          />
-        )}
-      />
     </div>
   );
 });

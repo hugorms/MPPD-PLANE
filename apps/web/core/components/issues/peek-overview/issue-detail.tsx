@@ -146,6 +146,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         ? stripSocialCaseFromHtml(issue.description_html)
         : "<p></p>"
       : undefined;
+  const isSocialCase = hasSocialCaseWorkflow && extractFromHtml(issue.description_html ?? "") !== null;
 
   return (
     <div className="space-y-2">
@@ -266,33 +267,35 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         onSavingChange={(status) => setIsSubmitting(status)}
       />
 
-      <DescriptionInput
-        issueSequenceId={issue.sequence_id}
-        containerClassName="-ml-3 border-none"
-        disabled={disabled || isArchived}
-        editorRef={editorRef}
-        entityId={issue.id}
-        fileAssetType={EFileAssetType.ISSUE_DESCRIPTION}
-        initialValue={issueDescription}
-        key={issue.id}
-        onSubmit={async (value, isMigrationUpdate) => {
-          if (!issue.id || !issue.project_id) return;
-          // Re-inyectar la ficha y la foto de perfil en el HTML antes de guardar
-          const existingData = extractFromHtml(issue.description_html ?? "");
-          const existingPhotoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
-          let finalHtml = existingData
-            ? injectSocialCaseIntoHtml(value.description_html ?? "<p></p>", existingData)
-            : (value.description_html ?? "<p></p>");
-          if (existingPhotoUrl) finalHtml = injectProfilePhotoIntoHtml(finalHtml, existingPhotoUrl);
-          await issueOperations.update(workspaceSlug, issue.project_id, issue.id, {
-            description_html: finalHtml,
-            ...(isMigrationUpdate ? { skip_activity: "true" } : {}),
-          });
-        }}
-        setIsSubmitting={(value) => setIsSubmitting(value)}
-        projectId={issue.project_id}
-        workspaceSlug={workspaceSlug}
-      />
+      {!isSocialCase && (
+        <DescriptionInput
+          issueSequenceId={issue.sequence_id}
+          containerClassName="-ml-3 border-none"
+          disabled={disabled || isArchived}
+          editorRef={editorRef}
+          entityId={issue.id}
+          fileAssetType={EFileAssetType.ISSUE_DESCRIPTION}
+          initialValue={issueDescription}
+          key={issue.id}
+          onSubmit={async (value, isMigrationUpdate) => {
+            if (!issue.id || !issue.project_id) return;
+            // Re-inyectar la ficha y la foto de perfil en el HTML antes de guardar
+            const existingData = extractFromHtml(issue.description_html ?? "");
+            const existingPhotoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
+            let finalHtml = existingData
+              ? injectSocialCaseIntoHtml(value.description_html ?? "<p></p>", existingData)
+              : (value.description_html ?? "<p></p>");
+            if (existingPhotoUrl) finalHtml = injectProfilePhotoIntoHtml(finalHtml, existingPhotoUrl);
+            await issueOperations.update(workspaceSlug, issue.project_id, issue.id, {
+              description_html: finalHtml,
+              ...(isMigrationUpdate ? { skip_activity: "true" } : {}),
+            });
+          }}
+          setIsSubmitting={(value) => setIsSubmitting(value)}
+          projectId={issue.project_id}
+          workspaceSlug={workspaceSlug}
+        />
+      )}
 
       <div className="flex items-center justify-between gap-2">
         {currentUser && (
