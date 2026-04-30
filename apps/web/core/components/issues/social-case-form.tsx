@@ -250,20 +250,30 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
 ];
 
 // Campos adicionales solo para militares (deben coincidir con FIELDS_MILITAR en use-social-case-state-change.ts)
-const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["jornada", "unidadDependencia"];
+const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["gradoMilitar", "jornada", "unidadDependencia"];
 
-// Campos requeridos para iniciar el proceso (recibido → proceso)
+// Componentes FANB canónicos — constante de módulo usada en retrocompat y validación
+const FANB_COMPONENTS_SET = new Set([
+  "Ejército Nacional Bolivariano",
+  "Armada Bolivariana de Venezuela",
+  "Aviación Militar Bolivariana",
+  "Guardia Nacional Bolivariana",
+  "Milicia Nacional Bolivariana",
+]);
+
 const FANB_INSTITUCIONES = [
   { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
   { short: "SEGUROS HORIZONTE", full: "SEGUROS HORIZONTE" },
   { short: "DIGESALUD", full: "DIGESALUD — Dirección General de Salud de la FANB" },
 ] as const;
 
+// Campos requeridos para iniciar el proceso (recibido → proceso)
 const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "cedula", label: "Cédula" },
   { key: "nombre", label: "Nombre" },
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
+  { key: "gradoMilitar", label: "Grado militar" },
   { key: "jornada", label: "Componente" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "referencia", label: "Solicitud" },
@@ -344,14 +354,7 @@ export const SocialCaseForm = ({
       // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por grado o
       // por componente FANB canónico. No usar jornada como texto libre porque casos civiles
       // viejos podían tener cualquier valor allí (ej. "Jornada de salud").
-      const FANB_COMPONENTS = new Set([
-        "Ejército Nacional Bolivariano",
-        "Armada Bolivariana de Venezuela",
-        "Aviación Militar Bolivariana",
-        "Guardia Nacional Bolivariana",
-        "Milicia Nacional Bolivariana",
-      ]);
-      if (!extracted.esMilitar && (extracted.gradoMilitar || FANB_COMPONENTS.has(extracted.jornada))) {
+      if (!extracted.esMilitar && (extracted.gradoMilitar || FANB_COMPONENTS_SET.has(extracted.jornada))) {
         extracted.esMilitar = "true";
       }
       setData(extracted);
@@ -572,7 +575,9 @@ export const SocialCaseForm = ({
   const effectiveRecibidoRequired =
     data.esMilitar === "true"
       ? RECIBIDO_REQUIRED
-      : RECIBIDO_REQUIRED.filter(({ key }) => key !== "jornada" && key !== "unidadDependencia");
+      : RECIBIDO_REQUIRED.filter(
+          ({ key }) => key !== "gradoMilitar" && key !== "jornada" && key !== "unidadDependencia"
+        );
   const recibidoFilled = effectiveRecibidoRequired.filter(({ key }) => data[key]?.trim()).length;
   const recibidoComplete = recibidoFilled === effectiveRecibidoRequired.length;
 

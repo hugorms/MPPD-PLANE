@@ -21,6 +21,7 @@ const FIELDS_BASE: { key: string; label: string }[] = [
 
 // Campos adicionales solo para militares
 const FIELDS_MILITAR: { key: string; label: string }[] = [
+  { key: "gradoMilitar", label: "Grado militar" },
   { key: "jornada", label: "Componente" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
 ];
