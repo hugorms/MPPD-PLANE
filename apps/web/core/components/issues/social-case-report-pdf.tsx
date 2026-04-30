@@ -103,8 +103,9 @@ const S = StyleSheet.create({
   cResponsable: { width: 80 },
   cBenef: { width: 36 },
   cReferencia: { flex: 2 },
-  cAccion: { flex: 2 },
-  cResultado: { flex: 2 },
+  cDescripcion: { flex: 2 },
+  cAccion: { flex: 1.5 },
+  cResultado: { flex: 1.5 },
   cEstado: { width: 60 },
 
   // Pill de estado
@@ -686,6 +687,9 @@ export const SocialCaseReportPDF = ({
           <View style={S.cReferencia}>
             <Text style={S.cellHeader}>Referencia</Text>
           </View>
+          <View style={S.cDescripcion}>
+            <Text style={S.cellHeader}>Descripción</Text>
+          </View>
           <View style={S.cAccion}>
             <Text style={S.cellHeader}>Acción tomada</Text>
           </View>
@@ -725,6 +729,9 @@ export const SocialCaseReportPDF = ({
             </View>
             <View style={S.cReferencia}>
               <Text style={S.cell}>{row.referencia.slice(0, 100)}</Text>
+            </View>
+            <View style={S.cDescripcion}>
+              <Text style={S.cell}>{row.descripcionCaso.slice(0, 100)}</Text>
             </View>
             <View style={S.cAccion}>
               <Text style={S.cell}>{row.accionTomada.slice(0, 100)}</Text>
