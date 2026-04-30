@@ -1153,37 +1153,24 @@ export const SocialCaseForm = ({
 
           {/* Institución contactada — acceso rápido en En proceso */}
           {isEnProceso && !isArticulacion && !isClosed && (
-            <div className="space-y-2">
+            <div>
               <label htmlFor="sc-institucion-proceso" className={labelClass}>
                 Órgano / Institución contactada
               </label>
-              <div className="flex flex-wrap gap-2">
-                {FANB_INSTITUCIONES.map((inst) => (
-                  <button
-                    key={inst.short}
-                    type="button"
-                    disabled={!isEditable}
-                    onClick={() => update("institucionContactada", inst.full)}
-                    className={cn(
-                      "rounded-md border px-2.5 py-1 text-11 font-medium transition-colors",
-                      data.institucionContactada === inst.full
-                        ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
-                        : "border-subtle bg-surface-2 text-secondary hover:bg-layer-1",
-                      !isEditable && "cursor-not-allowed opacity-60"
-                    )}
-                  >
-                    {inst.short}
-                  </button>
-                ))}
-              </div>
-              <input
+              <select
                 id="sc-institucion-proceso"
                 disabled={!isEditable}
                 className={fc(isEditable)}
-                placeholder="Otra institución..."
                 value={data.institucionContactada}
                 onChange={(e) => update("institucionContactada", e.target.value)}
-              />
+              >
+                <option value="">-- Seleccionar institución --</option>
+                {FANB_INSTITUCIONES.map((inst) => (
+                  <option key={inst.short} value={inst.full}>
+                    {inst.full}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
@@ -1205,34 +1192,20 @@ export const SocialCaseForm = ({
                 <label htmlFor="sc-institucion" className={labelClass}>
                   Órgano / Institución contactada
                 </label>
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {FANB_INSTITUCIONES.map((inst) => (
-                    <button
-                      key={inst.short}
-                      type="button"
-                      disabled={!isEditable}
-                      onClick={() => update("institucionContactada", inst.full)}
-                      className={cn(
-                        "rounded-md border px-2.5 py-1 text-11 font-medium transition-colors",
-                        data.institucionContactada === inst.full
-                          ? "border-accent-primary bg-accent-primary/10 text-accent-primary"
-                          : "border-subtle bg-surface-2 text-secondary hover:bg-layer-1",
-                        !isEditable && "cursor-not-allowed opacity-60"
-                      )}
-                    >
-                      {inst.short}
-                    </button>
-                  ))}
-                </div>
-                <input
+                <select
                   id="sc-institucion"
                   disabled={!isEditable}
-                  autoCapitalize="sentences"
                   className={fc(isEditable)}
-                  placeholder="Ej: IVSS, BANAVIH, MPPS..."
                   value={data.institucionContactada}
                   onChange={(e) => update("institucionContactada", e.target.value)}
-                />
+                >
+                  <option value="">-- Seleccionar institución --</option>
+                  {FANB_INSTITUCIONES.map((inst) => (
+                    <option key={inst.short} value={inst.full}>
+                      {inst.full}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 <div>
