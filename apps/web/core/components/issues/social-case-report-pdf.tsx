@@ -101,7 +101,7 @@ const S = StyleSheet.create({
   cMunicipio: { width: 62 },
   cComponente: { width: 68 },
   cResponsable: { width: 80 },
-  cBenef: { width: 36 },
+  cTelefono: { width: 72 },
   cReferencia: { flex: 2 },
   cDescripcion: { flex: 2 },
   cAccion: { flex: 1.5 },
@@ -681,8 +681,8 @@ export const SocialCaseReportPDF = ({
           <View style={S.cResponsable}>
             <Text style={S.cellHeader}>Responsable</Text>
           </View>
-          <View style={S.cBenef}>
-            <Text style={S.cellHeader}>Benef.</Text>
+          <View style={S.cTelefono}>
+            <Text style={S.cellHeader}>Teléfono</Text>
           </View>
           <View style={S.cReferencia}>
             <Text style={S.cellHeader}>Referencia</Text>
@@ -722,10 +722,8 @@ export const SocialCaseReportPDF = ({
             <View style={S.cResponsable}>
               <Text style={S.cell}>{row.responsable}</Text>
             </View>
-            <View style={S.cBenef}>
-              <Text style={[S.cell, { color: row.beneficiado ? C.green : C.gray500 }]}>
-                {row.beneficiado ? "Sí" : "No"}
-              </Text>
+            <View style={S.cTelefono}>
+              <Text style={S.cell}>{row.telefono || "—"}</Text>
             </View>
             <View style={S.cReferencia}>
               <Text style={S.cell}>{row.referencia.slice(0, 100)}</Text>
