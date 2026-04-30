@@ -399,6 +399,7 @@ export const SocialCaseForm = ({
     "esMilitar",
     "mismoBeneficiario",
     "fechaCierre",
+    "descripcionCaso",
   ]);
 
   const capFirst = (f: keyof SocialCaseData, v: string) => {
