@@ -9,25 +9,27 @@ import type { TIssueOperations } from "@/components/issues/issue-detail/root";
 // ── Campos requeridos por nivel de avance ────────────────────────────────────
 // Deben coincidir con RECIBIDO_REQUIRED y PROCESO_REQUIRED en social-case-form.tsx
 
-// Para pasar a "En Proceso" (= RECIBIDO_REQUIRED del formulario)
-const FIELDS_PROCESO: { key: string; label: string }[] = [
+// Campos base requeridos para todos los casos (civil y militar)
+const FIELDS_BASE: { key: string; label: string }[] = [
   { key: "cedula", label: "Cédula" },
   { key: "nombre", label: "Nombre del ciudadano" },
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
-  { key: "jornada", label: "Actividad" },
   { key: "referencia", label: "Solicitud" },
+  { key: "descripcionCaso", label: "Descripción del caso" },
 ];
 
-// Para pasar a "Articulación" (incluye los de proceso + resultado + acción)
-const FIELDS_ARTICULACION: { key: string; label: string }[] = [
-  ...FIELDS_PROCESO,
-  { key: "resultado", label: "Solicitud / Beneficio otorgado" },
+// Campos adicionales solo para militares
+const FIELDS_MILITAR: { key: string; label: string }[] = [
+  { key: "jornada", label: "Componente" },
+  { key: "unidadDependencia", label: "Unidad / Dependencia" },
+];
+
+// Campos adicionales para articulación y cierre
+const FIELDS_EXTRA_ARTICULACION: { key: string; label: string }[] = [
+  { key: "resultado", label: "Resultado / Beneficio otorgado" },
   { key: "accionTomada", label: "Acción tomada" },
 ];
-
-// Para resolver/cerrar el caso (mismos campos que articulación)
-const FIELDS_CIERRE: { key: string; label: string }[] = [...FIELDS_ARTICULACION];
 
 // ── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -42,9 +44,9 @@ type UseStateChangeParams = {
  * Devuelve `handleStateChange(newStateId)`.
  *
  * Validación por capa según el estado destino:
- *   - → En Proceso:    cédula, nombre, teléfono, dirección, actividad, solicitud/beneficio
+ *   - → En Proceso:    campos base + componente y unidad (solo si es militar) + descripcionCaso
  *   - → Articulación:  los anteriores + resultado + acciónTomada
- *   - → Resuelto:      mismos campos que articulación + fechaCierre auto-inyectada
+ *   - → Resuelto:      mismos que articulación + fechaCierre auto-inyectada
  *   - → Sin Resolución / Recibido / genérico: sin validación
  *
  * Si el issue no contiene tabla de caso social (data-social-case), el cambio
@@ -69,23 +71,10 @@ export function useSocialCaseStateChange({ workspaceSlug, projectId, issueId, is
       return;
     }
 
-    // Determinar nivel de validación según estado destino
-    let fieldsRequired: { key: string; label: string }[] | null = null;
-    let actionLabel = "";
-
-    if (stateGroup === "completed") {
-      fieldsRequired = FIELDS_CIERRE;
-      actionLabel = "resolver el caso";
-    } else if (stateName.includes("articulaci")) {
-      fieldsRequired = FIELDS_ARTICULACION;
-      actionLabel = "articular el caso";
-    } else if (stateName.includes("proceso")) {
-      fieldsRequired = FIELDS_PROCESO;
-      actionLabel = "iniciar el proceso";
-    }
-
     // Si el estado destino no requiere validación (ej. Recibido, genérico) → cambio libre
-    if (!fieldsRequired) {
+    const needsValidation =
+      stateGroup === "completed" || stateName.includes("articulaci") || stateName.includes("proceso");
+    if (!needsValidation) {
       await issueOperations.update(workspaceSlug, projectId, issueId, { state_id: newStateId });
       return;
     }
@@ -100,10 +89,26 @@ export function useSocialCaseStateChange({ workspaceSlug, projectId, issueId, is
       return;
     }
 
-    // Validar campos requeridos
-    const fields = fieldsRequired;
+    // Construir campos requeridos dinámicamente: militares exigen componente y unidad
+    const isMilitar = data.esMilitar === "true";
+    const fieldsProceso = isMilitar ? [...FIELDS_BASE, ...FIELDS_MILITAR] : FIELDS_BASE;
+    const fieldsArticulacion = [...fieldsProceso, ...FIELDS_EXTRA_ARTICULACION];
 
-    const missing = fields
+    let fieldsRequired: { key: string; label: string }[];
+    let actionLabel: string;
+
+    if (stateGroup === "completed") {
+      fieldsRequired = fieldsArticulacion;
+      actionLabel = "resolver el caso";
+    } else if (stateName.includes("articulaci")) {
+      fieldsRequired = fieldsArticulacion;
+      actionLabel = "articular el caso";
+    } else {
+      fieldsRequired = fieldsProceso;
+      actionLabel = "iniciar el proceso";
+    }
+
+    const missing = fieldsRequired
       .filter(({ key }) => !(data as Record<string, string>)[key]?.trim())
       .map(({ label }) => label);
 
