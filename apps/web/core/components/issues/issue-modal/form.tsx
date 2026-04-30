@@ -166,7 +166,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     issue: { getIssueById },
   } = useIssueDetail();
   const { fetchCycles } = useProjectIssueProperties();
-  const { getStateById } = useProjectState();
+  const { getStateById, getProjectStates } = useProjectState();
 
   // form info
   const methods = useForm<TIssue>({
@@ -321,6 +321,25 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
       })
     )
       return;
+
+    // Etiqueta obligatoria en proyectos de caso social
+    const projectStates = getProjectStates(projectId ?? "");
+    const hasSocialCaseWorkflow = Boolean(
+      projectStates?.some((s) => s.name?.toLowerCase().includes("proceso")) &&
+      projectStates?.some((s) => s.name?.toLowerCase().includes("articulaci")) &&
+      projectStates?.some((s) => s.name?.toLowerCase().includes("recib"))
+    );
+    if (hasSocialCaseWorkflow) {
+      const labelIds: string[] = watch("label_ids") ?? [];
+      if (labelIds.length === 0) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: "Etiqueta requerida",
+          message: "Debes agregar al menos una etiqueta al caso antes de guardarlo.",
+        });
+        return;
+      }
+    }
 
     // Inyectar datos de la ficha social en description_html antes de guardar
     let pendingKey: string | null = null;
