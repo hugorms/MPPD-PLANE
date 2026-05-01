@@ -9,9 +9,7 @@ import { observer } from "mobx-react";
 import { useTranslation } from "@plane/i18n";
 // ui
 import {
-  CycleIcon,
   StatePropertyIcon,
-  ModuleIcon,
   MembersPropertyIcon,
   PriorityPropertyIcon,
   StartDatePropertyIcon,
@@ -19,7 +17,6 @@ import {
   LabelPropertyIcon,
   UserCirclePropertyIcon,
   EstimatePropertyIcon,
-  ParentPropertyIcon,
 } from "@plane/propel/icons";
 import { cn, getDate, renderFormattedPayloadDate, shouldHighlightIssueDueDate } from "@plane/utils";
 // components
@@ -33,20 +30,15 @@ import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
-import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web components
 // components
 import { WorkItemAdditionalSidebarProperties } from "@/plane-web/components/issues/issue-details/additional-properties";
-import { IssueParentSelectRoot } from "@/plane-web/components/issues/issue-details/parent-select-root";
 import { DateAlert } from "@/plane-web/components/issues/issue-details/sidebar/date-alert";
-import { TransferHopInfo } from "@/plane-web/components/issues/issue-details/sidebar/transfer-hop-info";
 import { IssueWorklogProperty } from "@/plane-web/components/issues/worklog/property";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
 import { useSocialCaseStateChange } from "@/hooks/use-social-case-state-change";
-import { IssueCycleSelect } from "./cycle-select";
 import { IssueLabel } from "./label";
-import { IssueModuleSelect } from "./module-select";
 import type { TIssueOperations } from "./root";
 
 type Props = {
@@ -61,7 +53,6 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   const { t } = useTranslation();
   const { workspaceSlug, projectId, issueId, issueOperations, isEditable } = props;
   // store hooks
-  const { getProjectById } = useProject();
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
   const {
     issue: { getIssueById },
@@ -75,7 +66,6 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   const { handleStateChange } = useSocialCaseStateChange({ workspaceSlug, projectId, issueId, issueOperations });
 
   // derived values
-  const projectDetails = getProjectById(issue.project_id);
   const stateDetails = getStateById(issue.state_id);
 
   const minDate = issue.start_date ? getDate(issue.start_date) : null;
@@ -210,47 +200,6 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
                 />
               </SidebarPropertyListItem>
             )}
-
-            {projectDetails?.module_view && (
-              <SidebarPropertyListItem icon={ModuleIcon} label={t("common.modules")}>
-                <IssueModuleSelect
-                  className="w-full grow"
-                  workspaceSlug={workspaceSlug}
-                  projectId={projectId}
-                  issueId={issueId}
-                  issueOperations={issueOperations}
-                  disabled={!isEditable}
-                />
-              </SidebarPropertyListItem>
-            )}
-
-            {projectDetails?.cycle_view && (
-              <SidebarPropertyListItem
-                icon={CycleIcon}
-                label={t("common.cycle")}
-                appendElement={<TransferHopInfo workItem={issue} />}
-              >
-                <IssueCycleSelect
-                  className="h-7.5 w-full grow"
-                  workspaceSlug={workspaceSlug}
-                  projectId={projectId}
-                  issueId={issueId}
-                  issueOperations={issueOperations}
-                  disabled={!isEditable}
-                />
-              </SidebarPropertyListItem>
-            )}
-
-            <SidebarPropertyListItem icon={ParentPropertyIcon} label={t("common.parent")}>
-              <IssueParentSelectRoot
-                className="h-7.5 w-full grow"
-                workspaceSlug={workspaceSlug}
-                projectId={projectId}
-                issueId={issueId}
-                issueOperations={issueOperations}
-                disabled={!isEditable}
-              />
-            </SidebarPropertyListItem>
 
             <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
               <IssueLabel
