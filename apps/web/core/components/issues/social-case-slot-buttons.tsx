@@ -18,12 +18,14 @@ function SlotButton({
   label,
   isDone,
   uploading,
+  disabled,
   accept,
   onFile,
 }: {
   label: string;
   isDone: boolean;
   uploading: boolean;
+  disabled: boolean;
   accept: string;
   onFile: (file: File) => void;
 }) {
@@ -36,7 +38,7 @@ function SlotButton({
         type="file"
         accept={accept}
         className="hidden"
-        disabled={uploading}
+        disabled={uploading || disabled}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (!file) return;
@@ -47,7 +49,7 @@ function SlotButton({
       <Button
         variant="secondary"
         size="lg"
-        disabled={uploading}
+        disabled={uploading || disabled}
         onClick={() => inputRef.current?.click()}
         className={isDone ? "border-green-500 text-green-600 dark:text-green-400" : ""}
       >
@@ -84,9 +86,9 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     const name = att.attributes?.name ?? "";
     const prefix = SLOT_PREFIXES_LIST.find((p) => name.startsWith(p));
     if (!prefix) return acc;
-    if (prefix === "[ENTREGA]") {
-      const count = Object.keys(acc).filter((k) => k.startsWith("[ENTREGA]")).length;
-      acc[`[ENTREGA]_${count + 1}`] = name;
+    if (prefix === "[ENTREGA]" || prefix === "[CI_BEN]") {
+      const count = Object.keys(acc).filter((k) => k.startsWith(prefix)).length;
+      acc[`${prefix}_${count + 1}`] = name;
     } else {
       acc[prefix] = name;
     }
@@ -120,9 +122,14 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     <>
       {EVIDENCE_SLOTS.map((slot) => {
         const isRegistro = slot.prefix === "[ENTREGA]";
-        const registroCount = isRegistro ? Object.keys(slotFiles).filter((k) => k.startsWith("[ENTREGA]")).length : 0;
-        const isDone = isRegistro ? registroCount > 0 : !!slotFiles[slot.prefix];
-        const displayLabel = isRegistro && registroCount > 0 ? `${slot.label} (${registroCount})` : slot.label;
+        const isCedula = slot.prefix === "[CI_BEN]";
+        const countable = isRegistro || isCedula;
+        const slotCount = countable ? Object.keys(slotFiles).filter((k) => k.startsWith(slot.prefix)).length : 0;
+        const maxFiles = slot.maxFiles;
+        const reachedMax = maxFiles !== undefined && slotCount >= maxFiles;
+        const isDone = countable ? slotCount > 0 : !!slotFiles[slot.prefix];
+        const displayLabel =
+          countable && slotCount > 0 ? `${slot.label} (${slotCount}${maxFiles ? `/${maxFiles}` : ""})` : slot.label;
 
         return (
           <SlotButton
@@ -130,11 +137,13 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
             label={displayLabel}
             isDone={isDone}
             uploading={!!slotUploading[slot.prefix]}
+            disabled={reachedMax}
             accept="image/*,.pdf"
             onFile={(file) => {
-              if (isRegistro) {
-                const count = Object.keys(slotFiles).filter((k) => k.startsWith("[ENTREGA]")).length;
-                handleSlotUpload(`[ENTREGA]_${count + 1}`, file);
+              if (reachedMax) return;
+              if (countable) {
+                const nextCount = Object.keys(slotFiles).filter((k) => k.startsWith(slot.prefix)).length;
+                handleSlotUpload(`${slot.prefix}_${nextCount + 1}`, file);
               } else {
                 handleSlotUpload(slot.prefix, file);
               }

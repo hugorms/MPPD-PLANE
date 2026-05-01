@@ -791,7 +791,7 @@ export const SocialCaseReportPDF = ({
                             <Text style={S.metaValue}>{row.gradoMilitar}</Text>
                           </>
                         ) : null}
-                        {row.esMilitar && row.unidadDependencia && row.unidadDependencia !== "-" ? (
+                        {row.unidadDependencia && row.unidadDependencia !== "-" ? (
                           <>
                             <Text style={S.metaLabel}>Unidad / Dependencia</Text>
                             <Text style={S.metaValue}>{row.unidadDependencia}</Text>
@@ -832,6 +832,12 @@ export const SocialCaseReportPDF = ({
                     <Text style={S.detailText}>{row.descripcionCaso}</Text>
                   </View>
                 )}
+                {row.institucionContactada && row.institucionContactada !== "-" && (
+                  <View style={S.detailSection}>
+                    <Text style={S.detailSectionTitle}>ÓRGANO / INSTITUCIÓN CONTACTADA</Text>
+                    <Text style={S.detailText}>{row.institucionContactada}</Text>
+                  </View>
+                )}
                 <View style={S.detailSection}>
                   <Text style={S.detailSectionTitle}>ACCIÓN TOMADA</Text>
                   <Text style={S.detailText}>{row.accionTomada || "—"}</Text>
@@ -840,12 +846,6 @@ export const SocialCaseReportPDF = ({
                   <Text style={S.detailSectionTitle}>RESULTADO</Text>
                   <Text style={S.detailText}>{row.resultado || "—"}</Text>
                 </View>
-                {row.institucionContactada && row.institucionContactada !== "-" && (
-                  <View style={S.detailSection}>
-                    <Text style={S.detailSectionTitle}>ÓRGANO / INSTITUCIÓN CONTACTADA</Text>
-                    <Text style={S.detailText}>{row.institucionContactada}</Text>
-                  </View>
-                )}
                 {row.observacionCierre && row.observacionCierre !== "-" && (
                   <View style={S.detailSection}>
                     <Text style={S.detailSectionTitle}>OBSERVACIÓN DE CIERRE</Text>

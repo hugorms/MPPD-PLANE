@@ -153,12 +153,7 @@ export const isMilitarySocialCaseData = (
   data?: Pick<SocialCaseData, "esMilitar" | "gradoMilitar" | "jornada" | "unidadDependencia"> | null
 ): boolean => {
   const jornada = data?.jornada?.trim() ?? "";
-  return Boolean(
-    data?.esMilitar === "true" ||
-    data?.gradoMilitar?.trim() ||
-    data?.unidadDependencia?.trim() ||
-    FANB_COMPONENTS_SET.has(jornada)
-  );
+  return Boolean(data?.esMilitar === "true" || data?.gradoMilitar?.trim() || FANB_COMPONENTS_SET.has(jornada));
 };
 
 const normalizeExtractedSocialCase = (data: SocialCaseData): SocialCaseData =>
@@ -256,10 +251,10 @@ const fieldReadonly = "border-subtle bg-surface-1 text-primary cursor-default ou
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const EVIDENCE_SLOTS = [
-  { prefix: "[CI_BEN]", label: "Adj. C.I." },
+export const EVIDENCE_SLOTS: { prefix: string; label: string; maxFiles?: number }[] = [
+  { prefix: "[CI_BEN]", label: "Adj. Cédula / Credencial", maxFiles: 2 },
   { prefix: "[ENTREGA]", label: "Adj. Registro Fotográfico" },
-] as const;
+];
 
 // Campos base requeridos para articulación/cierre (civiles y militares)
 const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
@@ -267,6 +262,7 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
   "nombre",
   "telefono",
   "direccion",
+  "unidadDependencia",
   "referencia",
   "descripcionCaso",
   "resultado",
@@ -274,13 +270,41 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
 ];
 
 // Campos adicionales solo para militares (deben coincidir con FIELDS_MILITAR en use-social-case-state-change.ts)
-const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["gradoMilitar", "jornada", "unidadDependencia"];
+const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["gradoMilitar", "jornada"];
 
 const FANB_INSTITUCIONES = [
   { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
   { short: "SEGUROS HORIZONTE", full: "SEGUROS HORIZONTE" },
   { short: "DIGESALUD", full: "DIGESALUD — Dirección General de Salud de la FANB" },
 ] as const;
+
+const InstitucionSelect = ({
+  id,
+  value,
+  disabled,
+  className,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  disabled: boolean;
+  className: string;
+  onChange: (value: string) => void;
+}) => (
+  <div>
+    <label htmlFor={id} className={labelClass}>
+      Órgano / Institución contactada
+    </label>
+    <select id={id} disabled={disabled} className={className} value={value} onChange={(e) => onChange(e.target.value)}>
+      <option value="">-- Seleccionar institución --</option>
+      {FANB_INSTITUCIONES.map((inst) => (
+        <option key={inst.short} value={inst.full}>
+          {inst.full}
+        </option>
+      ))}
+    </select>
+  </div>
+);
 
 // Campos requeridos para iniciar el proceso (recibido → proceso)
 const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
@@ -369,10 +393,7 @@ export const SocialCaseForm = ({
       // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por grado o
       // por componente FANB canónico. No usar jornada como texto libre porque casos civiles
       // viejos podían tener cualquier valor allí (ej. "Jornada de salud").
-      if (
-        !extracted.esMilitar &&
-        (extracted.gradoMilitar || extracted.unidadDependencia || FANB_COMPONENTS_SET.has(extracted.jornada))
-      ) {
+      if (!extracted.esMilitar && (extracted.gradoMilitar || FANB_COMPONENTS_SET.has(extracted.jornada))) {
         extracted.esMilitar = "true";
       }
       setData(extracted);
@@ -593,9 +614,7 @@ export const SocialCaseForm = ({
   const effectiveRecibidoRequired =
     data.esMilitar === "true"
       ? RECIBIDO_REQUIRED
-      : RECIBIDO_REQUIRED.filter(
-          ({ key }) => key !== "gradoMilitar" && key !== "jornada" && key !== "unidadDependencia"
-        );
+      : RECIBIDO_REQUIRED.filter(({ key }) => key !== "gradoMilitar" && key !== "jornada");
   const recibidoFilled = effectiveRecibidoRequired.filter(({ key }) => data[key]?.trim()).length;
   const recibidoComplete = recibidoFilled === effectiveRecibidoRequired.length;
 
@@ -794,7 +813,7 @@ export const SocialCaseForm = ({
                       const next = {
                         ...prev,
                         esMilitar: val,
-                        ...(val !== "true" ? { gradoMilitar: "", jornada: "", unidadDependencia: "" } : {}),
+                        ...(val !== "true" ? { gradoMilitar: "", jornada: "" } : {}),
                       };
                       if (mode === "create-no-save") {
                         try {
@@ -853,23 +872,21 @@ export const SocialCaseForm = ({
               </div>
             )}
 
-            {/* Unidad / Dependencia — solo si es Militar */}
-            {data.esMilitar === "true" && (
-              <div>
-                <label htmlFor="sc-unidad" className={labelClass}>
-                  Unidad / Dependencia
-                </label>
-                <input
-                  id="sc-unidad"
-                  disabled={!isEditable}
-                  autoCapitalize="sentences"
-                  className={fc(isEditable)}
-                  placeholder="Nombre de la unidad o dependencia"
-                  value={data.unidadDependencia}
-                  onChange={(e) => update("unidadDependencia", e.target.value)}
-                />
-              </div>
-            )}
+            {/* Unidad / Dependencia */}
+            <div>
+              <label htmlFor="sc-unidad" className={labelClass}>
+                Unidad / Dependencia
+              </label>
+              <input
+                id="sc-unidad"
+                disabled={!isEditable}
+                autoCapitalize="sentences"
+                className={fc(isEditable)}
+                placeholder="Nombre de la unidad o dependencia"
+                value={data.unidadDependencia}
+                onChange={(e) => update("unidadDependencia", e.target.value)}
+              />
+            </div>
 
             {/* Teléfono 1 | Teléfono 2 */}
             <div className="grid grid-cols-2 gap-x-6">
@@ -1027,6 +1044,13 @@ export const SocialCaseForm = ({
           {showFullSeguimiento && (
             <div className="space-y-3">
               <span className={sectionHeadClass}>En proceso</span>
+              <InstitucionSelect
+                id="sc-institucion-proceso"
+                disabled={!isEditable}
+                className={fc(isEditable)}
+                value={data.institucionContactada}
+                onChange={(value) => update("institucionContactada", value)}
+              />
               <div>
                 <label htmlFor="sc-accion" className={labelClass}>
                   Acción tomada
@@ -1058,29 +1082,6 @@ export const SocialCaseForm = ({
             </div>
           )}
 
-          {/* Institución contactada — acceso rápido en En proceso */}
-          {isEnProceso && !isArticulacion && !isClosed && (
-            <div>
-              <label htmlFor="sc-institucion-proceso" className={labelClass}>
-                Órgano / Institución contactada
-              </label>
-              <select
-                id="sc-institucion-proceso"
-                disabled={!isEditable}
-                className={fc(isEditable)}
-                value={data.institucionContactada}
-                onChange={(e) => update("institucionContactada", e.target.value)}
-              >
-                <option value="">-- Seleccionar institución --</option>
-                {FANB_INSTITUCIONES.map((inst) => (
-                  <option key={inst.short} value={inst.full}>
-                    {inst.full}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
           {/* SECCION 4: CIERRE DEL CASO — visible en articulación (editable) o resuelto (lectura) */}
           {(isClosed || isArticulacion) && (
             <div className="space-y-3">
@@ -1095,25 +1096,13 @@ export const SocialCaseForm = ({
                   </span>
                 )}
               </div>
-              <div className="mb-3">
-                <label htmlFor="sc-institucion" className={labelClass}>
-                  Órgano / Institución contactada
-                </label>
-                <select
-                  id="sc-institucion"
-                  disabled={!isEditable}
-                  className={fc(isEditable)}
-                  value={data.institucionContactada}
-                  onChange={(e) => update("institucionContactada", e.target.value)}
-                >
-                  <option value="">-- Seleccionar institución --</option>
-                  {FANB_INSTITUCIONES.map((inst) => (
-                    <option key={inst.short} value={inst.full}>
-                      {inst.full}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <InstitucionSelect
+                id="sc-institucion"
+                disabled={!isEditable}
+                className={fc(isEditable)}
+                value={data.institucionContactada}
+                onChange={(value) => update("institucionContactada", value)}
+              />
               <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                 {!isArticulacion && (
                   <div>

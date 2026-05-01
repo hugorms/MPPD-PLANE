@@ -55,6 +55,7 @@ const attachmentService = new IssueAttachmentService();
 // ── Utilidades módulo ─────────────────────────────────────────────────────────
 
 type Preset = "today" | "week" | "month" | "3months" | "all" | "custom";
+type XlsAttachment = { attributes?: { name?: string }; asset_url?: string };
 
 const CONDICION_OPTIONS = ["Civil", "Militar"] as const;
 
@@ -75,6 +76,12 @@ const FANB_COMPONENTES = [
 ] as const;
 
 const toUpperOrDash = (v: string | undefined | null) => (v ?? "-").toUpperCase();
+
+const getAttachmentExt = (attachment: XlsAttachment) => {
+  const nameExt = (attachment.attributes?.name ?? "").split(".").pop()?.toLowerCase() ?? "";
+  const urlExt = (attachment.asset_url ?? "").split("?")[0].split(".").pop()?.toLowerCase() ?? "";
+  return nameExt || urlExt;
+};
 
 async function urlToBase64(url: string): Promise<string> {
   const res = await fetch(url, { credentials: "omit" });
@@ -508,7 +515,7 @@ const Overview = observer(function Overview() {
         componente,
         esMilitar: isMilitar,
         gradoMilitar: isMilitar ? d?.gradoMilitar || "-" : "-",
-        unidadDependencia: isMilitar ? d?.unidadDependencia || "-" : "-",
+        unidadDependencia: d?.unidadDependencia || "-",
         referencia: d?.referencia || "-",
         descripcionCaso: d?.descripcionCaso || "-",
         accionTomada: d?.accionTomada || "-",
@@ -842,9 +849,11 @@ const Overview = observer(function Overview() {
       const ws = workspaceSlug?.toString() ?? "";
       const pid = selectedProjectId;
 
-      const PHOTO_W_PX = 189;
       const PHOTO_H_PX = 113;
       const PHOTO_COL_W = 38;
+      const PHOTO_COL_W_PX = PHOTO_COL_W * 7 + 5;
+      const CRED_IMG_W = 90;
+      const CRED_IMG_H = 113;
       const RESENA_IMG_W = 94;
       const RESENA_IMG_H = 113;
       const RESENA_COL_IDX = 12;
@@ -853,6 +862,21 @@ const Overview = observer(function Overview() {
       const RESENA_GAP = 4;
       const IMAGE_EXTS_XLS = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
       const SLOT_PREFIXES_XLS = ["[CI_BEN]", "[ENTREGA]"];
+      const cleanAttachmentName = (name: string) => {
+        let cleanName = name;
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const prefix of SLOT_PREFIXES_XLS) {
+            if (cleanName.startsWith(`${prefix}_`)) {
+              cleanName = cleanName.slice(prefix.length + 1);
+              changed = true;
+              break;
+            }
+          }
+        }
+        return cleanName.replace(/^\d+_/, "");
+      };
 
       sheet.columns = [
         { key: "num" },
@@ -940,7 +964,7 @@ const Overview = observer(function Overview() {
         "UNIDAD / DEPENDENCIA",
         "DESCRIPCIÓN DE LA SOLICITUD",
         "DESCRIPCIÓN DEL CASO",
-        "CÉDULA DE IDENTIDAD",
+        "CÉDULA / CREDENCIAL",
         "RESEÑA FOTOGRÁFICA",
         "ORGANISMO COMPETENTE",
         "OBSERVACIÓN",
@@ -1015,29 +1039,53 @@ const Overview = observer(function Overview() {
             const attList = await attachmentService.getIssueAttachments(ws, pid, row.id);
             const rowZero = sheet.rowCount - 1;
 
-            const cedulaAtt = attList?.find((a) => a.attributes?.name?.startsWith("[CI_BEN]"));
-            if (cedulaAtt) {
-              const rawUrl = getFileURL(cedulaAtt.asset_url) ?? cedulaAtt.asset_url;
-              const fullUrl = rawUrl.startsWith("http") ? rawUrl : `${window.location.origin}${rawUrl}`;
-              // oxlint-disable-next-line no-await-in-loop
-              const base64Full = await fetchBase64WithAuth(fullUrl);
-              const mimeM = base64Full.match(/^data:image\/(\w+);base64,/);
-              const ext = (mimeM?.[1] ?? "jpeg") as "png" | "jpeg" | "gif";
-              const imgId = workbook.addImage({ base64: base64Full.split(",")[1], extension: ext });
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              sheet.addImage(imgId, {
-                tl: { col: 11, row: rowZero } as any,
-                ext: { width: PHOTO_W_PX, height: PHOTO_H_PX },
-              });
+            const cedulaFiles = (attList ?? []).filter((a) => a.attributes?.name?.startsWith("[CI_BEN]"));
+            const cedulaImgs = cedulaFiles.filter((a) => IMAGE_EXTS_XLS.has(getAttachmentExt(a))).slice(0, 2);
+            const cedulaDocs = cedulaFiles.filter((a) => !IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
+            if (cedulaDocs.length > 0) {
+              dataRow.getCell(12).value = cedulaDocs
+                .map((a) => cleanAttachmentName(a.attributes?.name ?? "archivo adjunto"))
+                .join("\n");
+              dataRow.getCell(12).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+            }
+            for (let imgIdx = 0; imgIdx < cedulaImgs.length; imgIdx++) {
+              const cedulaAtt = cedulaImgs[imgIdx];
+              try {
+                const rawUrl = getFileURL(cedulaAtt.asset_url) ?? cedulaAtt.asset_url;
+                const fullUrl = rawUrl.startsWith("http") ? rawUrl : `${window.location.origin}${rawUrl}`;
+                // oxlint-disable-next-line no-await-in-loop
+                const base64Full = await fetchBase64WithAuth(fullUrl);
+                const mimeM = base64Full.match(/^data:image\/(\w+);base64,/);
+                const ext = (mimeM?.[1] ?? "jpeg") as "png" | "jpeg" | "gif";
+                const imgId = workbook.addImage({ base64: base64Full.split(",")[1], extension: ext });
+                const xPx = RESENA_GAP + imgIdx * (CRED_IMG_W + RESENA_GAP);
+                const rowHPx = (dataRow.height ?? PHOTO_ROW_H_PT) * (96 / 72);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                sheet.addImage(imgId, {
+                  tl: { col: 11 + xPx / PHOTO_COL_W_PX, row: rowZero + RESENA_GAP / rowHPx } as any,
+                  ext: { width: CRED_IMG_W, height: CRED_IMG_H },
+                });
+              } catch {
+                if (!dataRow.getCell(12).value) {
+                  dataRow.getCell(12).value = cleanAttachmentName(cedulaAtt.attributes?.name ?? "archivo adjunto");
+                  dataRow.getCell(12).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+                }
+              }
             }
 
-            const nativeImgs = (attList ?? []).filter((a) => {
+            const nativeFiles = (attList ?? []).filter((a) => {
               const name = a.attributes?.name ?? "";
               const noPrefix = !SLOT_PREFIXES_XLS.some((p) => name.startsWith(p));
-              const nameExt = name.split(".").pop()?.toLowerCase() ?? "";
-              const urlExt = (a.asset_url ?? "").split("?")[0].split(".").pop()?.toLowerCase() ?? "";
-              return noPrefix && IMAGE_EXTS_XLS.has(nameExt || urlExt);
+              return noPrefix;
             });
+            const nativeImgs = nativeFiles.filter((a) => IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
+            const nativeDocs = nativeFiles.filter((a) => !IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
+            if (nativeDocs.length > 0) {
+              dataRow.getCell(13).value = nativeDocs
+                .map((a) => cleanAttachmentName(a.attributes?.name ?? "archivo adjunto"))
+                .join("\n");
+              dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+            }
             if (nativeImgs.length > 0) {
               const gridRows = Math.ceil(nativeImgs.length / 2);
               const reseñaHPx = gridRows * RESENA_IMG_H + (gridRows + 1) * RESENA_GAP;

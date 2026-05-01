@@ -15,6 +15,7 @@ const FIELDS_BASE: { key: string; label: string }[] = [
   { key: "nombre", label: "Nombre del ciudadano" },
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
+  { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "referencia", label: "Solicitud" },
   { key: "descripcionCaso", label: "Descripción del caso" },
 ];
@@ -23,7 +24,6 @@ const FIELDS_BASE: { key: string; label: string }[] = [
 const FIELDS_MILITAR: { key: string; label: string }[] = [
   { key: "gradoMilitar", label: "Grado militar" },
   { key: "jornada", label: "Componente" },
-  { key: "unidadDependencia", label: "Unidad / Dependencia" },
 ];
 
 // Campos adicionales para articulación y cierre

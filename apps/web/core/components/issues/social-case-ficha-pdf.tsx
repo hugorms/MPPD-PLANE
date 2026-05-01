@@ -165,6 +165,25 @@ const S = StyleSheet.create({
     color: C.gray500,
     textAlign: "center",
   },
+  fileCellBox: {
+    margin: 6,
+    padding: 8,
+    border: `1px solid ${C.border}`,
+    backgroundColor: C.white,
+    width: "86%",
+  },
+  fileCellIcon: {
+    fontSize: 12,
+    fontFamily: "Helvetica-Bold",
+    color: "#dc2626",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  fileCellName: {
+    fontSize: 6,
+    color: C.black,
+    textAlign: "center",
+  },
 
   // ── FOOTER ──
   footer: {
@@ -243,17 +262,32 @@ export function SocialCaseFichaPDF({
   startDate,
 }: SocialCaseFichaProps) {
   const KNOWN_PREFIXES = ["[CI_BEN]", "[ENTREGA]"];
-  const byPrefix = (prefix: string) => attachments.find((a) => a.isImage && a.base64 && a.name.startsWith(prefix));
-  const solicitudImg = attachments.find(
-    (a) => a.isImage && a.base64 && !KNOWN_PREFIXES.some((p) => a.name.startsWith(p))
-  );
-  const registroImgs = attachments.filter((a) => a.isImage && a.base64 && a.name.startsWith("[ENTREGA]"));
+  const cleanAttachmentName = (name: string) => {
+    let cleanName = name;
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const prefix of KNOWN_PREFIXES) {
+        if (cleanName.startsWith(`${prefix}_`)) {
+          cleanName = cleanName.slice(prefix.length + 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+    return cleanName.replace(/^\d+_/, "");
+  };
+  const attachmentLabel = (name: string) => cleanAttachmentName(name).split(".").pop()?.toUpperCase() || "ARCHIVO";
+
+  const solicitudFiles = attachments.filter((a) => !KNOWN_PREFIXES.some((p) => a.name.startsWith(`${p}_`)));
+  const ciFiles = attachments.filter((a) => a.name.startsWith("[CI_BEN]_"));
+  const registroFiles = attachments.filter((a) => a.name.startsWith("[ENTREGA]_"));
 
   type FotoSlot = { label: string; imgs: (typeof attachments)[number][] };
   const fotoSlots: FotoSlot[] = [
-    { label: "SOLICITUD", imgs: solicitudImg ? [solicitudImg] : [] },
-    { label: "C.I.", imgs: byPrefix("[CI_BEN]") ? [byPrefix("[CI_BEN]")!] : [] },
-    { label: "REGISTRO FOTOGRÁFICO", imgs: registroImgs },
+    { label: "SOLICITUD", imgs: solicitudFiles },
+    { label: "CÉDULA / CREDENCIAL", imgs: ciFiles },
+    { label: "REGISTRO FOTOGRÁFICO", imgs: registroFiles },
   ];
 
   const numeroCaso = projectIdentifier
@@ -307,16 +341,14 @@ export function SocialCaseFichaPDF({
             <Row label="Grado militar" value={data.gradoMilitar} />
           ) : null}
           {data.esMilitar === "true" && data.jornada ? <Row label="Componente" value={data.jornada} /> : null}
-          {data.esMilitar === "true" && data.unidadDependencia ? (
-            <Row label="Unidad / Dependencia" value={data.unidadDependencia} />
-          ) : null}
+          {data.unidadDependencia ? <Row label="Unidad / Dependencia" value={data.unidadDependencia} /> : null}
           <Row label="Solicitud" value={data.referencia} />
           {data.descripcionCaso ? <Row label="Descripción del caso" value={data.descripcionCaso} /> : null}
-          <Row label="Acción tomada" value={data.accionTomada} />
-          <Row label="Resultado / Beneficio otorgado" value={data.resultado} />
           {data.institucionContactada ? (
             <Row label="Órgano / Institución contactada" value={data.institucionContactada} />
           ) : null}
+          <Row label="Acción tomada" value={data.accionTomada} />
+          <Row label="Resultado / Beneficio otorgado" value={data.resultado} />
           {data.observacionCierre ? <Row label="Observación de cierre" value={data.observacionCierre} /> : null}
           <Row label="Fecha de inicio" value={formatDate(startDate ?? "")} />
           <Row
@@ -352,9 +384,17 @@ export function SocialCaseFichaPDF({
                 );
               }
               if (slot.imgs.length === 1) {
+                const file = slot.imgs[0];
                 return (
                   <View key={slot.label} style={cellStyle}>
-                    <Image src={slot.imgs[0].base64 as string} style={S.photoCellImg} />
+                    {file.isImage && file.base64 ? (
+                      <Image src={file.base64} style={S.photoCellImg} />
+                    ) : (
+                      <View style={S.fileCellBox}>
+                        <Text style={S.fileCellIcon}>{attachmentLabel(file.name)}</Text>
+                        <Text style={S.fileCellName}>{cleanAttachmentName(file.name)}</Text>
+                      </View>
+                    )}
                   </View>
                 );
               }
@@ -364,11 +404,24 @@ export function SocialCaseFichaPDF({
               return (
                 <View key={slot.label} style={{ ...cellStyle, flexDirection: "row", flexWrap: "wrap", height: 160 }}>
                   {slot.imgs.map((img) => (
-                    <Image
+                    <View
                       key={img.name}
-                      src={img.base64 as string}
-                      style={{ width: "50%", height: imgHeight, objectFit: "contain" }}
-                    />
+                      style={{
+                        width: "50%",
+                        height: imgHeight,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {img.isImage && img.base64 ? (
+                        <Image src={img.base64} style={{ width: "100%", height: imgHeight, objectFit: "contain" }} />
+                      ) : (
+                        <View style={S.fileCellBox}>
+                          <Text style={S.fileCellIcon}>{attachmentLabel(img.name)}</Text>
+                          <Text style={S.fileCellName}>{cleanAttachmentName(img.name)}</Text>
+                        </View>
+                      )}
+                    </View>
                   ))}
                 </View>
               );

@@ -82,7 +82,7 @@ function ImageLightbox({ src, alt, onClose }: { src: string; alt: string; onClos
 
 // ── Slot badge helpers ────────────────────────────────────────────────────────
 const SLOT_BADGE_MAP: Record<string, string> = {
-  "[CI_BEN]": "Adj. C.I.",
+  "[CI_BEN]": "Cédula / Credencial",
   "[ENTREGA]": "Registro Fotográfico",
 };
 const SLOT_PREFIXES = Object.keys(SLOT_BADGE_MAP);
@@ -104,7 +104,7 @@ function getSlotInfo(rawName: string) {
   }
   return {
     badge: firstPrefix ? SLOT_BADGE_MAP[firstPrefix] : null,
-    cleanName: getFileName(strippedName),
+    cleanName: getFileName(strippedName.replace(/^\d+_/, "")),
   };
 }
 

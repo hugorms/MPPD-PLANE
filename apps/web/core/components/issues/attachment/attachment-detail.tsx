@@ -63,7 +63,7 @@ export const IssueAttachmentsDetail = observer(function IssueAttachmentsDetail(p
 
   // Badge de origen — detecta y limpia todos los prefijos encadenados (ej. [CI_BEN]_[ENTREGA]_...)
   const SLOT_BADGE_MAP: Record<string, string> = {
-    "[CI_BEN]": "Adj. C.I.",
+    "[CI_BEN]": "Cédula / Credencial",
     "[ENTREGA]": "Registro Fotográfico",
   };
   const SLOT_PREFIXES = Object.keys(SLOT_BADGE_MAP);
@@ -83,7 +83,7 @@ export const IssueAttachmentsDetail = observer(function IssueAttachmentsDetail(p
     }
   }
   const slotBadge = firstSlotPrefix ? SLOT_BADGE_MAP[firstSlotPrefix] : null;
-  const cleanFileName = getFileName(strippedName);
+  const cleanFileName = getFileName(strippedName.replace(/^\d+_/, ""));
 
   return (
     <>
