@@ -380,7 +380,7 @@ function GraphicPage({
           [
             { label: "Total de fichas", value: total, color: C.blue, pct: "" },
             {
-              label: "Con resultado",
+              label: "Resueltos",
               value: conResultado,
               color: "#16a34a",
               pct: total > 0 ? ` ${Math.round((conResultado / total) * 100)}%` : "",
@@ -561,8 +561,8 @@ export const SocialCaseReportPDF = ({
   logoUrl,
 }: Props) => {
   const total = rows.length;
-  const beneficiados = rows.filter((r) => r.beneficiado).length;
-  const pctBenef = total > 0 ? Math.round((beneficiados / total) * 100) : 0;
+  const resueltos = rows.filter((r) => r.beneficiado).length;
+  const pctResueltos = total > 0 ? Math.round((resueltos / total) * 100) : 0;
   const cantCiviles = byCondicion?.["Civil"] ?? rows.filter((r) => !r.esMilitar).length;
   const cantMilitares = byCondicion?.["Militar"] ?? rows.filter((r) => r.esMilitar).length;
 
@@ -587,11 +587,11 @@ export const SocialCaseReportPDF = ({
             </View>
             <View style={[S.statBox, { borderLeftColor: C.green }]}>
               <Text style={S.statNum}>{conResultado}</Text>
-              <Text style={S.statLabel}>Con resultado registrado</Text>
+              <Text style={S.statLabel}>Casos resueltos</Text>
             </View>
             <View style={[S.statBox, { borderLeftColor: "#7c3aed" }]}>
-              <Text style={S.statNum}>{pctBenef}%</Text>
-              <Text style={S.statLabel}>Tasa de beneficiados</Text>
+              <Text style={S.statNum}>{pctResueltos}%</Text>
+              <Text style={S.statLabel}>Tasa de resueltos</Text>
             </View>
           </View>
 
@@ -707,7 +707,7 @@ export const SocialCaseReportPDF = ({
         {rows.map((row, idx) => (
           <View key={row.id} style={idx % 2 === 0 ? S.tableRow : S.tableRowAlt} wrap={false}>
             <View style={S.cId}>
-              <Text style={S.cellBold}>GCS-{row.sequenceId}</Text>
+              <Text style={S.cellBold}>{row.numeroCaso}</Text>
             </View>
             <View style={S.cNombre}>
               <Text style={S.cell}>{row.nombre}</Text>
@@ -772,7 +772,7 @@ export const SocialCaseReportPDF = ({
                   )}
                   <View style={S.detailMeta}>
                     <Text style={S.detailName}>{row.nombre}</Text>
-                    <Text style={S.detailId}>GCS-{row.sequenceId}</Text>
+                    <Text style={S.detailId}>{row.numeroCaso}</Text>
                     <View style={S.metaGrid}>
                       <View style={S.metaCol}>
                         <Text style={S.metaLabel}>Cédula</Text>
@@ -811,7 +811,7 @@ export const SocialCaseReportPDF = ({
                             <Text style={S.metaValue}>{row.fechaCierre}</Text>
                           </>
                         ) : null}
-                        <Text style={S.metaLabel}>Beneficiado</Text>
+                        <Text style={S.metaLabel}>Resuelto</Text>
                         <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
                           {row.beneficiado ? "Sí" : "No"}
                         </Text>
@@ -863,7 +863,7 @@ export const SocialCaseReportPDF = ({
                 <Page key={`att-${row.id}-${att.name}`} size="A4" style={S.page}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
                     <Text style={{ fontSize: 8, color: C.gray500 }}>
-                      GCS-{row.sequenceId} · {row.nombre}
+                      {row.numeroCaso} · {row.nombre}
                     </Text>
                     <Text style={{ fontSize: 8, color: C.gray500 }}>
                       Adjunto {attIdx + 1} / {rowAttachments.length}

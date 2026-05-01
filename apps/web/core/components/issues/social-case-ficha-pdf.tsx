@@ -194,6 +194,7 @@ export type FichaAttachment = {
 export type SocialCaseFichaProps = {
   data: SocialCaseData;
   projectName: string;
+  projectIdentifier?: string;
   stateName: string;
   sequenceId: number;
   responsable: string;
@@ -231,6 +232,7 @@ function Row({ label, value, last = false }: { label: string; value: string; las
 export function SocialCaseFichaPDF({
   data,
   projectName,
+  projectIdentifier,
   stateName,
   sequenceId,
   responsable: _responsable,
@@ -254,7 +256,11 @@ export function SocialCaseFichaPDF({
     { label: "REGISTRO FOTOGRÁFICO", imgs: registroImgs },
   ];
 
-  const numeroCaso = data.numeroCaso ? `#${data.numeroCaso}` : `GCS-${sequenceId}`;
+  const numeroCaso = projectIdentifier
+    ? `${projectIdentifier}-${sequenceId}`
+    : data.numeroCaso
+      ? `#${data.numeroCaso}`
+      : `#${sequenceId}`;
 
   return (
     <Document>

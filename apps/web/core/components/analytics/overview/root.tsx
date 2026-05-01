@@ -396,6 +396,14 @@ const Overview = observer(function Overview() {
     return map;
   }, [states]);
 
+  const stateGroups = useMemo(() => {
+    const map: Record<string, string | undefined> = {};
+    (states ?? []).forEach((s) => {
+      map[s.id] = s.group;
+    });
+    return map;
+  }, [states]);
+
   const stateColorMap = useMemo(() => {
     const map: Record<string, string> = {};
     (states ?? []).forEach((s) => {
@@ -473,19 +481,21 @@ const Overview = observer(function Overview() {
 
       const photoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
       const stateName = stateNames[issue.state_id ?? ""] ?? "Sin estado";
+      const isResolved =
+        stateGroups[issue.state_id ?? ""] === "completed" || stateName.toLowerCase().includes("resuelt");
       const isMilitar = isMilitarySocialCaseData(d);
       const componente = d?.jornada || (isMilitar ? "Militar / Sin componente" : "Civil");
+      const issueIdentifier = `MPPDGCS-${issue.sequence_id}`;
       const entidad = d?.entidad?.trim() || "";
       const assignees = (issue.assignee_ids ?? [])
         .map((id: string) => memberRoot.getUserDetails(id)?.display_name || memberRoot.getUserDetails(id)?.first_name)
         .filter(Boolean) as string[];
       const responsable = assignees.length > 0 ? assignees.join(", ") : "Sin asignar";
-      const beneficiado = !!(d?.resultado && d.resultado.trim());
 
       parsedRows.push({
         id: issue.id,
         sequenceId: issue.sequence_id,
-        numeroCaso: d?.numeroCaso ? `#${d.numeroCaso}` : `GCS-${issue.sequence_id}`,
+        numeroCaso: issueIdentifier,
         stateId: issue.state_id ?? null,
         stateName,
         photoUrl,
@@ -506,7 +516,7 @@ const Overview = observer(function Overview() {
         institucionContactada: d?.institucionContactada || "-",
         fechaCierre: d?.fechaCierre || "-",
         observacionCierre: d?.observacionCierre || "-",
-        beneficiado,
+        beneficiado: isResolved,
       });
 
       parsedByState[stateName] = (parsedByState[stateName] ?? 0) + 1;
@@ -527,7 +537,7 @@ const Overview = observer(function Overview() {
 
       if (isMilitar) parsedMilitares++;
       else parsedCiviles++;
-      if (d?.resultado?.trim()) parsedConResultado++;
+      if (isResolved) parsedConResultado++;
     }
 
     const parsedByCondicion: Record<string, number> = {};
@@ -561,6 +571,7 @@ const Overview = observer(function Overview() {
   }, [
     allIssues,
     stateNames,
+    stateGroups,
     fromDate,
     toDate,
     memberRoot,
@@ -740,7 +751,7 @@ const Overview = observer(function Overview() {
         // KPIs
         const kpis = [
           { label: "Total de fichas", value: rows.length },
-          { label: "Con resultado", value: conResultado },
+          { label: "Resueltos", value: conResultado },
           { label: "Civiles", value: byCondicion["Civil"] ?? 0 },
           { label: "Militares", value: byCondicion["Militar"] ?? 0 },
         ];
@@ -959,7 +970,7 @@ const Overview = observer(function Overview() {
         const BORDER_DATA = { style: "thin" as const, color: { argb: "FFd1d5db" } };
         const telefonoCombinado = [d?.telefono, d?.telefono2].filter(Boolean).join(" / ");
         const cellValues = [
-          toUpperOrDash(d?.numeroCaso ? `#${d.numeroCaso}` : `GCS-${row.sequenceId}`),
+          toUpperOrDash(row.numeroCaso),
           toUpperOrDash(row.nombre),
           toUpperOrDash(row.cedula),
           toUpperOrDash(telefonoCombinado),
@@ -1281,7 +1292,7 @@ const Overview = observer(function Overview() {
                       <p className="text-26 font-bold text-secondary">{rows.length}</p>
                       <p className="mt-0.5 text-11 text-tertiary">Total de fichas</p>
                     </div>
-                    {/* Con resultado */}
+                    {/* Resueltos */}
                     <div
                       className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
                       style={{ borderLeftColor: "#16a34a" }}
@@ -1292,7 +1303,7 @@ const Overview = observer(function Overview() {
                           <p className="text-12 text-tertiary">{Math.round((conResultado / rows.length) * 100)}%</p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-11 text-tertiary">Con resultado</p>
+                      <p className="mt-0.5 text-11 text-tertiary">Resueltos</p>
                     </div>
                     {/* Civiles */}
                     <div

@@ -76,7 +76,9 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
 
     setIsExporting(true);
     try {
-      const projectName = getProjectById(projectId)?.name ?? "Proyecto";
+      const projectDetails = getProjectById(projectId);
+      const projectName = projectDetails?.name ?? "Proyecto";
+      const projectIdentifier = "MPPDGCS";
       const generatedAtLabel = new Date().toLocaleDateString("es-VE");
       const stateName = issue.state_id ? (getStateById(issue.state_id)?.name ?? "Sin estado") : "Sin estado";
       const assignees = (issue.assignee_ids ?? [])
@@ -165,6 +167,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
         <SocialCaseFichaPDF
           data={d ?? emptyData}
           projectName={projectName}
+          projectIdentifier={projectIdentifier}
           stateName={stateName}
           sequenceId={issue.sequence_id}
           responsable={responsable}
