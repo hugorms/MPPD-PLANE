@@ -555,7 +555,7 @@ export const SocialCaseForm = ({
         setCedulaNotFound(true);
         return;
       }
-      const esMilitarDetectado = Boolean(result.gradoMilitar || result.componente);
+      const esMilitarDetectado = Boolean(result.esMilitar || result.gradoMilitar || result.componente);
       const onfaloFields = {
         ...(result.nombre && { nombre: toUpper(result.nombre) }),
         ...(result.telefono && { telefono: result.telefono }),

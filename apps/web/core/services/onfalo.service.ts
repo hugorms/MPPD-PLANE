@@ -11,6 +11,7 @@ export type OnfaloPersonData = {
   entidad: string;
   fotoUrl: string | null;
   notFound: boolean;
+  esMilitar: boolean;
   gradoMilitar: string;
   componente: string;
 };
@@ -61,6 +62,22 @@ const firstNonEmptyAll = (...vals: unknown[]): string => {
     if (parts.length) return parts.join(", ");
   }
   return "";
+};
+
+const hasActiveMilitaryProhibition = (prohibitions: unknown): boolean => {
+  if (!Array.isArray(prohibitions)) return false;
+  return prohibitions.some((item) => {
+    const p = item as Record<string, any>;
+    const values = [
+      p.reason,
+      p.observation,
+      p.type,
+      p.prohibitionType?.name,
+      p.prohibitionType?.description,
+      p.securityAgency?.name,
+    ];
+    return values.some((value) => typeof value === "string" && normalizeStr(value).includes("militar activo"));
+  });
 };
 
 export class OnfaloService {
@@ -124,6 +141,7 @@ export class OnfaloService {
       const componenteRaw: string = mil.Componente?.descripcion ?? d.Tif?.Componente?.descripcion ?? "";
       const componenteAbr: string = mil.Componente?.abreviatura ?? d.HistorialMilitar?.[0]?.componente ?? "";
       const componente = matchComponente(componenteRaw) || COMPONENTE_MAP[componenteAbr.toUpperCase()] || "";
+      const esMilitar = Boolean(gradoMilitar || componente || hasActiveMilitaryProhibition(d.prohibitions));
 
       return {
         nombre,
@@ -134,6 +152,7 @@ export class OnfaloService {
         entidad,
         fotoUrl,
         notFound: false,
+        esMilitar,
         gradoMilitar,
         componente,
       };
@@ -149,6 +168,7 @@ export class OnfaloService {
           entidad: "",
           fotoUrl: null,
           notFound: true,
+          esMilitar: false,
           gradoMilitar: "",
           componente: "",
         };
