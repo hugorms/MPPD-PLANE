@@ -218,6 +218,8 @@ export type ParsedIssueRow = {
   entidad: string;
   componente: string;
   esMilitar: boolean;
+  gradoMilitar: string;
+  unidadDependencia: string;
   referencia: string;
   descripcionCaso: string;
   accionTomada: string;
@@ -783,6 +785,18 @@ export const SocialCaseReportPDF = ({
                       <View style={S.metaCol}>
                         <Text style={S.metaLabel}>Componente</Text>
                         <Text style={S.metaValue}>{row.componente}</Text>
+                        {row.esMilitar && row.gradoMilitar && row.gradoMilitar !== "-" ? (
+                          <>
+                            <Text style={S.metaLabel}>Grado militar</Text>
+                            <Text style={S.metaValue}>{row.gradoMilitar}</Text>
+                          </>
+                        ) : null}
+                        {row.esMilitar && row.unidadDependencia && row.unidadDependencia !== "-" ? (
+                          <>
+                            <Text style={S.metaLabel}>Unidad / Dependencia</Text>
+                            <Text style={S.metaValue}>{row.unidadDependencia}</Text>
+                          </>
+                        ) : null}
                         <Text style={S.metaLabel}>Estado (Vzla.)</Text>
                         <Text style={S.metaValue}>{row.entidad || "—"}</Text>
                         <Text style={S.metaLabel}>Responsable</Text>

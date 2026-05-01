@@ -13,7 +13,11 @@ import { Button } from "@plane/propel/button";
 import { Checkbox } from "@plane/ui";
 import { API_BASE_URL } from "@plane/constants";
 import { getFileURL, cn } from "@plane/utils";
-import { extractFromHtml, extractProfilePhotoFromHtml } from "@/components/issues/social-case-form";
+import {
+  extractFromHtml,
+  extractProfilePhotoFromHtml,
+  isMilitarySocialCaseData,
+} from "@/components/issues/social-case-form";
 import {
   SocialCaseReportPDF,
   type ParsedIssueRow,
@@ -454,7 +458,7 @@ const Overview = observer(function Overview() {
 
       // Filtro Civil / Militar
       if (condicionFilter.length > 0) {
-        const isMil = d?.esMilitar === "true";
+        const isMil = isMilitarySocialCaseData(d);
         const matchesMilitar = condicionFilter.includes("Militar") && isMil;
         const matchesCivil = condicionFilter.includes("Civil") && !isMil;
         if (!matchesMilitar && !matchesCivil) continue;
@@ -469,7 +473,7 @@ const Overview = observer(function Overview() {
 
       const photoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
       const stateName = stateNames[issue.state_id ?? ""] ?? "Sin estado";
-      const isMilitar = d?.esMilitar === "true";
+      const isMilitar = isMilitarySocialCaseData(d);
       const componente = d?.jornada || (isMilitar ? "Militar / Sin componente" : "Civil");
       const entidad = d?.entidad?.trim() || "";
       const assignees = (issue.assignee_ids ?? [])
@@ -493,6 +497,8 @@ const Overview = observer(function Overview() {
         entidad,
         componente,
         esMilitar: isMilitar,
+        gradoMilitar: isMilitar ? d?.gradoMilitar || "-" : "-",
+        unidadDependencia: isMilitar ? d?.unidadDependencia || "-" : "-",
         referencia: d?.referencia || "-",
         descripcionCaso: d?.descripcionCaso || "-",
         accionTomada: d?.accionTomada || "-",
@@ -830,7 +836,7 @@ const Overview = observer(function Overview() {
       const PHOTO_COL_W = 38;
       const RESENA_IMG_W = 94;
       const RESENA_IMG_H = 113;
-      const RESENA_COL_IDX = 9;
+      const RESENA_COL_IDX = 12;
       const RESENA_COL_W = 40;
       const RESENA_COL_W_PX = RESENA_COL_W * 7 + 5;
       const RESENA_GAP = 4;
@@ -844,6 +850,9 @@ const Overview = observer(function Overview() {
         { key: "telefono" },
         { key: "direccion" },
         { key: "tipo" },
+        { key: "grado_militar" },
+        { key: "componente" },
+        { key: "unidad_dependencia" },
         { key: "descripcion" },
         { key: "descripcion_caso" },
         { key: "foto", width: PHOTO_COL_W },
@@ -851,7 +860,7 @@ const Overview = observer(function Overview() {
         { key: "organismo" },
         { key: "observacion" },
       ];
-      const colMaxLen = [2, 38, 20, 14, 26, 14, 28, 28, 0, 0, 22, 24];
+      const colMaxLen = [2, 38, 20, 14, 26, 14, 18, 24, 28, 28, 28, 0, 0, 22, 24];
 
       let logoId: number | null = null;
       try {
@@ -873,14 +882,17 @@ const Overview = observer(function Overview() {
       sheet.getRow(2).height = 40;
       sheet.getRow(3).height = 28;
 
-      sheet.mergeCells("A1:L1");
+      sheet.mergeCells("A1:O1");
       sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
       if (logoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sheet.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 6.5, row: 1 } as any });
       }
 
-      sheet.mergeCells("A2:L2");
+      // Map para lookup O(1) en lugar de find() O(n) dentro del loop
+      const issueMap = new Map(allIssues.map((is) => [is.id, is]));
+
+      sheet.mergeCells("A2:O2");
       const componenteUnique =
         rows.length > 0 && rows[0].componente !== "-" && rows.every((r) => r.componente === rows[0].componente)
           ? rows[0].componente.toUpperCase()
@@ -889,7 +901,7 @@ const Overview = observer(function Overview() {
       sheet.getCell("A2").font = { bold: true, size: 18, name: "Arial", color: { argb: "FF000000" } };
       sheet.getCell("A2").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
 
-      sheet.mergeCells("A3:L3");
+      sheet.mergeCells("A3:O3");
       const firstCaseStartDate = rows
         .map((r) => issueMap.get(r.id)?.start_date ?? issueMap.get(r.id)?.created_at?.slice(0, 10))
         .filter(Boolean)
@@ -912,6 +924,9 @@ const Overview = observer(function Overview() {
         "TELÉFONO",
         "DIRECCIÓN DE HABITACIÓN",
         "TIPO DE CASO",
+        "GRADO MILITAR",
+        "COMPONENTE",
+        "UNIDAD / DEPENDENCIA",
         "DESCRIPCIÓN DE LA SOLICITUD",
         "DESCRIPCIÓN DEL CASO",
         "CÉDULA DE IDENTIDAD",
@@ -928,9 +943,6 @@ const Overview = observer(function Overview() {
       });
 
       const PHOTO_ROW_H_PT = Math.ceil((PHOTO_H_PX / 96) * 2.54 * 28.35);
-
-      // Map para lookup O(1) en lugar de find() O(n) dentro del loop
-      const issueMap = new Map(allIssues.map((is) => [is.id, is]));
 
       // oxlint-disable-next-line unicorn/no-array-sort
       const sortedRows = [...rows].sort((a, b) =>
@@ -953,6 +965,9 @@ const Overview = observer(function Overview() {
           toUpperOrDash(telefonoCombinado),
           toUpperOrDash(d?.direccion),
           toUpperOrDash(issue?.name),
+          toUpperOrDash(row.gradoMilitar),
+          toUpperOrDash(row.componente),
+          toUpperOrDash(row.unidadDependencia),
           toUpperOrDash(row.referencia),
           toUpperOrDash(row.descripcionCaso),
           "",
@@ -961,7 +976,7 @@ const Overview = observer(function Overview() {
           toUpperOrDash(d?.observacionCierre),
         ];
         cellValues.forEach((val, idx) => {
-          if (idx !== 8 && idx !== 9) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
+          if (idx !== 11 && idx !== 12) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
         });
         const dataRow = sheet.addRow(cellValues);
         if (includePhotos) {
@@ -969,13 +984,13 @@ const Overview = observer(function Overview() {
           const CHARS_EST = 18;
           let maxLines = 1;
           cellValues.forEach((val, idx) => {
-            if (idx === 8 || idx === 9) return;
+            if (idx === 11 || idx === 12) return;
             maxLines = Math.max(maxLines, Math.ceil(val.length / CHARS_EST));
           });
           dataRow.height = Math.max(PHOTO_ROW_H_PT, maxLines * PT_PER_LINE);
         }
         dataRow.eachCell((cell, colNum) => {
-          if (colNum !== 9 && colNum !== 10) {
+          if (colNum !== 12 && colNum !== 13) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ROW_BG } };
           }
           cell.font = { size: 12, name: "Arial" };
@@ -1000,7 +1015,7 @@ const Overview = observer(function Overview() {
               const imgId = workbook.addImage({ base64: base64Full.split(",")[1], extension: ext });
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               sheet.addImage(imgId, {
-                tl: { col: 8, row: rowZero } as any,
+                tl: { col: 11, row: rowZero } as any,
                 ext: { width: PHOTO_W_PX, height: PHOTO_H_PX },
               });
             }
@@ -1053,8 +1068,8 @@ const Overview = observer(function Overview() {
       }
 
       sheet.columns.forEach((col, idx) => {
-        if (idx === 8) return;
-        if (idx === 9) {
+        if (idx === 11) return;
+        if (idx === 12) {
           col.width = Math.max(Math.ceil((colMaxLen[idx] ?? 0) * 0.85) + 1, RESENA_COL_W);
           return;
         }

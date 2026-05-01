@@ -140,6 +140,30 @@ const escapeHtml = (str: string): string =>
  *  1. Primero intenta leer el JSON del <caption> (robusto, ProseMirror lo conserva como texto)
  *  2. Si no, reconstruye campo a campo leyendo data-key de cada <td>
  */
+// Componentes FANB canonicos: usados para retrocompatibilidad y exportaciones.
+const FANB_COMPONENTS_SET = new Set([
+  "Ejército Nacional Bolivariano",
+  "Armada Bolivariana de Venezuela",
+  "Aviación Militar Bolivariana",
+  "Guardia Nacional Bolivariana",
+  "Milicia Nacional Bolivariana",
+]);
+
+export const isMilitarySocialCaseData = (
+  data?: Pick<SocialCaseData, "esMilitar" | "gradoMilitar" | "jornada" | "unidadDependencia"> | null
+): boolean => {
+  const jornada = data?.jornada?.trim() ?? "";
+  return Boolean(
+    data?.esMilitar === "true" ||
+    data?.gradoMilitar?.trim() ||
+    data?.unidadDependencia?.trim() ||
+    FANB_COMPONENTS_SET.has(jornada)
+  );
+};
+
+const normalizeExtractedSocialCase = (data: SocialCaseData): SocialCaseData =>
+  isMilitarySocialCaseData(data) ? { ...data, esMilitar: "true" } : data;
+
 export const extractFromHtml = (html: string): SocialCaseData | null => {
   if (!html?.match(TABLE_RE)) return null;
   try {
@@ -154,7 +178,7 @@ export const extractFromHtml = (html: string): SocialCaseData | null => {
       try {
         const parsed = JSON.parse(caption.textContent);
         if (parsed && typeof parsed === "object" && "cedula" in parsed)
-          return { ...EMPTY, ...parsed } as SocialCaseData;
+          return normalizeExtractedSocialCase({ ...EMPTY, ...parsed } as SocialCaseData);
       } catch (_) {}
     }
 
@@ -168,7 +192,7 @@ export const extractFromHtml = (html: string): SocialCaseData | null => {
       const key = cells[0].getAttribute("data-key") as keyof SocialCaseData | null;
       if (key && key in result) result[key] = cells[1].textContent ?? "";
     });
-    return result;
+    return normalizeExtractedSocialCase(result);
   } catch {
     return null;
   }
@@ -251,15 +275,6 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
 
 // Campos adicionales solo para militares (deben coincidir con FIELDS_MILITAR en use-social-case-state-change.ts)
 const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["gradoMilitar", "jornada", "unidadDependencia"];
-
-// Componentes FANB canónicos — constante de módulo usada en retrocompat y validación
-const FANB_COMPONENTS_SET = new Set([
-  "Ejército Nacional Bolivariano",
-  "Armada Bolivariana de Venezuela",
-  "Aviación Militar Bolivariana",
-  "Guardia Nacional Bolivariana",
-  "Milicia Nacional Bolivariana",
-]);
 
 const FANB_INSTITUCIONES = [
   { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
@@ -354,7 +369,10 @@ export const SocialCaseForm = ({
       // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por grado o
       // por componente FANB canónico. No usar jornada como texto libre porque casos civiles
       // viejos podían tener cualquier valor allí (ej. "Jornada de salud").
-      if (!extracted.esMilitar && (extracted.gradoMilitar || FANB_COMPONENTS_SET.has(extracted.jornada))) {
+      if (
+        !extracted.esMilitar &&
+        (extracted.gradoMilitar || extracted.unidadDependencia || FANB_COMPONENTS_SET.has(extracted.jornada))
+      ) {
         extracted.esMilitar = "true";
       }
       setData(extracted);

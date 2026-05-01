@@ -69,14 +69,13 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     issue: { getIssueById },
     attachment: { getAttachmentsByIssueId, getAttachmentById },
   } = useIssueDetail();
-  const { getProjectStates, getStateById } = useProjectState();
+  const { getProjectStates } = useProjectState();
 
   const [sessionUploads, setSessionUploads] = useState<Record<string, string>>({});
   const [slotUploading, setSlotUploading] = useState<Record<string, boolean>>({});
 
   const issue = getIssueById(issueId);
   const projectStates = getProjectStates(projectId);
-  const currentState = issue?.state_id ? getStateById(issue.state_id) : undefined;
 
   // Calcular qué slots ya tienen archivo subido leyendo directamente los adjuntos del store
   const storeSlotFiles = (getAttachmentsByIssueId(issueId) ?? []).reduce<Record<string, string>>((acc, attId) => {
@@ -103,16 +102,9 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     projectStates?.some((s) => s.name?.toLowerCase().includes("recib"))
   );
 
-  const isClosed = currentState?.group === "completed";
-  const isSinResolucion = currentState?.group === "cancelled";
-  const isEnProceso = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("proceso"));
-  const isArticulacion = hasSocialCaseWorkflow && Boolean(currentState?.name?.toLowerCase().includes("articulaci"));
-
   const data = extractFromHtml(issue?.description_html ?? "");
 
-  if (!hasSocialCaseWorkflow || !data || isClosed || isSinResolucion || (!isEnProceso && !isArticulacion)) {
-    return null;
-  }
+  if (!hasSocialCaseWorkflow || !data) return null;
 
   const handleSlotUpload = async (prefix: string, file: File) => {
     setSlotUploading((prev) => ({ ...prev, [prefix]: true }));
