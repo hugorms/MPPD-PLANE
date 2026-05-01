@@ -66,7 +66,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
   const {
     issue: { getIssueById },
   } = useIssueDetail();
-  const { getProjectById } = useProject();
+  const { getProjectById: _getProjectById } = useProject();
   const { getStateById } = useProjectState();
   const memberRoot = useMember();
 
@@ -76,7 +76,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
 
     setIsExporting(true);
     try {
-      const projectName = getProjectById(projectId)?.name ?? "Proyecto";
+      const projectName = "MPPD-GCS";
       const generatedAtLabel = new Date().toLocaleDateString("es-VE");
       const stateName = issue.state_id ? (getStateById(issue.state_id)?.name ?? "Sin estado") : "Sin estado";
       const assignees = (issue.assignee_ids ?? [])

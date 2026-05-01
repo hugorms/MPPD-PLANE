@@ -584,7 +584,7 @@ const Overview = observer(function Overview() {
     return `${f} – ${t2}`;
   }, [fromDate, toDate]);
 
-  const projectName = selectedProjectId ? (getProjectById(selectedProjectId)?.name ?? "Proyecto") : "Proyecto";
+  const projectName = "MPPD-GCS";
 
   // ── PDF export ───────────────────────────────────────────────────────────────
   const handleDownload = async () => {

@@ -81,6 +81,7 @@ class GlobalSearchEndpoint(BaseAPIView):
 
     def filter_issues(self, query, slug, project_id, workspace_search):
         fields = ["name", "sequence_id", "project__identifier"]
+        social_fields = ["social_case_cedula", "social_case_nombre"]
         q = Q()
         if query:
             for field in fields:
@@ -91,6 +92,8 @@ class GlobalSearchEndpoint(BaseAPIView):
                         q |= Q(**{"sequence_id": sequence_id})
                 else:
                     q |= Q(**{f"{field}__icontains": query})
+            for field in social_fields:
+                q |= Q(**{f"{field}__icontains": query})
 
         issues = Issue.issue_objects.filter(
             q,
