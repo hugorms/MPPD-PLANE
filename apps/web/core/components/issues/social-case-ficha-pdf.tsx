@@ -337,6 +337,9 @@ export function SocialCaseFichaPDF({
           <Row label="Parroquia" value={data.parroquia} />
           <Row label="Municipio" value={data.municipio} />
           <Row label="Estado" value={data.entidad} />
+          {data.esMilitar === "true" && data.condicionMilitar ? (
+            <Row label="Condición militar" value={data.condicionMilitar} />
+          ) : null}
           {data.esMilitar === "true" && data.gradoMilitar ? (
             <Row label="Grado militar" value={data.gradoMilitar} />
           ) : null}

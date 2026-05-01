@@ -151,6 +151,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
         municipio: "",
         entidad: "",
         esMilitar: "",
+        condicionMilitar: "",
         gradoMilitar: "",
         unidadDependencia: "",
         jornada: "",

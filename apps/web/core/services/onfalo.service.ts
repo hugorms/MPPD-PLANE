@@ -12,6 +12,7 @@ export type OnfaloPersonData = {
   fotoUrl: string | null;
   notFound: boolean;
   esMilitar: boolean;
+  condicionMilitar: string;
   gradoMilitar: string;
   componente: string;
 };
@@ -64,8 +65,8 @@ const firstNonEmptyAll = (...vals: unknown[]): string => {
   return "";
 };
 
-const hasActiveMilitaryProhibition = (prohibitions: unknown): boolean => {
-  if (!Array.isArray(prohibitions)) return false;
+const getMilitaryCondition = (prohibitions: unknown): string => {
+  if (!Array.isArray(prohibitions)) return "";
   return prohibitions.some((item) => {
     const p = item as Record<string, any>;
     const values = [
@@ -77,7 +78,9 @@ const hasActiveMilitaryProhibition = (prohibitions: unknown): boolean => {
       p.securityAgency?.name,
     ];
     return values.some((value) => typeof value === "string" && normalizeStr(value).includes("militar activo"));
-  });
+  })
+    ? "Militar Activo"
+    : "";
 };
 
 export class OnfaloService {
@@ -141,7 +144,8 @@ export class OnfaloService {
       const componenteRaw: string = mil.Componente?.descripcion ?? d.Tif?.Componente?.descripcion ?? "";
       const componenteAbr: string = mil.Componente?.abreviatura ?? d.HistorialMilitar?.[0]?.componente ?? "";
       const componente = matchComponente(componenteRaw) || COMPONENTE_MAP[componenteAbr.toUpperCase()] || "";
-      const esMilitar = Boolean(gradoMilitar || componente || hasActiveMilitaryProhibition(d.prohibitions));
+      const condicionMilitar = getMilitaryCondition(d.prohibitions);
+      const esMilitar = Boolean(gradoMilitar || componente || condicionMilitar);
 
       return {
         nombre,
@@ -153,6 +157,7 @@ export class OnfaloService {
         fotoUrl,
         notFound: false,
         esMilitar,
+        condicionMilitar,
         gradoMilitar,
         componente,
       };
@@ -169,6 +174,7 @@ export class OnfaloService {
           fotoUrl: null,
           notFound: true,
           esMilitar: false,
+          condicionMilitar: "",
           gradoMilitar: "",
           componente: "",
         };

@@ -514,6 +514,7 @@ const Overview = observer(function Overview() {
         entidad,
         componente,
         esMilitar: isMilitar,
+        condicionMilitar: isMilitar ? d?.condicionMilitar || "-" : "-",
         gradoMilitar: isMilitar ? d?.gradoMilitar || "-" : "-",
         unidadDependencia: d?.unidadDependencia || "-",
         referencia: d?.referencia || "-",
@@ -856,7 +857,7 @@ const Overview = observer(function Overview() {
       const CRED_IMG_H = 113;
       const RESENA_IMG_W = 94;
       const RESENA_IMG_H = 113;
-      const RESENA_COL_IDX = 12;
+      const RESENA_COL_IDX = 13;
       const RESENA_COL_W = 40;
       const RESENA_COL_W_PX = RESENA_COL_W * 7 + 5;
       const RESENA_GAP = 4;
@@ -885,6 +886,7 @@ const Overview = observer(function Overview() {
         { key: "telefono" },
         { key: "direccion" },
         { key: "tipo" },
+        { key: "condicion_militar" },
         { key: "grado_militar" },
         { key: "componente" },
         { key: "unidad_dependencia" },
@@ -895,7 +897,7 @@ const Overview = observer(function Overview() {
         { key: "organismo" },
         { key: "observacion" },
       ];
-      const colMaxLen = [2, 38, 20, 14, 26, 14, 18, 24, 28, 28, 28, 0, 0, 22, 24];
+      const colMaxLen = [2, 38, 20, 14, 26, 14, 20, 18, 24, 28, 28, 28, 0, 0, 22, 24];
 
       let logoId: number | null = null;
       try {
@@ -917,7 +919,7 @@ const Overview = observer(function Overview() {
       sheet.getRow(2).height = 40;
       sheet.getRow(3).height = 28;
 
-      sheet.mergeCells("A1:O1");
+      sheet.mergeCells("A1:P1");
       sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
       if (logoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -927,7 +929,7 @@ const Overview = observer(function Overview() {
       // Map para lookup O(1) en lugar de find() O(n) dentro del loop
       const issueMap = new Map(allIssues.map((is) => [is.id, is]));
 
-      sheet.mergeCells("A2:O2");
+      sheet.mergeCells("A2:P2");
       const componenteUnique =
         rows.length > 0 && rows[0].componente !== "-" && rows.every((r) => r.componente === rows[0].componente)
           ? rows[0].componente.toUpperCase()
@@ -936,7 +938,7 @@ const Overview = observer(function Overview() {
       sheet.getCell("A2").font = { bold: true, size: 18, name: "Arial", color: { argb: "FF000000" } };
       sheet.getCell("A2").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
 
-      sheet.mergeCells("A3:O3");
+      sheet.mergeCells("A3:P3");
       const firstCaseStartDate = rows
         .map((r) => issueMap.get(r.id)?.start_date ?? issueMap.get(r.id)?.created_at?.slice(0, 10))
         .filter(Boolean)
@@ -959,6 +961,7 @@ const Overview = observer(function Overview() {
         "TELÉFONO",
         "DIRECCIÓN DE HABITACIÓN",
         "TIPO DE CASO",
+        "CONDICIÓN MILITAR",
         "GRADO MILITAR",
         "COMPONENTE",
         "UNIDAD / DEPENDENCIA",
@@ -1000,6 +1003,7 @@ const Overview = observer(function Overview() {
           toUpperOrDash(telefonoCombinado),
           toUpperOrDash(d?.direccion),
           toUpperOrDash(issue?.name),
+          toUpperOrDash(row.condicionMilitar),
           toUpperOrDash(row.gradoMilitar),
           toUpperOrDash(row.componente),
           toUpperOrDash(row.unidadDependencia),
@@ -1011,7 +1015,7 @@ const Overview = observer(function Overview() {
           toUpperOrDash(d?.observacionCierre),
         ];
         cellValues.forEach((val, idx) => {
-          if (idx !== 11 && idx !== 12) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
+          if (idx !== 12 && idx !== 13) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
         });
         const dataRow = sheet.addRow(cellValues);
         if (includePhotos) {
@@ -1019,13 +1023,13 @@ const Overview = observer(function Overview() {
           const CHARS_EST = 18;
           let maxLines = 1;
           cellValues.forEach((val, idx) => {
-            if (idx === 11 || idx === 12) return;
+            if (idx === 12 || idx === 13) return;
             maxLines = Math.max(maxLines, Math.ceil(val.length / CHARS_EST));
           });
           dataRow.height = Math.max(PHOTO_ROW_H_PT, maxLines * PT_PER_LINE);
         }
         dataRow.eachCell((cell, colNum) => {
-          if (colNum !== 12 && colNum !== 13) {
+          if (colNum !== 13 && colNum !== 14) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ROW_BG } };
           }
           cell.font = { size: 12, name: "Arial" };
@@ -1043,10 +1047,10 @@ const Overview = observer(function Overview() {
             const cedulaImgs = cedulaFiles.filter((a) => IMAGE_EXTS_XLS.has(getAttachmentExt(a))).slice(0, 2);
             const cedulaDocs = cedulaFiles.filter((a) => !IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
             if (cedulaDocs.length > 0) {
-              dataRow.getCell(12).value = cedulaDocs
+              dataRow.getCell(13).value = cedulaDocs
                 .map((a) => cleanAttachmentName(a.attributes?.name ?? "archivo adjunto"))
                 .join("\n");
-              dataRow.getCell(12).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+              dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
             }
             for (let imgIdx = 0; imgIdx < cedulaImgs.length; imgIdx++) {
               const cedulaAtt = cedulaImgs[imgIdx];
@@ -1062,13 +1066,13 @@ const Overview = observer(function Overview() {
                 const rowHPx = (dataRow.height ?? PHOTO_ROW_H_PT) * (96 / 72);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 sheet.addImage(imgId, {
-                  tl: { col: 11 + xPx / PHOTO_COL_W_PX, row: rowZero + RESENA_GAP / rowHPx } as any,
+                  tl: { col: 12 + xPx / PHOTO_COL_W_PX, row: rowZero + RESENA_GAP / rowHPx } as any,
                   ext: { width: CRED_IMG_W, height: CRED_IMG_H },
                 });
               } catch {
-                if (!dataRow.getCell(12).value) {
-                  dataRow.getCell(12).value = cleanAttachmentName(cedulaAtt.attributes?.name ?? "archivo adjunto");
-                  dataRow.getCell(12).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+                if (!dataRow.getCell(13).value) {
+                  dataRow.getCell(13).value = cleanAttachmentName(cedulaAtt.attributes?.name ?? "archivo adjunto");
+                  dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
                 }
               }
             }
@@ -1081,10 +1085,10 @@ const Overview = observer(function Overview() {
             const nativeImgs = nativeFiles.filter((a) => IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
             const nativeDocs = nativeFiles.filter((a) => !IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
             if (nativeDocs.length > 0) {
-              dataRow.getCell(13).value = nativeDocs
+              dataRow.getCell(14).value = nativeDocs
                 .map((a) => cleanAttachmentName(a.attributes?.name ?? "archivo adjunto"))
                 .join("\n");
-              dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+              dataRow.getCell(14).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
             }
             if (nativeImgs.length > 0) {
               const gridRows = Math.ceil(nativeImgs.length / 2);
@@ -1127,8 +1131,8 @@ const Overview = observer(function Overview() {
       }
 
       sheet.columns.forEach((col, idx) => {
-        if (idx === 11) return;
-        if (idx === 12) {
+        if (idx === 12) return;
+        if (idx === 13) {
           col.width = Math.max(Math.ceil((colMaxLen[idx] ?? 0) * 0.85) + 1, RESENA_COL_W);
           return;
         }

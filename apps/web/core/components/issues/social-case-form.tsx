@@ -19,6 +19,7 @@ export type SocialCaseData = {
   municipio: string;
   entidad: string;
   esMilitar: string; // "true" | ""
+  condicionMilitar: string;
   gradoMilitar: string;
   unidadDependencia: string;
   jornada: string;
@@ -81,6 +82,7 @@ const EMPTY: SocialCaseData = {
   municipio: "",
   entidad: "",
   esMilitar: "",
+  condicionMilitar: "",
   gradoMilitar: "",
   unidadDependencia: "",
   jornada: "",
@@ -116,6 +118,7 @@ const FIELDS: { key: keyof SocialCaseData; label: string }[] = [
   { key: "municipio", label: "Municipio" },
   { key: "entidad", label: "Estado" },
   { key: "esMilitar", label: "Es militar" },
+  { key: "condicionMilitar", label: "Condición militar" },
   { key: "gradoMilitar", label: "Grado militar" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
   { key: "jornada", label: "Jornada" },
@@ -150,10 +153,18 @@ const FANB_COMPONENTS_SET = new Set([
 ]);
 
 export const isMilitarySocialCaseData = (
-  data?: Pick<SocialCaseData, "esMilitar" | "gradoMilitar" | "jornada" | "unidadDependencia"> | null
+  data?: Pick<
+    SocialCaseData,
+    "esMilitar" | "condicionMilitar" | "gradoMilitar" | "jornada" | "unidadDependencia"
+  > | null
 ): boolean => {
   const jornada = data?.jornada?.trim() ?? "";
-  return Boolean(data?.esMilitar === "true" || data?.gradoMilitar?.trim() || FANB_COMPONENTS_SET.has(jornada));
+  return Boolean(
+    data?.esMilitar === "true" ||
+    data?.condicionMilitar?.trim() ||
+    data?.gradoMilitar?.trim() ||
+    FANB_COMPONENTS_SET.has(jornada)
+  );
 };
 
 const normalizeExtractedSocialCase = (data: SocialCaseData): SocialCaseData =>
@@ -270,7 +281,7 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
 ];
 
 // Campos adicionales solo para militares (deben coincidir con FIELDS_MILITAR en use-social-case-state-change.ts)
-const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["gradoMilitar", "jornada"];
+const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["condicionMilitar", "gradoMilitar", "jornada"];
 
 const FANB_INSTITUCIONES = [
   { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
@@ -312,6 +323,7 @@ const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
   { key: "nombre", label: "Nombre" },
   { key: "telefono", label: "Teléfono" },
   { key: "direccion", label: "Dirección" },
+  { key: "condicionMilitar", label: "Condición militar" },
   { key: "gradoMilitar", label: "Grado militar" },
   { key: "jornada", label: "Componente" },
   { key: "unidadDependencia", label: "Unidad / Dependencia" },
@@ -393,7 +405,10 @@ export const SocialCaseForm = ({
       // Retrocompat: casos creados antes del campo esMilitar — auto-detectar por grado o
       // por componente FANB canónico. No usar jornada como texto libre porque casos civiles
       // viejos podían tener cualquier valor allí (ej. "Jornada de salud").
-      if (!extracted.esMilitar && (extracted.gradoMilitar || FANB_COMPONENTS_SET.has(extracted.jornada))) {
+      if (
+        !extracted.esMilitar &&
+        (extracted.condicionMilitar || extracted.gradoMilitar || FANB_COMPONENTS_SET.has(extracted.jornada))
+      ) {
         extracted.esMilitar = "true";
       }
       setData(extracted);
@@ -439,6 +454,7 @@ export const SocialCaseForm = ({
     "jornada",
     "entidad",
     "esMilitar",
+    "condicionMilitar",
     "fechaCierre",
     "descripcionCaso",
   ]);
@@ -564,6 +580,7 @@ export const SocialCaseForm = ({
         ...(result.municipio && { municipio: toUpper(result.municipio) }),
         ...(result.entidad && { entidad: result.entidad }),
         ...(esMilitarDetectado && { esMilitar: "true" }),
+        ...(result.condicionMilitar && { condicionMilitar: result.condicionMilitar }),
         ...(result.gradoMilitar && { gradoMilitar: toUpper(result.gradoMilitar) }),
         ...(result.componente && { jornada: result.componente }),
       };
@@ -614,7 +631,9 @@ export const SocialCaseForm = ({
   const effectiveRecibidoRequired =
     data.esMilitar === "true"
       ? RECIBIDO_REQUIRED
-      : RECIBIDO_REQUIRED.filter(({ key }) => key !== "gradoMilitar" && key !== "jornada");
+      : RECIBIDO_REQUIRED.filter(
+          ({ key }) => key !== "condicionMilitar" && key !== "gradoMilitar" && key !== "jornada"
+        );
   const recibidoFilled = effectiveRecibidoRequired.filter(({ key }) => data[key]?.trim()).length;
   const recibidoComplete = recibidoFilled === effectiveRecibidoRequired.length;
 
@@ -813,7 +832,7 @@ export const SocialCaseForm = ({
                       const next = {
                         ...prev,
                         esMilitar: val,
-                        ...(val !== "true" ? { gradoMilitar: "", jornada: "" } : {}),
+                        ...(val !== "true" ? { condicionMilitar: "", gradoMilitar: "", jornada: "" } : {}),
                       };
                       if (mode === "create-no-save") {
                         try {
@@ -833,9 +852,26 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Fila 3: Grado | Componente — solo si es Militar */}
+            {/* Fila 3: Condición | Grado | Componente — solo si es Militar */}
             {data.esMilitar === "true" && (
-              <div className="grid grid-cols-2 gap-x-6">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                <div>
+                  <label htmlFor="sc-condicion-militar" className={labelClass}>
+                    Condición militar
+                  </label>
+                  <select
+                    id="sc-condicion-militar"
+                    disabled={!isEditable}
+                    className={fc(isEditable)}
+                    value={data.condicionMilitar}
+                    onChange={(e) => update("condicionMilitar", e.target.value)}
+                  >
+                    <option value="">-- Seleccionar condición --</option>
+                    <option value="Militar Activo">Militar Activo</option>
+                    <option value="Militar Retirado">Militar Retirado</option>
+                    <option value="Familiar Militar">Familiar Militar</option>
+                  </select>
+                </div>
                 <div>
                   <label htmlFor="sc-grado" className={labelClass}>
                     Grado militar
