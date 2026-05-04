@@ -137,6 +137,8 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
       )}
 
       <button
+        type="button"
+        className="w-full text-left"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -177,7 +179,12 @@ export const IssueAttachmentsListItem = observer(function IssueAttachmentsListIt
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div
+            role="presentation"
+            className="flex items-center gap-3"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             {attachment.created_by && (
               <Tooltip
                 isMobile={isMobile}

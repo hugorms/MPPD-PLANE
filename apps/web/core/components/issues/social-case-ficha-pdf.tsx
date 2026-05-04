@@ -184,6 +184,45 @@ const S = StyleSheet.create({
     color: C.black,
     textAlign: "center",
   },
+  attachHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  attachHeaderText: {
+    fontSize: 8,
+    color: C.gray500,
+  },
+  attachName: {
+    fontSize: 7,
+    color: C.gray500,
+    marginBottom: 8,
+  },
+  attachImageWrap: {
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 36,
+  },
+  attachImage: {
+    width: 400,
+    height: 610,
+    objectFit: "contain",
+  },
+  attachFileRow: {
+    border: `1px solid ${C.borderLight}`,
+    backgroundColor: C.gray100,
+    padding: 12,
+    marginTop: 16,
+  },
+  attachFileName: {
+    fontSize: 9,
+    color: C.black,
+    marginBottom: 4,
+  },
+  attachFileNote: {
+    fontSize: 7,
+    color: C.gray500,
+  },
 
   // ── FOOTER ──
   footer: {
@@ -208,6 +247,10 @@ export type FichaAttachment = {
   name: string;
   isImage: boolean;
   base64?: string;
+  sourceName?: string;
+  pageNumber?: number;
+  pageCount?: number;
+  isPdfPage?: boolean;
 };
 
 export type SocialCaseFichaProps = {
@@ -279,9 +322,10 @@ export function SocialCaseFichaPDF({
   };
   const attachmentLabel = (name: string) => cleanAttachmentName(name).split(".").pop()?.toUpperCase() || "ARCHIVO";
 
-  const solicitudFiles = attachments.filter((a) => !KNOWN_PREFIXES.some((p) => a.name.startsWith(`${p}_`)));
-  const ciFiles = attachments.filter((a) => a.name.startsWith("[CI_BEN]_"));
-  const registroFiles = attachments.filter((a) => a.name.startsWith("[ENTREGA]_"));
+  const summaryAttachments = attachments.filter((a) => !a.isPdfPage);
+  const solicitudFiles = summaryAttachments.filter((a) => !KNOWN_PREFIXES.some((p) => a.name.startsWith(`${p}_`)));
+  const ciFiles = summaryAttachments.filter((a) => a.name.startsWith("[CI_BEN]_"));
+  const registroFiles = summaryAttachments.filter((a) => a.name.startsWith("[ENTREGA]_"));
 
   type FotoSlot = { label: string; imgs: (typeof attachments)[number][] };
   const fotoSlots: FotoSlot[] = [
@@ -438,6 +482,37 @@ export function SocialCaseFichaPDF({
           <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
         </View>
       </Page>
+
+      {attachments.map((att, attIdx) => (
+        <Page key={`ficha-att-${att.sourceName ?? att.name}-${att.pageNumber ?? att.name}`} size="A4" style={S.page}>
+          <View style={S.attachHeader}>
+            <Text style={S.attachHeaderText}>
+              {numeroCaso} - {data.nombre}
+            </Text>
+            <Text style={S.attachHeaderText}>
+              Adjunto {attIdx + 1} / {attachments.length}
+              {att.isPdfPage && att.pageNumber && att.pageCount ? ` - Pagina ${att.pageNumber}/${att.pageCount}` : ""}
+            </Text>
+          </View>
+          <Text style={S.attachName}>{att.sourceName ?? att.name}</Text>
+
+          {att.isImage && att.base64 ? (
+            <View style={S.attachImageWrap}>
+              <Image src={att.base64} style={S.attachImage} />
+            </View>
+          ) : (
+            <View style={S.attachFileRow}>
+              <Text style={S.attachFileName}>{cleanAttachmentName(att.name)}</Text>
+              <Text style={S.attachFileNote}>Ver archivo adjunto por separado</Text>
+            </View>
+          )}
+
+          <View style={S.footer} fixed>
+            <Text style={S.footerText}>{projectName} - Ficha Tecnica Individual</Text>
+            <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
+          </View>
+        </Page>
+      ))}
     </Document>
   );
 }

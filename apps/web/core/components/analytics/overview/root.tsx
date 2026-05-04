@@ -27,6 +27,7 @@ import {
 import { VENEZUELA_ESTADOS } from "@/components/issues/social-case-estados";
 import { APIService } from "@/services/api.service";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
+import { fetchBase64WithAuth, resolveSocialCaseExportAttachment } from "@/utils/social-case-attachment-export";
 import { useMember } from "@/hooks/store/use-member";
 import { useLabel } from "@/hooks/store/use-label";
 import { useProject } from "@/hooks/store/use-project";
@@ -83,18 +84,6 @@ const getAttachmentExt = (attachment: XlsAttachment) => {
   return nameExt || urlExt;
 };
 
-async function urlToBase64(url: string): Promise<string> {
-  const res = await fetch(url, { credentials: "omit" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("loadend", () => resolve(reader.result as string));
-    reader.addEventListener("error", () => reject(new Error("FileReader error")));
-    reader.readAsDataURL(blob);
-  });
-}
-
 async function urlToBase64Authed(url: string): Promise<string> {
   const res = await fetch(url, { credentials: "include" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -105,15 +94,6 @@ async function urlToBase64Authed(url: string): Promise<string> {
     reader.addEventListener("error", () => reject(new Error("FileReader error")));
     reader.readAsDataURL(blob);
   });
-}
-
-async function fetchBase64WithAuth(apiUrl: string): Promise<string> {
-  if (apiUrl.includes("/api/cedula-photo/")) return urlToBase64Authed(apiUrl);
-  const sep = apiUrl.includes("?") ? "&" : "?";
-  const jsonRes = await fetch(`${apiUrl}${sep}as_url=1`, { credentials: "include" });
-  if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status}`);
-  const { url } = await jsonRes.json();
-  return urlToBase64(url);
 }
 
 function presetRange(preset: Preset): { from: Date | null; to: Date | null } {
@@ -618,7 +598,6 @@ const Overview = observer(function Overview() {
     setProgress({ current: 0, total: rows.length });
     try {
       const generatedAtLabel = new Date().toLocaleDateString("es-VE");
-      const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
       const ws = workspaceSlug?.toString() ?? "";
       const pid = selectedProjectId;
 
@@ -651,25 +630,7 @@ const Overview = observer(function Overview() {
           if (includeAttachments && includeDetails) {
             try {
               const rawList = await attachmentService.getIssueAttachments(ws, pid, row.id);
-              attachments = await Promise.all(
-                (rawList ?? []).map(async (a) => {
-                  const nameExt = (a.attributes?.name ?? "").split(".").pop()?.toLowerCase() ?? "";
-                  const urlExt = (a.asset_url ?? "").split("?")[0].split(".").pop()?.toLowerCase() ?? "";
-                  const ext = nameExt || urlExt;
-                  const isImage = IMAGE_EXTS.has(ext);
-                  if (isImage) {
-                    try {
-                      const url = getFileURL(a.asset_url) ?? a.asset_url;
-                      const fullUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
-                      const base64 = await fetchBase64WithAuth(fullUrl);
-                      return { name: a.attributes?.name ?? "archivo", isImage: true, base64 };
-                    } catch {
-                      return { name: a.attributes?.name ?? "archivo", isImage: false };
-                    }
-                  }
-                  return { name: a.attributes?.name ?? "archivo", isImage: false };
-                })
-              );
+              attachments = (await Promise.all((rawList ?? []).map(resolveSocialCaseExportAttachment))).flat();
             } catch {
               attachments = [];
             }

@@ -9,22 +9,9 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useMember } from "@/hooks/store/use-member";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
 import { SocialCaseFichaPDF, type FichaAttachment } from "@/components/issues/social-case-ficha-pdf";
+import { fetchBase64WithAuth, resolveSocialCaseExportAttachment } from "@/utils/social-case-attachment-export";
 
 const attachmentService = new IssueAttachmentService();
-const IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
-
-// URL MinIO pre-firmada (sin credenciales — la URL ya está firmada)
-async function urlToBase64(url: string): Promise<string> {
-  const res = await fetch(url, { credentials: "omit" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("loadend", () => resolve(reader.result as string));
-    reader.addEventListener("error", () => reject(new Error("FileReader error")));
-    reader.readAsDataURL(blob);
-  });
-}
 
 // URLs propias de Django (estáticos, cedula-photo, etc.) — con sesión
 async function urlToBase64Authed(url: string): Promise<string> {
@@ -37,17 +24,6 @@ async function urlToBase64Authed(url: string): Promise<string> {
     reader.addEventListener("error", () => reject(new Error("FileReader error")));
     reader.readAsDataURL(blob);
   });
-}
-
-// URLs de adjuntos MinIO: pide pre-signed URL a Django y descarga sin credenciales
-async function fetchBase64WithAuth(apiUrl: string): Promise<string> {
-  // /api/cedula-photo/ devuelve la imagen directamente (no JSON) — usar fetch autenticado directo
-  if (apiUrl.includes("/api/cedula-photo/")) return urlToBase64Authed(apiUrl);
-  const sep = apiUrl.includes("?") ? "&" : "?";
-  const jsonRes = await fetch(`${apiUrl}${sep}as_url=1`, { credentials: "include" });
-  if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status} al obtener URL`);
-  const { url } = await jsonRes.json();
-  return urlToBase64(url);
 }
 
 type Params = {
@@ -117,25 +93,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
       let fichaAttachments: FichaAttachment[] = [];
       try {
         const rawList = await attachmentService.getIssueAttachments(workspaceSlug, projectId, issueId);
-        fichaAttachments = await Promise.all(
-          (rawList ?? []).map(async (a) => {
-            const nameExt = (a.attributes?.name ?? "").split(".").pop()?.toLowerCase() ?? "";
-            const urlExt = (a.asset_url ?? "").split("?")[0].split(".").pop()?.toLowerCase() ?? "";
-            const ext = nameExt || urlExt;
-            const isImage = IMAGE_EXTS.has(ext);
-            if (isImage) {
-              try {
-                const url = getFileURL(a.asset_url) ?? a.asset_url;
-                const fullUrl = url.startsWith("http") ? url : `${window.location.origin}${url}`;
-                const base64 = await fetchBase64WithAuth(fullUrl);
-                return { name: a.attributes?.name ?? "archivo", isImage: true, base64 };
-              } catch {
-                return { name: a.attributes?.name ?? "archivo", isImage: false };
-              }
-            }
-            return { name: a.attributes?.name ?? "archivo", isImage: false };
-          })
-        );
+        fichaAttachments = (await Promise.all((rawList ?? []).map(resolveSocialCaseExportAttachment))).flat();
       } catch {
         fichaAttachments = [];
       }

@@ -201,6 +201,10 @@ export type AttachmentInfo = {
   name: string;
   isImage: boolean;
   base64?: string;
+  sourceName?: string;
+  pageNumber?: number;
+  pageCount?: number;
+  isPdfPage?: boolean;
 };
 
 export type ParsedIssueRow = {
@@ -874,9 +878,12 @@ export const SocialCaseReportPDF = ({
                     </Text>
                     <Text style={{ fontSize: 8, color: C.gray500 }}>
                       Adjunto {attIdx + 1} / {rowAttachments.length}
+                      {att.isPdfPage && att.pageNumber && att.pageCount
+                        ? ` · Página ${att.pageNumber}/${att.pageCount}`
+                        : ""}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 7, color: C.gray300, marginBottom: 8 }}>{att.name}</Text>
+                  <Text style={{ fontSize: 7, color: C.gray300, marginBottom: 8 }}>{att.sourceName ?? att.name}</Text>
 
                   {att.isImage && att.base64 ? (
                     <View style={{ alignItems: "center", marginTop: 8, marginBottom: 36 }}>
