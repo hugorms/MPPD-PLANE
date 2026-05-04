@@ -251,6 +251,14 @@ export const injectSocialCaseIntoHtml = (html: string, data: SocialCaseData): st
 
 const toUpper = (v: string) => v.toUpperCase();
 
+const capitalizeFirstLetter = (value: string) =>
+  value.replace(/^(\s*)(\p{L})/u, (_, spaces, letter) => `${spaces}${letter.toUpperCase()}`);
+
+const capitalizeWords = (value: string) =>
+  value
+    .toLocaleLowerCase("es-VE")
+    .replace(/(^|[\s.'-])(\p{L})/gu, (_, prefix, letter) => `${prefix}${letter.toLocaleUpperCase("es-VE")}`);
+
 const sectionHeadClass = "block text-xs text-custom-text-300 uppercase tracking-wider mb-2.5";
 
 const labelClass = "block text-xs text-custom-text-300 mb-0.5";
@@ -450,22 +458,35 @@ export const SocialCaseForm = ({
   }, [issueId, mode, descriptionHtml, editing]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const SELECT_FIELDS = new Set<keyof SocialCaseData>([
+  const UNCHANGED_FIELDS = new Set<keyof SocialCaseData>([
+    "cedula",
     "jornada",
     "entidad",
     "esMilitar",
     "condicionMilitar",
     "fechaCierre",
-    "descripcionCaso",
+    "institucionContactada",
+    "telefono",
+    "telefono2",
   ]);
 
-  const capFirst = (f: keyof SocialCaseData, v: string) => {
-    if (SELECT_FIELDS.has(f)) return v;
-    return v.toUpperCase();
+  const TITLE_CASE_FIELDS = new Set<keyof SocialCaseData>([
+    "nombre",
+    "gradoMilitar",
+    "unidadDependencia",
+    "direccion",
+    "parroquia",
+    "municipio",
+  ]);
+
+  const normalizeFieldValue = (f: keyof SocialCaseData, v: string) => {
+    if (UNCHANGED_FIELDS.has(f)) return v;
+    if (TITLE_CASE_FIELDS.has(f)) return capitalizeWords(v);
+    return capitalizeFirstLetter(v);
   };
 
   const update = (field: keyof SocialCaseData, value: string) => {
-    const val = capFirst(field, value);
+    const val = normalizeFieldValue(field, value);
     setData((prev) => {
       const next = { ...prev, [field]: val };
       if (mode === "create-no-save") {
