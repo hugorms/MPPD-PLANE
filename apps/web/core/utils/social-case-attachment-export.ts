@@ -53,6 +53,11 @@ async function fetchBlob(url: string, credentials: RequestCredentials): Promise<
   return res.blob();
 }
 
+async function isPdfBlob(blob: Blob): Promise<boolean> {
+  const header = await blob.slice(0, 5).text();
+  return header === "%PDF-";
+}
+
 async function fetchPublicBlob(url: string): Promise<Blob> {
   return fetchBlob(url, "omit");
 }
@@ -75,6 +80,20 @@ async function fetchBlobWithAuth(apiUrl: string): Promise<Blob> {
   if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status} al obtener URL`);
   const { url } = await jsonRes.json();
   return fetchPublicBlob(url);
+}
+
+async function fetchPdfBlobWithAuth(apiUrl: string): Promise<Blob> {
+  try {
+    const directBlob = await fetchAuthedBlob(apiUrl);
+    if (await isPdfBlob(directBlob)) return directBlob;
+  } catch {
+    // Continuar con URL firmada.
+  }
+
+  const sep = apiUrl.includes("?") ? "&" : "?";
+  const signedBlob = await fetchBlob(`${apiUrl}${sep}as_url=1`, "include");
+  if (await isPdfBlob(signedBlob)) return signedBlob;
+  throw new Error("El adjunto descargado no es un PDF valido");
 }
 
 export async function fetchBase64WithAuth(apiUrl: string): Promise<string> {
@@ -145,7 +164,7 @@ export async function resolveSocialCaseExportAttachment(
 
   if (PDF_EXTS.has(ext)) {
     try {
-      const blob = await fetchBlobWithAuth(fullUrl);
+      const blob = await fetchPdfBlobWithAuth(fullUrl);
       const pages = await pdfBlobToPageImages(blob, name);
       return pages.length > 0 ? pages : [{ name, isImage: false }];
     } catch {
