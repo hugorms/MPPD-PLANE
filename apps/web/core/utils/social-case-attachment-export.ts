@@ -83,13 +83,6 @@ async function fetchBlobWithAuth(apiUrl: string): Promise<Blob> {
 }
 
 async function fetchPdfBlobWithAuth(apiUrl: string): Promise<Blob> {
-  try {
-    const directBlob = await fetchAuthedBlob(apiUrl);
-    if (await isPdfBlob(directBlob)) return directBlob;
-  } catch {
-    // Continuar con URL firmada.
-  }
-
   const sep = apiUrl.includes("?") ? "&" : "?";
   try {
     const proxyBlob = await fetchBlob(`${apiUrl}${sep}proxy=1`, "include");

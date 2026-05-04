@@ -9,7 +9,7 @@ import re
 
 # Django imports
 from django.core.serializers.json import DjangoJSONEncoder
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.db import IntegrityError
 from django.db.models import (
     Case,
@@ -2101,6 +2101,30 @@ class IssueAttachmentDetailAPIEndpoint(BaseAPIView):
             )
 
         storage = S3Storage(request=request)
+        if request.GET.get("proxy") == "1":
+            obj = storage.s3_client.get_object(
+                Bucket=storage.aws_storage_bucket_name,
+                Key=str(asset.asset.name),
+            )
+            response = StreamingHttpResponse(
+                obj["Body"].iter_chunks(),
+                content_type=obj.get("ContentType") or asset.attributes.get("type") or "application/octet-stream",
+            )
+            response["Content-Length"] = obj.get("ContentLength", "")
+            response["Content-Disposition"] = storage._get_content_disposition(
+                "inline",
+                asset.attributes.get("name"),
+            )
+            return response
+
+        if request.GET.get("as_url") == "1":
+            presigned_url = storage.generate_presigned_url(
+                object_name=asset.asset.name,
+                disposition="attachment",
+                filename=asset.attributes.get("name"),
+            )
+            return Response({"url": presigned_url})
+
         presigned_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
             disposition="attachment",
