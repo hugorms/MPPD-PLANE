@@ -1,6 +1,7 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { SocialCaseData } from "./social-case-form";
+import { isSocialCasePdfAttachment } from "@/utils/social-case-attachment-export";
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 const C = {
@@ -322,7 +323,7 @@ export function SocialCaseFichaPDF({
   };
   const attachmentLabel = (name: string) => cleanAttachmentName(name).split(".").pop()?.toUpperCase() || "ARCHIVO";
 
-  const summaryAttachments = attachments.filter((a) => !a.isPdfPage);
+  const summaryAttachments = attachments.filter((a) => !isSocialCasePdfAttachment(a));
   const solicitudFiles = summaryAttachments.filter((a) => !KNOWN_PREFIXES.some((p) => a.name.startsWith(`${p}_`)));
   const ciFiles = summaryAttachments.filter((a) => a.name.startsWith("[CI_BEN]_"));
   const registroFiles = summaryAttachments.filter((a) => a.name.startsWith("[ENTREGA]_"));

@@ -26,6 +26,11 @@ const getAttachmentExt = (attachment: RawAttachment) => {
   return nameExt || urlExt;
 };
 
+export const isSocialCasePdfAttachment = (attachment: { name?: string; sourceName?: string; isPdfPage?: boolean }) =>
+  Boolean(attachment.isPdfPage) ||
+  (attachment.name ?? "").split("?")[0].toLowerCase().endsWith(".pdf") ||
+  (attachment.sourceName ?? "").split("?")[0].toLowerCase().endsWith(".pdf");
+
 const blobToBase64 = (blob: Blob): Promise<string> =>
   new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,20 +39,36 @@ const blobToBase64 = (blob: Blob): Promise<string> =>
     reader.readAsDataURL(blob);
   });
 
-async function fetchPublicBlob(url: string): Promise<Blob> {
-  const res = await fetch(url, { credentials: "omit" });
+async function fetchBlob(url: string, credentials: RequestCredentials): Promise<Blob> {
+  const res = await fetch(url, { credentials });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const payload = await res.json();
+    if (typeof payload?.url === "string") return fetchBlob(payload.url, "omit");
+    throw new Error("JSON response without signed URL");
+  }
+
   return res.blob();
 }
 
+async function fetchPublicBlob(url: string): Promise<Blob> {
+  return fetchBlob(url, "omit");
+}
+
 async function fetchAuthedBlob(url: string): Promise<Blob> {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.blob();
+  return fetchBlob(url, "include");
 }
 
 async function fetchBlobWithAuth(apiUrl: string): Promise<Blob> {
   if (apiUrl.includes("/api/cedula-photo/")) return fetchAuthedBlob(apiUrl);
+
+  try {
+    return await fetchAuthedBlob(apiUrl);
+  } catch {
+    // Algunas rutas de assets devuelven JSON con URL firmada solo al pedir as_url=1.
+  }
 
   const sep = apiUrl.includes("?") ? "&" : "?";
   const jsonRes = await fetch(`${apiUrl}${sep}as_url=1`, { credentials: "include" });
