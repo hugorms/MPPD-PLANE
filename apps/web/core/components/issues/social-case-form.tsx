@@ -886,7 +886,7 @@ export const SocialCaseForm = ({
                     onChange={(e) => update("gradoMilitar", e.target.value)}
                   />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label htmlFor="sc-jornada" className={labelClass}>
                     Componente
                   </label>
@@ -1080,13 +1080,15 @@ export const SocialCaseForm = ({
           {showFullSeguimiento && (
             <div className="space-y-3">
               <span className={sectionHeadClass}>En proceso</span>
-              <InstitucionSelect
-                id="sc-institucion-proceso"
-                disabled={!isEditable}
-                className={fc(isEditable)}
-                value={data.institucionContactada}
-                onChange={(value) => update("institucionContactada", value)}
-              />
+              {!isArticulacion && !isClosed && (
+                <InstitucionSelect
+                  id="sc-institucion-proceso"
+                  disabled={!isEditable}
+                  className={fc(isEditable)}
+                  value={data.institucionContactada}
+                  onChange={(value) => update("institucionContactada", value)}
+                />
+              )}
               <div>
                 <label htmlFor="sc-accion" className={labelClass}>
                   Acción tomada
