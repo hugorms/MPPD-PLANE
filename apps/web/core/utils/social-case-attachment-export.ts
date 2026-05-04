@@ -91,6 +91,13 @@ async function fetchPdfBlobWithAuth(apiUrl: string): Promise<Blob> {
   }
 
   const sep = apiUrl.includes("?") ? "&" : "?";
+  try {
+    const proxyBlob = await fetchBlob(`${apiUrl}${sep}proxy=1`, "include");
+    if (await isPdfBlob(proxyBlob)) return proxyBlob;
+  } catch {
+    // Continuar con URL firmada.
+  }
+
   const signedBlob = await fetchBlob(`${apiUrl}${sep}as_url=1`, "include");
   if (await isPdfBlob(signedBlob)) return signedBlob;
   throw new Error("El adjunto descargado no es un PDF valido");

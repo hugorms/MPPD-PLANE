@@ -10,7 +10,7 @@ import uuid
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, StreamingHttpResponse
 
 # Third Party imports
 from rest_framework.response import Response
@@ -180,6 +180,22 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 )
 
             storage = S3Storage(request=request)
+            if request.GET.get("proxy") == "1":
+                obj = storage.s3_client.get_object(
+                    Bucket=storage.aws_storage_bucket_name,
+                    Key=str(asset.asset.name),
+                )
+                response = StreamingHttpResponse(
+                    obj["Body"].iter_chunks(),
+                    content_type=obj.get("ContentType") or asset.attributes.get("type") or "application/octet-stream",
+                )
+                response["Content-Length"] = obj.get("ContentLength", "")
+                response["Content-Disposition"] = storage._get_content_disposition(
+                    "inline",
+                    asset.attributes.get("name"),
+                )
+                return response
+
             presigned_url = storage.generate_presigned_url(
                 object_name=asset.asset.name,
                 disposition="attachment",
