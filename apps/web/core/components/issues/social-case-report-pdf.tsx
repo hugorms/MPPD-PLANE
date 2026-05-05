@@ -304,14 +304,6 @@ const PDF_FANB_COMPONENTES = [
   "Milicia Nacional Bolivariana",
 ] as const;
 
-const PDF_FANB_COLOR_MAP: Record<string, string> = {
-  "Ejército Nacional Bolivariano": "#15803d",
-  "Armada Bolivariana de Venezuela": "#1d4ed8",
-  "Aviación Militar Bolivariana": "#0369a1",
-  "Guardia Nacional Bolivariana": "#4d7c0f",
-  "Milicia Nacional Bolivariana": "#b91c1c",
-};
-
 type Props = {
   rows: ParsedIssueRow[];
   projectName: string;
@@ -346,17 +338,16 @@ function pdfMonthLabel(yyyyMM: string): string {
 function PdfHBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
   const pct = total > 0 ? Math.max(2, Math.round((count / total) * 100)) : 2;
   return (
-    <View style={{ marginBottom: 6 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
-        <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color, marginRight: 5 }} />
-        <Text style={{ fontSize: 7.5, color: C.gray700, flex: 1 }} numberOfLines={1}>
+    <View style={{ marginBottom: 7 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 3 }}>
+        <Text style={{ fontSize: 7.2, color: C.gray700, flex: 1 }} numberOfLines={1}>
           {label}
         </Text>
-        <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 4 }}>{count}</Text>
-        <Text style={{ fontSize: 6.5, color: C.gray500, marginLeft: 3 }}>{pct}%</Text>
+        <Text style={{ fontSize: 7.2, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 4 }}>{count}</Text>
+        <Text style={{ fontSize: 6.2, color: C.gray500, marginLeft: 3 }}>{pct}%</Text>
       </View>
-      <View style={{ width: "100%", height: 5, backgroundColor: C.gray100 }}>
-        <View style={{ width: `${pct}%`, height: 5, backgroundColor: color, opacity: 0.85 }} />
+      <View style={{ width: "100%", height: 6, backgroundColor: "#e8eef7", borderRadius: 3 }}>
+        <View style={{ width: `${pct}%`, height: 6, backgroundColor: color, borderRadius: 3 }} />
       </View>
     </View>
   );
@@ -364,8 +355,8 @@ function PdfHBar({ label, count, total, color }: { label: string; count: number;
 
 function SectionHeader({ title, sub }: { title: string; sub?: string }) {
   return (
-    <View style={{ marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${C.border}` }}>
-      <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{title}</Text>
+    <View style={{ marginBottom: 8, paddingBottom: 5, borderBottom: `1px solid ${C.border}` }}>
+      <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.navy }}>{title}</Text>
       {sub ? <Text style={{ fontSize: 6.5, color: C.gray500, marginTop: 1 }}>{sub}</Text> : null}
     </View>
   );
@@ -385,7 +376,6 @@ function GraphicPage({
   byEntidad,
   byMonth,
   byLabel = [],
-  stateColorMap = {},
 }: {
   projectName: string;
   dateRange: string;
@@ -400,10 +390,10 @@ function GraphicPage({
   byEntidad: [string, number][];
   byMonth: [string, number][];
   byLabel?: [string, number][];
-  stateColorMap?: Record<string, string>;
 }) {
   const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
-  const CHART_H = 60;
+  const CHART_H = 68;
+  const BAR_COLOR = C.navy;
 
   // Solo los 5 FANB canónicos con count > 0
   // oxlint-disable-next-line unicorn/no-array-sort
@@ -424,104 +414,112 @@ function GraphicPage({
         style={{
           flexDirection: "row",
           alignItems: "center",
-          marginBottom: 12,
+          marginBottom: 16,
           paddingBottom: 8,
-          borderBottom: `2px solid ${C.blue}`,
+          borderBottom: `2px solid ${C.navy}`,
         }}
       >
-        {logoUrl && <Image src={logoUrl} style={{ width: 100, height: 34, objectFit: "contain", marginRight: 10 }} />}
+        {logoUrl && <Image src={logoUrl} style={{ width: 96, height: 32, objectFit: "contain", marginRight: 10 }} />}
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 13, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{projectName}</Text>
-          <Text style={{ fontSize: 8, color: C.gray500, marginTop: 2 }}>Análisis de Casos Sociales · {dateRange}</Text>
+          <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy }}>{projectName}</Text>
+          <Text style={{ fontSize: 7.5, color: C.gray500, marginTop: 2 }}>
+            Análisis de Casos Sociales · Todos los registros
+          </Text>
         </View>
+        <Text style={{ fontSize: 7.5, color: C.gray500 }}>{dateRange}</Text>
       </View>
 
       {/* KPIs */}
-      <View style={{ flexDirection: "row", gap: 6, marginBottom: 12 }}>
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
         {(
           [
-            { label: "Total de fichas", value: total, color: C.blue, pct: "" },
+            { label: "Total de fichas", value: total, pct: "" },
             {
               label: "Resueltos",
               value: conResultado,
-              color: "#16a34a",
               pct: total > 0 ? ` ${Math.round((conResultado / total) * 100)}%` : "",
             },
-            { label: "Civiles", value: cantCiviles, color: C.gray700, pct: ` ${civPct}%` },
-            { label: "Militares", value: cantMilitares, color: "#1d4ed8", pct: ` ${milPct}%` },
+            { label: "Civiles", value: cantCiviles, pct: ` ${civPct}%` },
+            { label: "Militares", value: cantMilitares, pct: ` ${milPct}%` },
           ] as const
         ).map((k) => (
           <View
             key={k.label}
-            style={{ flex: 1, backgroundColor: C.gray100, padding: 8, borderLeft: `3px solid ${k.color}` }}
+            style={{
+              flex: 1,
+              backgroundColor: C.gray50,
+              paddingVertical: 10,
+              paddingHorizontal: 9,
+              borderLeft: `3px solid ${C.navy}`,
+              borderRadius: 4,
+              border: `1px solid ${C.border}`,
+            }}
           >
             <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-              <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{k.value}</Text>
+              <Text style={{ fontSize: 19, fontFamily: "Helvetica-Bold", color: C.navy }}>{k.value}</Text>
               {k.pct ? <Text style={{ fontSize: 7, color: C.gray500, marginLeft: 3 }}>{k.pct}</Text> : null}
             </View>
-            <Text style={{ fontSize: 7, color: C.gray500, marginTop: 1 }}>{k.label}</Text>
+            <Text style={{ fontSize: 6.8, color: C.gray500, marginTop: 2 }}>{k.label}</Text>
           </View>
         ))}
       </View>
 
       {/* 2 columnas */}
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: "row", gap: 12 }}>
         {/* Columna izquierda */}
-        <View style={{ flex: 1, gap: 10 }}>
+        <View style={{ flex: 1, gap: 11 }}>
           {/* Componentes FANB */}
-          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
             <SectionHeader title="COMPONENTES FANB" sub="Distribución por rama militar" />
             {fanbEntries.map(([name, count]) => (
-              <PdfHBar
-                key={name}
-                label={name}
-                count={count}
-                total={total}
-                color={PDF_FANB_COLOR_MAP[name] ?? C.gray500}
-              />
+              <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
             ))}
           </View>
 
           {/* Estado de Venezuela */}
-          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
             <SectionHeader title="ESTADO DE VENEZUELA" sub={`Top ${byEntidad.length}`} />
             {byEntidad.length === 0 ? (
               <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos registrados</Text>
             ) : (
               byEntidad
                 .slice(0, 6)
-                .map(([name, count]) => <PdfHBar key={name} label={name} count={count} total={total} color="#7c3aed" />)
+                .map(([name, count]) => (
+                  <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
+                ))
             )}
           </View>
         </View>
 
         {/* Columna derecha */}
-        <View style={{ flex: 1, gap: 10 }}>
-          {/* Estado del caso — colores reales */}
-          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+        <View style={{ flex: 1, gap: 11 }}>
+          {/* Estado del caso */}
+          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
             <SectionHeader
               title="ESTADO DEL CASO"
               sub={`${stateEntries.length} estado${stateEntries.length !== 1 ? "s" : ""}`}
             />
             {stateEntries.map(([name, count]) => (
-              <PdfHBar key={name} label={name} count={count} total={total} color={stateColorMap[name] ?? C.gray500} />
+              <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
             ))}
           </View>
 
           {/* Etiquetas */}
-          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
             <SectionHeader title="ETIQUETAS" sub={`${byLabel.length} etiqueta${byLabel.length !== 1 ? "s" : ""}`} />
             {byLabel.length === 0 ? (
               <Text style={{ fontSize: 7, color: C.gray500 }}>Sin etiquetas asignadas</Text>
             ) : (
               byLabel
                 .slice(0, 6)
-                .map(([name, count]) => <PdfHBar key={name} label={name} count={count} total={total} color={C.blue} />)
+                .map(([name, count]) => (
+                  <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
+                ))
             )}
           </View>
 
           {/* Evolución mensual */}
-          <View style={{ backgroundColor: C.gray50, padding: 9 }}>
+          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
             <SectionHeader title="EVOLUCIÓN MENSUAL" sub={`Últimos ${byMonth.length} meses`} />
             {byMonth.length === 0 ? (
               <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
@@ -533,7 +531,7 @@ function GraphicPage({
                   return (
                     <View key={month} style={{ flex: 1, alignItems: "center" }}>
                       <Text style={{ fontSize: 5.5, color: C.gray700, marginBottom: 1 }}>{count}</Text>
-                      <View style={{ width: "100%", height: barH, backgroundColor: C.blue, opacity }} />
+                      <View style={{ width: "100%", height: barH, backgroundColor: BAR_COLOR, opacity }} />
                       <Text style={{ fontSize: 5, color: C.gray500, marginTop: 1 }} numberOfLines={1}>
                         {pdfMonthLabel(month)}
                       </Text>
@@ -579,7 +577,6 @@ export const SocialCaseReportPDF = ({
   byEntidad = [],
   byMonth = [],
   byLabel = [],
-  stateColorMap = {},
   conResultado,
   generatedAtLabel,
   includeCover = true,
@@ -611,7 +608,6 @@ export const SocialCaseReportPDF = ({
           byEntidad={byEntidad}
           byMonth={byMonth}
           byLabel={byLabel ?? []}
-          stateColorMap={stateColorMap ?? {}}
         />
       )}
 
