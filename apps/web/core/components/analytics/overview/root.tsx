@@ -336,7 +336,6 @@ const Overview = observer(function Overview() {
   const generating = generatingType !== null;
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [includeCover, setIncludeCover] = useState(true);
-  const [includeGraphicSheet, setIncludeGraphicSheet] = useState(true);
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeDetails, setIncludeDetails] = useState(false);
   const [includeAttachments, setIncludeAttachments] = useState(true);
@@ -658,7 +657,7 @@ const Overview = observer(function Overview() {
           generatedAtLabel={generatedAtLabel}
           stateFlow={stateFlow}
           includeCover={includeCover}
-          includeGraphicSheet={includeGraphicSheet}
+          includeGraphicSheet={includeCover}
           includePhotos={includePhotos}
           includeDetails={includeDetails}
           includeAttachments={includeAttachments}
@@ -698,7 +697,7 @@ const Overview = observer(function Overview() {
       const workbook = new ExcelJS.Workbook();
 
       // ── Hoja de resumen gráfico ──────────────────────────────────────────────
-      if (includeGraphicSheet) {
+      if (includeCover) {
         const summary = workbook.addWorksheet("Resumen");
         const HBG = "FF1e3a5f";
         const WHT = "FFFFFFFF";
@@ -1504,23 +1503,12 @@ const Overview = observer(function Overview() {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex cursor-pointer items-center justify-between gap-3">
                       <div>
-                        <p className="text-13 text-secondary">Incluir portada / resumen</p>
-                        <p className="text-11 text-tertiary">Totales por estado, componente y condición.</p>
+                        <p className="text-13 text-secondary">Incluir portada estadística</p>
+                        <p className="text-11 text-tertiary">KPIs, gráficas, estados, componentes y etiquetas.</p>
                       </div>
                       <Checkbox
                         checked={includeCover}
                         onChange={() => setIncludeCover((v) => !v)}
-                        disabled={generating}
-                      />
-                    </div>
-                    <div className="flex cursor-pointer items-center justify-between gap-3">
-                      <div>
-                        <p className="text-13 text-secondary">Incluir hoja gráfica</p>
-                        <p className="text-11 text-tertiary">Página con KPIs y gráficas según el filtrado activo.</p>
-                      </div>
-                      <Checkbox
-                        checked={includeGraphicSheet}
-                        onChange={() => setIncludeGraphicSheet((v) => !v)}
                         disabled={generating}
                       />
                     </div>

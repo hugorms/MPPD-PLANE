@@ -657,19 +657,18 @@ export const SocialCaseReportPDF = ({
   includePhotos = true,
   includeDetails = false,
   includeAttachments = false,
-  includeGraphicSheet = false,
+  includeGraphicSheet: _includeGraphicSheet = false,
   logoUrl,
 }: Props) => {
   const total = rows.length;
-  const resueltos = rows.filter((r) => r.beneficiado).length;
-  const pctResueltos = total > 0 ? Math.round((resueltos / total) * 100) : 0;
+  const pctResueltos = total > 0 ? Math.round((conResultado / total) * 100) : 0;
   const cantCiviles = byCondicion?.["Civil"] ?? rows.filter((r) => !r.esMilitar).length;
   const cantMilitares = byCondicion?.["Militar"] ?? rows.filter((r) => r.esMilitar).length;
 
   return (
     <Document>
       {/* ══ PORTADA ══════════════════════════════════════════════════════════ */}
-      {includeCover && (
+      {includeCover && total < 0 && (
         <Page size="A4" style={[S.page, S.coverPage]}>
           {logoUrl && (
             <View style={{ alignItems: "center", marginBottom: 16 }}>
@@ -735,7 +734,7 @@ export const SocialCaseReportPDF = ({
       )}
 
       {/* ══ HOJA GRÁFICA ════════════════════════════════════════════════════ */}
-      {includeGraphicSheet && total > 0 && (
+      {includeCover && total > 0 && (
         <GraphicPage
           projectName={projectName}
           dateRange={dateRange}
