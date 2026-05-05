@@ -510,10 +510,8 @@ const Overview = observer(function Overview() {
       const componente = d?.jornada || (isMilitar ? "Militar / Sin componente" : "Civil");
       const issueIdentifier = `MPPDGCS-${issue.sequence_id}`;
       const entidad = d?.entidad?.trim() || "";
-      const assignees = (issue.assignee_ids ?? [])
-        .map((id: string) => memberRoot.getUserDetails(id)?.display_name || memberRoot.getUserDetails(id)?.first_name)
-        .filter(Boolean) as string[];
-      const responsable = assignees.length > 0 ? assignees.join(", ") : "Sin asignar";
+      const creator = issue.created_by_id ? memberRoot.getUserDetails(issue.created_by_id) : null;
+      const responsable = creator?.display_name || creator?.first_name || "Sin creador registrado";
 
       parsedRows.push({
         id: issue.id,

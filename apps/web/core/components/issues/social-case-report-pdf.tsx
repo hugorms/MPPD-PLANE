@@ -96,17 +96,17 @@ const S = StyleSheet.create({
     gap: 12,
   },
   detailPhotoFrame: {
-    width: 92,
+    width: 86,
     padding: 5,
     borderRadius: 7,
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
     alignItems: "center",
   },
-  detailPhoto: { width: 80, height: 106, borderRadius: 5, objectFit: "cover" },
+  detailPhoto: { width: 74, height: 98, borderRadius: 5, objectFit: "cover" },
   detailPhotoPlaceholder: {
-    width: 80,
-    height: 106,
+    width: 74,
+    height: 98,
     borderRadius: 5,
     backgroundColor: C.gray100,
     justifyContent: "center",
@@ -137,32 +137,34 @@ const S = StyleSheet.create({
   detailStatusText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, textAlign: "center" },
   metaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
   metaColIdentity: {
-    width: "30%",
+    width: "34%",
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
     borderRadius: 5,
     paddingVertical: 5,
     paddingHorizontal: 6,
-    minHeight: 132,
+    minHeight: 112,
   },
   metaColMilitary: {
-    width: "43%",
+    width: "63%",
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
     borderRadius: 5,
     paddingVertical: 5,
     paddingHorizontal: 6,
-    minHeight: 132,
+    minHeight: 112,
   },
   metaColManagement: {
-    width: "23.6%",
+    width: "100%",
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
     borderRadius: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-    minHeight: 132,
+    paddingVertical: 6,
+    paddingHorizontal: 7,
+    marginTop: 6,
   },
+  metaManagementGrid: { flexDirection: "row", gap: 8 },
+  metaManagementItem: { flex: 1 },
   metaCol: {
     flex: 1,
     backgroundColor: C.white,
@@ -817,17 +819,19 @@ export const SocialCaseReportPDF = ({
                           </View>
                         ) : null}
                       </View>
-                      <View style={S.metaColManagement}>
-                        <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
-                        <View style={S.metaItem}>
+                    </View>
+                    <View style={S.metaColManagement}>
+                      <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
+                      <View style={S.metaManagementGrid}>
+                        <View style={S.metaManagementItem}>
                           <Text style={S.metaLabel}>Responsable</Text>
                           <Text style={S.metaValue}>{row.responsable}</Text>
                         </View>
-                        <View style={S.metaItem}>
+                        <View style={S.metaManagementItem}>
                           <Text style={S.metaLabel}>Fecha de cierre</Text>
                           <Text style={S.metaValue}>{row.fechaCierre || "-"}</Text>
                         </View>
-                        <View style={S.metaItem}>
+                        <View style={S.metaManagementItem}>
                           <Text style={S.metaLabel}>Caso resuelto</Text>
                           <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
                             {row.beneficiado ? "Sí" : "No"}

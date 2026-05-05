@@ -94,6 +94,7 @@ class SocialCaseReportEndpoint(BaseAPIView):
                 "label_ids",
                 "label_names",
                 "project_id",
+                "created_by_id",
                 "created_at",
                 "updated_at",
                 "start_date",
