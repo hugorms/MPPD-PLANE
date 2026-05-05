@@ -26,49 +26,6 @@ const S = StyleSheet.create({
   // Página
   page: { padding: 36, fontSize: 9, fontFamily: "Helvetica", color: C.black, backgroundColor: C.white },
 
-  // ── PORTADA ──
-  coverPage: { padding: 48, flexDirection: "column", justifyContent: "flex-start" },
-  logo: { width: 32, height: 32, marginBottom: 24 },
-  coverTitle: {
-    fontSize: 24,
-    fontFamily: "Helvetica-Bold",
-    color: C.black,
-    marginBottom: 4,
-    textAlign: "center",
-    hyphens: "none",
-  },
-  coverSub: { fontSize: 11, color: C.gray500, marginBottom: 28, textAlign: "center" },
-  statsRow: { flexDirection: "row", gap: 10, marginBottom: 24 },
-  statBox: {
-    flex: 1,
-    backgroundColor: C.gray100,
-    borderRadius: 6,
-    padding: 14,
-    borderLeft: `3px solid ${C.blue}`,
-  },
-  statNum: { fontSize: 26, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 2 },
-  statLabel: { fontSize: 8, color: C.gray500 },
-
-  // Tabla resumen portada
-  summaryGrid: { flexDirection: "row", gap: 20, marginTop: 4 },
-  summaryCol: { flex: 1 },
-  summaryTitle: {
-    fontSize: 9,
-    fontFamily: "Helvetica-Bold",
-    color: C.gray700,
-    marginBottom: 8,
-    paddingBottom: 4,
-    borderBottom: `1px solid ${C.border}`,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 4,
-    borderBottom: `1px solid ${C.gray100}`,
-  },
-  summaryKey: { fontSize: 9, color: C.gray700, flex: 1 },
-  summaryVal: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.gray900 },
-
   divider: { borderBottom: `1px solid ${C.border}`, marginVertical: 16 },
 
   // ── TABLA PRINCIPAL ──
@@ -659,78 +616,12 @@ export const SocialCaseReportPDF = ({
   logoUrl,
 }: Props) => {
   const total = rows.length;
-  const pctResueltos = total > 0 ? Math.round((conResultado / total) * 100) : 0;
   const cantCiviles = byCondicion?.["Civil"] ?? rows.filter((r) => !r.esMilitar).length;
   const cantMilitares = byCondicion?.["Militar"] ?? rows.filter((r) => r.esMilitar).length;
 
   return (
     <Document>
       {/* ══ PORTADA ══════════════════════════════════════════════════════════ */}
-      {includeCover && total < 0 && (
-        <Page size="A4" style={[S.page, S.coverPage]}>
-          {logoUrl && (
-            <View style={{ alignItems: "center", marginBottom: 16 }}>
-              <Image src={logoUrl} style={{ width: 180, height: 60, objectFit: "contain" }} />
-            </View>
-          )}
-          <Text style={S.coverTitle}>{projectName}</Text>
-          <Text style={S.coverSub}>Reporte de Casos Sociales · {dateRange}</Text>
-
-          {/* Stats */}
-          <View style={S.statsRow}>
-            <View style={S.statBox}>
-              <Text style={S.statNum}>{total}</Text>
-              <Text style={S.statLabel}>Total de fichas</Text>
-            </View>
-            <View style={[S.statBox, { borderLeftColor: C.green }]}>
-              <Text style={S.statNum}>{conResultado}</Text>
-              <Text style={S.statLabel}>Casos resueltos</Text>
-            </View>
-            <View style={[S.statBox, { borderLeftColor: "#7c3aed" }]}>
-              <Text style={S.statNum}>{pctResueltos}%</Text>
-              <Text style={S.statLabel}>Tasa de resueltos</Text>
-            </View>
-          </View>
-
-          <View style={S.divider} />
-
-          {/* Resumen por estado del caso, componente y condición */}
-          <View style={S.summaryGrid}>
-            <View style={S.summaryCol}>
-              <Text style={S.summaryTitle}>Por estado del caso</Text>
-              {Object.entries(byState).map(([name, count]) => (
-                <View key={name} style={S.summaryRow}>
-                  <Text style={S.summaryKey}>{name}</Text>
-                  <Text style={S.summaryVal}>{count}</Text>
-                </View>
-              ))}
-            </View>
-            <View style={S.summaryCol}>
-              <Text style={S.summaryTitle}>Por componente</Text>
-              {Object.entries(byComponente).map(([name, count]) => (
-                <View key={name} style={S.summaryRow}>
-                  <Text style={S.summaryKey}>{name}</Text>
-                  <Text style={S.summaryVal}>{count}</Text>
-                </View>
-              ))}
-              {byCondicion && Object.keys(byCondicion).length > 0 && (
-                <>
-                  <Text style={[S.summaryTitle, { marginTop: 12 }]}>Civil / Militar</Text>
-                  {Object.entries(byCondicion).map(([name, count]) => (
-                    <View key={name} style={S.summaryRow}>
-                      <Text style={S.summaryKey}>{name}</Text>
-                      <Text style={S.summaryVal}>{count}</Text>
-                    </View>
-                  ))}
-                </>
-              )}
-            </View>
-          </View>
-
-          <Footer projectName={projectName} generatedAtLabel={generatedAtLabel} />
-        </Page>
-      )}
-
       {/* ══ HOJA GRÁFICA ════════════════════════════════════════════════════ */}
       {includeCover && total > 0 && (
         <GraphicPage

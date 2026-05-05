@@ -589,6 +589,8 @@ const Overview = observer(function Overview() {
   }, [fromDate, toDate]);
 
   const projectName = "MPPD-GCS";
+  const includeMedia = includeDetails && includePhotos;
+  const includeEvidence = includeDetails && includeAttachments;
 
   // ── PDF export ───────────────────────────────────────────────────────────────
   const handleDownload = async () => {
@@ -615,7 +617,7 @@ const Overview = observer(function Overview() {
       const resolvedRows: ParsedIssueRow[] = [];
       for (const row of rows) {
         let resolvedPhotoUrl = row.photoUrl;
-        if (includeDetails && includePhotos && row.photoUrl) {
+        if (includeMedia && row.photoUrl) {
           try {
             const raw = getFileURL(row.photoUrl) ?? row.photoUrl;
             const apiUrl = raw.startsWith("http") ? raw : `${window.location.origin}${raw}`;
@@ -627,7 +629,7 @@ const Overview = observer(function Overview() {
         }
 
         let attachments: AttachmentInfo[] = [];
-        if (includeDetails && includeAttachments) {
+        if (includeEvidence) {
           try {
             // oxlint-disable-next-line no-await-in-loop
             const rawList = await attachmentService.getIssueAttachments(ws, pid, row.id);
@@ -659,9 +661,9 @@ const Overview = observer(function Overview() {
           generatedAtLabel={generatedAtLabel}
           stateFlow={stateFlow}
           includeCover={includeCover}
-          includePhotos={includeDetails && includePhotos}
+          includePhotos={includeMedia}
           includeDetails={includeDetails}
-          includeAttachments={includeDetails && includeAttachments}
+          includeAttachments={includeEvidence}
           logoUrl={logoUrl}
         />
       ).toBlob();
@@ -979,7 +981,7 @@ const Overview = observer(function Overview() {
           if (idx !== 12 && idx !== 13) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
         });
         const dataRow = sheet.addRow(cellValues);
-        if (includePhotos) {
+        if (includeMedia) {
           const PT_PER_LINE = 15;
           const CHARS_EST = 18;
           let maxLines = 1;
@@ -998,7 +1000,7 @@ const Overview = observer(function Overview() {
           cell.border = { top: BORDER_DATA, bottom: BORDER_DATA, left: BORDER_DATA, right: BORDER_DATA };
         });
 
-        if (includePhotos) {
+        if (includeMedia) {
           try {
             // oxlint-disable-next-line no-await-in-loop
             const attList = await attachmentService.getIssueAttachments(ws, pid, row.id);
@@ -1524,7 +1526,7 @@ const Overview = observer(function Overview() {
                         <p className="text-11 text-tertiary">Requiere reporte completo activado.</p>
                       </div>
                       <Checkbox
-                        checked={includeDetails && includePhotos}
+                        checked={includeMedia}
                         onChange={() => setIncludePhotos((v) => !v)}
                         disabled={generating || !includeDetails}
                       />
@@ -1551,7 +1553,7 @@ const Overview = observer(function Overview() {
                         <p className="text-11 text-tertiary">Requiere reporte completo activado.</p>
                       </div>
                       <Checkbox
-                        checked={includeDetails && includeAttachments}
+                        checked={includeEvidence}
                         onChange={() => setIncludeAttachments((v) => !v)}
                         disabled={generating || !includeDetails}
                       />
