@@ -120,7 +120,7 @@ const S = StyleSheet.create({
     gap: 10,
   },
   detailNameWrap: { flex: 1 },
-  detailName: { fontSize: 19, fontFamily: "Helvetica-Bold", color: C.navy, marginBottom: 6, lineHeight: 1.05 },
+  detailName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy, marginBottom: 6, lineHeight: 1.08 },
   detailId: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.blue },
   detailStatusBadge: {
     minWidth: 90,
@@ -556,38 +556,6 @@ function GraphicPage({
 
 // ── Timeline vertical de estados ─────────────────────────────────────────────
 
-const Timeline = ({ stateFlow, currentStateId }: { stateFlow: StateFlowStep[]; currentStateId: string | null }) => {
-  const activeIdx = currentStateId ? stateFlow.findIndex((s) => s.id === currentStateId) : -1;
-
-  return (
-    <View style={S.timelineWrap}>
-      <Text style={S.timelineTitle}>FLUJO DEL CASO</Text>
-      {stateFlow.map((step, i) => {
-        const isDone = i < activeIdx;
-        const isActive = i === activeIdx;
-        const isLast = i === stateFlow.length - 1;
-        const dotColor = isActive ? C.blue : isDone ? C.green : C.gray300;
-        const lineColor = isDone ? C.green : C.gray300;
-
-        return (
-          <View key={step.id} style={S.timelineRow}>
-            <View style={S.timelineDotCol}>
-              <View style={[S.timelineDot, { backgroundColor: dotColor }]} />
-              {!isLast && <View style={[S.timelineLine, { backgroundColor: lineColor }]} />}
-            </View>
-            <View style={S.timelineLabel}>
-              <Text style={isActive ? S.timelineLabelActive : S.timelineLabelText}>
-                {step.name}
-                {isActive ? "  ◀ actual" : ""}
-              </Text>
-            </View>
-          </View>
-        );
-      })}
-    </View>
-  );
-};
-
 // ── Footer ────────────────────────────────────────────────────────────────────
 
 const Footer = ({ projectName, generatedAtLabel }: { projectName: string; generatedAtLabel: string }) => (
@@ -614,7 +582,6 @@ export const SocialCaseReportPDF = ({
   stateColorMap = {},
   conResultado,
   generatedAtLabel,
-  stateFlow,
   includeCover = true,
   includePhotos = true,
   includeDetails = false,
@@ -881,8 +848,6 @@ export const SocialCaseReportPDF = ({
                     <Text style={S.detailText}>{row.observacionCierre}</Text>
                   </View>
                 )}
-
-                {stateFlow.length > 0 && <Timeline stateFlow={stateFlow} currentStateId={row.stateId} />}
 
                 <Footer projectName={projectName} generatedAtLabel={generatedAtLabel} />
               </Page>
