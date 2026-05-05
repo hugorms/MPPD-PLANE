@@ -1,7 +1,11 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { SocialCaseData } from "./social-case-form";
-import { isSocialCasePdfAttachment } from "@/utils/social-case-attachment-export";
+import {
+  cleanSocialCaseAttachmentName,
+  getSocialCaseAttachmentSectionTitle,
+  groupSocialCaseAttachmentsBySection,
+} from "@/utils/social-case-attachment-export";
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 const C = {
@@ -194,9 +198,18 @@ const S = StyleSheet.create({
     fontSize: 8,
     color: C.gray500,
   },
+  attachSectionTitle: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: C.headerBg,
+    textTransform: "uppercase",
+    paddingBottom: 5,
+    marginBottom: 5,
+    borderBottom: `1px solid ${C.headerBg}`,
+  },
   attachName: {
-    fontSize: 7,
-    color: C.gray500,
+    fontSize: 8,
+    color: C.gray700,
     marginBottom: 8,
   },
   attachImageWrap: {
@@ -305,35 +318,7 @@ export function SocialCaseFichaPDF({
   logoUrl,
   startDate,
 }: SocialCaseFichaProps) {
-  const KNOWN_PREFIXES = ["[CI_BEN]", "[ENTREGA]"];
-  const cleanAttachmentName = (name: string) => {
-    let cleanName = name;
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const prefix of KNOWN_PREFIXES) {
-        if (cleanName.startsWith(`${prefix}_`)) {
-          cleanName = cleanName.slice(prefix.length + 1);
-          changed = true;
-          break;
-        }
-      }
-    }
-    return cleanName.replace(/^\d+_/, "");
-  };
-  const attachmentLabel = (name: string) => cleanAttachmentName(name).split(".").pop()?.toUpperCase() || "ARCHIVO";
-
-  const summaryAttachments = attachments.filter((a) => !isSocialCasePdfAttachment(a));
-  const solicitudFiles = summaryAttachments.filter((a) => !KNOWN_PREFIXES.some((p) => a.name.startsWith(`${p}_`)));
-  const ciFiles = summaryAttachments.filter((a) => a.name.startsWith("[CI_BEN]_"));
-  const registroFiles = summaryAttachments.filter((a) => a.name.startsWith("[ENTREGA]_"));
-
-  type FotoSlot = { label: string; imgs: (typeof attachments)[number][] };
-  const fotoSlots: FotoSlot[] = [
-    { label: "SOLICITUD", imgs: solicitudFiles },
-    { label: "CÉDULA / CREDENCIAL", imgs: ciFiles },
-    { label: "REGISTRO FOTOGRÁFICO", imgs: registroFiles },
-  ];
+  const attachmentSections = groupSocialCaseAttachmentsBySection(attachments);
 
   const numeroCaso = projectIdentifier
     ? `${projectIdentifier}-${sequenceId}`
@@ -406,77 +391,6 @@ export function SocialCaseFichaPDF({
           />
         </View>
 
-        {/* ── TABLA DE 4 FOTOS ── */}
-        <View style={S.photoTable}>
-          {/* Encabezado de columnas */}
-          <View style={S.photoTableHeader}>
-            {fotoSlots.map((slot, i) => (
-              <View
-                key={slot.label}
-                style={i < fotoSlots.length - 1 ? S.photoTableHeaderCell : S.photoTableHeaderCellLast}
-              >
-                <Text style={S.photoTableHeaderText}>{slot.label}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Celdas de imagen */}
-          <View style={S.photoTableBody}>
-            {fotoSlots.map((slot, i) => {
-              const cellStyle = i < fotoSlots.length - 1 ? S.photoCell : S.photoCellLast;
-              if (slot.imgs.length === 0) {
-                return (
-                  <View key={slot.label} style={cellStyle}>
-                    <Text style={S.photoCellPlaceholderText}>Sin{"\n"}imagen</Text>
-                  </View>
-                );
-              }
-              if (slot.imgs.length === 1) {
-                const file = slot.imgs[0];
-                return (
-                  <View key={slot.label} style={cellStyle}>
-                    {file.isImage && file.base64 ? (
-                      <Image src={file.base64} style={S.photoCellImg} />
-                    ) : (
-                      <View style={S.fileCellBox}>
-                        <Text style={S.fileCellIcon}>{attachmentLabel(file.name)}</Text>
-                        <Text style={S.fileCellName}>{cleanAttachmentName(file.name)}</Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              }
-              // Collage: grilla de 2 columnas, todas del mismo tamaño
-              const rows = Math.ceil(slot.imgs.length / 2);
-              const imgHeight = Math.floor(160 / rows);
-              return (
-                <View key={slot.label} style={{ ...cellStyle, flexDirection: "row", flexWrap: "wrap", height: 160 }}>
-                  {slot.imgs.map((img) => (
-                    <View
-                      key={img.name}
-                      style={{
-                        width: "50%",
-                        height: imgHeight,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {img.isImage && img.base64 ? (
-                        <Image src={img.base64} style={{ width: "100%", height: imgHeight, objectFit: "contain" }} />
-                      ) : (
-                        <View style={S.fileCellBox}>
-                          <Text style={S.fileCellIcon}>{attachmentLabel(img.name)}</Text>
-                          <Text style={S.fileCellName}>{cleanAttachmentName(img.name)}</Text>
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
         {/* ── FOOTER ── */}
         <View style={S.footer} fixed>
           <Text style={S.footerText}>{projectName} · Ficha Técnica Individual</Text>
@@ -484,36 +398,39 @@ export function SocialCaseFichaPDF({
         </View>
       </Page>
 
-      {attachments.map((att, attIdx) => (
-        <Page key={`ficha-att-${att.sourceName ?? att.name}-${att.pageNumber ?? att.name}`} size="A4" style={S.page}>
-          <View style={S.attachHeader}>
-            <Text style={S.attachHeaderText}>
-              {numeroCaso} - {data.nombre}
-            </Text>
-            <Text style={S.attachHeaderText}>
-              Adjunto {attIdx + 1} / {attachments.length}
-              {att.isPdfPage && att.pageNumber && att.pageCount ? ` - Pagina ${att.pageNumber}/${att.pageCount}` : ""}
-            </Text>
-          </View>
-          <Text style={S.attachName}>{att.sourceName ?? att.name}</Text>
-
-          {att.isImage && att.base64 ? (
-            <View style={S.attachImageWrap}>
-              <Image src={att.base64} style={S.attachImage} />
+      {attachmentSections.flatMap((section) =>
+        section.attachments.map((att, attIdx) => (
+          <Page key={`ficha-att-${att.sourceName ?? att.name}-${att.pageNumber ?? att.name}`} size="A4" style={S.page}>
+            <View style={S.attachHeader}>
+              <Text style={S.attachHeaderText}>
+                {numeroCaso} - {data.nombre}
+              </Text>
+              <Text style={S.attachHeaderText}>
+                {attIdx + 1} / {section.attachments.length}
+                {att.isPdfPage && att.pageNumber && att.pageCount ? ` - Pagina ${att.pageNumber}/${att.pageCount}` : ""}
+              </Text>
             </View>
-          ) : (
-            <View style={S.attachFileRow}>
-              <Text style={S.attachFileName}>{cleanAttachmentName(att.name)}</Text>
-              <Text style={S.attachFileNote}>Ver archivo adjunto por separado</Text>
-            </View>
-          )}
+            <Text style={S.attachSectionTitle}>{getSocialCaseAttachmentSectionTitle(att)}</Text>
+            <Text style={S.attachName}>{cleanSocialCaseAttachmentName(att.sourceName ?? att.name)}</Text>
 
-          <View style={S.footer} fixed>
-            <Text style={S.footerText}>{projectName} - Ficha Tecnica Individual</Text>
-            <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
-          </View>
-        </Page>
-      ))}
+            {att.isImage && att.base64 ? (
+              <View style={S.attachImageWrap}>
+                <Image src={att.base64} style={S.attachImage} />
+              </View>
+            ) : (
+              <View style={S.attachFileRow}>
+                <Text style={S.attachFileName}>{cleanSocialCaseAttachmentName(att.name)}</Text>
+                <Text style={S.attachFileNote}>Archivo adjunto</Text>
+              </View>
+            )}
+
+            <View style={S.footer} fixed>
+              <Text style={S.footerText}>{projectName} - Ficha Tecnica Individual</Text>
+              <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
+            </View>
+          </Page>
+        ))
+      )}
     </Document>
   );
 }

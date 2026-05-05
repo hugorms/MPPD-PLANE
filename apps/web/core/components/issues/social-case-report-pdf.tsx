@@ -1,5 +1,10 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
+import {
+  cleanSocialCaseAttachmentName,
+  getSocialCaseAttachmentSectionTitle,
+  groupSocialCaseAttachmentsBySection,
+} from "@/utils/social-case-attachment-export";
 
 // ── Paleta ───────────────────────────────────────────────────────────────────
 const C = {
@@ -168,6 +173,16 @@ const S = StyleSheet.create({
   // Adjuntos
   attachPageTitle: { fontSize: 11, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 2 },
   attachPageSub: { fontSize: 8, color: C.gray500, marginBottom: 8 },
+  attachSectionTitle: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    color: C.gray900,
+    textTransform: "uppercase",
+    paddingBottom: 5,
+    marginBottom: 5,
+    borderBottom: `1px solid ${C.gray900}`,
+  },
+  attachName: { fontSize: 8, color: C.gray700, marginBottom: 8 },
   attachFileRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -758,6 +773,7 @@ export const SocialCaseReportPDF = ({
         rows.map((row) => {
           const resolvedPhoto = includePhotos && row.photoUrl ? row.photoUrl : null;
           const rowAttachments = includeAttachments ? (row.attachments ?? []) : [];
+          const rowAttachmentSections = groupSocialCaseAttachmentsBySection(rowAttachments);
 
           return (
             <React.Fragment key={`case-${row.id}`}>
@@ -870,41 +886,49 @@ export const SocialCaseReportPDF = ({
               </Page>
 
               {/* ── PÁGINAS DE ADJUNTOS ── */}
-              {rowAttachments.map((att, attIdx) => (
-                <Page key={`att-${row.id}-${att.name}`} size="A4" style={S.page}>
-                  <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-                    <Text style={{ fontSize: 8, color: C.gray500 }}>
-                      {row.numeroCaso} · {row.nombre}
-                    </Text>
-                    <Text style={{ fontSize: 8, color: C.gray500 }}>
-                      Adjunto {attIdx + 1} / {rowAttachments.length}
-                      {att.isPdfPage && att.pageNumber && att.pageCount
-                        ? ` · Página ${att.pageNumber}/${att.pageCount}`
-                        : ""}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 7, color: C.gray300, marginBottom: 8 }}>{att.sourceName ?? att.name}</Text>
-
-                  {att.isImage && att.base64 ? (
-                    <View style={{ alignItems: "center", marginTop: 8, marginBottom: 36 }}>
-                      <Image src={att.base64} style={{ width: 400, height: 520, objectFit: "contain" }} />
-                    </View>
-                  ) : att.isImage && !att.base64 ? (
-                    <View style={[S.attachFileRow, { backgroundColor: "#fee2e2" }]}>
-                      <Text style={[S.attachFileName, { color: "#ef4444" }]}>
-                        {att.name} — imagen detectada pero no se pudo convertir a base64
+              {rowAttachmentSections.flatMap((section) =>
+                section.attachments.map((att, attIdx) => (
+                  <Page
+                    key={`att-${row.id}-${section.key}-${att.sourceName ?? att.name}-${att.pageNumber ?? att.name}`}
+                    size="A4"
+                    style={S.page}
+                  >
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+                      <Text style={{ fontSize: 8, color: C.gray500 }}>
+                        {row.numeroCaso} · {row.nombre}
+                      </Text>
+                      <Text style={{ fontSize: 8, color: C.gray500 }}>
+                        {attIdx + 1} / {section.attachments.length}
+                        {att.isPdfPage && att.pageNumber && att.pageCount
+                          ? ` · Página ${att.pageNumber}/${att.pageCount}`
+                          : ""}
                       </Text>
                     </View>
-                  ) : (
-                    <View style={S.attachFileRow}>
-                      <Text style={S.attachFileName}>{att.name}</Text>
-                      <Text style={S.attachFileNote}>Ver archivo adjunto por separado</Text>
-                    </View>
-                  )}
+                    <Text style={S.attachSectionTitle}>{getSocialCaseAttachmentSectionTitle(att)}</Text>
+                    <Text style={S.attachName}>{cleanSocialCaseAttachmentName(att.sourceName ?? att.name)}</Text>
 
-                  <Footer projectName={projectName} generatedAtLabel={generatedAtLabel} />
-                </Page>
-              ))}
+                    {att.isImage && att.base64 ? (
+                      <View style={{ alignItems: "center", marginTop: 8, marginBottom: 36 }}>
+                        <Image src={att.base64} style={{ width: 400, height: 520, objectFit: "contain" }} />
+                      </View>
+                    ) : att.isImage && !att.base64 ? (
+                      <View style={[S.attachFileRow, { backgroundColor: "#fee2e2" }]}>
+                        <Text style={[S.attachFileName, { color: "#ef4444" }]}>
+                          {cleanSocialCaseAttachmentName(att.name)} - imagen detectada pero no se pudo convertir a
+                          base64
+                        </Text>
+                      </View>
+                    ) : (
+                      <View style={S.attachFileRow}>
+                        <Text style={S.attachFileName}>{cleanSocialCaseAttachmentName(att.name)}</Text>
+                        <Text style={S.attachFileNote}>Archivo adjunto</Text>
+                      </View>
+                    )}
+
+                    <Footer projectName={projectName} generatedAtLabel={generatedAtLabel} />
+                  </Page>
+                ))
+              )}
             </React.Fragment>
           );
         })}

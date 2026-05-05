@@ -19,6 +19,56 @@ type RawAttachment = {
 
 export const SOCIAL_CASE_IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp"]);
 const PDF_EXTS = new Set(["pdf"]);
+const SOCIAL_CASE_ATTACHMENT_PREFIXES = ["[CI_BEN]", "[ENTREGA]"] as const;
+
+export type SocialCaseAttachmentSection = {
+  key: "solicitud" | "ci" | "registro";
+  title: string;
+  attachments: SocialCaseExportAttachment[];
+};
+
+export const cleanSocialCaseAttachmentName = (name: string) => {
+  let cleanName = name;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const prefix of SOCIAL_CASE_ATTACHMENT_PREFIXES) {
+      if (cleanName.startsWith(`${prefix}_`)) {
+        cleanName = cleanName.slice(prefix.length + 1);
+        changed = true;
+        break;
+      }
+    }
+  }
+  return cleanName.replace(/^\d+_/, "");
+};
+
+export const getSocialCaseAttachmentSectionTitle = (
+  attachment: Pick<SocialCaseExportAttachment, "name" | "sourceName">
+) => {
+  const sourceName = attachment.sourceName ?? attachment.name;
+  if (sourceName.startsWith("[CI_BEN]_")) return "CEDULA / CREDENCIAL";
+  if (sourceName.startsWith("[ENTREGA]_")) return "REGISTRO FOTOGRAFICO";
+  return "SOLICITUD";
+};
+
+export const groupSocialCaseAttachmentsBySection = (
+  attachments: SocialCaseExportAttachment[]
+): SocialCaseAttachmentSection[] => {
+  const sections: SocialCaseAttachmentSection[] = [
+    { key: "solicitud", title: "SOLICITUD", attachments: [] },
+    { key: "ci", title: "CEDULA / CREDENCIAL", attachments: [] },
+    { key: "registro", title: "REGISTRO FOTOGRAFICO", attachments: [] },
+  ];
+
+  for (const attachment of attachments) {
+    const title = getSocialCaseAttachmentSectionTitle(attachment);
+    const section = sections.find((item) => item.title === title) ?? sections[0];
+    section.attachments.push(attachment);
+  }
+
+  return sections.filter((section) => section.attachments.length > 0);
+};
 
 const getAttachmentExt = (attachment: RawAttachment) => {
   const nameExt = (attachment.attributes?.name ?? "").split(".").pop()?.toLowerCase() ?? "";
