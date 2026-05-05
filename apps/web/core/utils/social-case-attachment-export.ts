@@ -69,17 +69,21 @@ async function fetchAuthedBlob(url: string): Promise<Blob> {
 async function fetchBlobWithAuth(apiUrl: string): Promise<Blob> {
   if (apiUrl.includes("/api/cedula-photo/")) return fetchAuthedBlob(apiUrl);
 
+  const sep = apiUrl.includes("?") ? "&" : "?";
   try {
-    return await fetchAuthedBlob(apiUrl);
+    return await fetchBlob(`${apiUrl}${sep}proxy=1`, "include");
   } catch {
-    // Algunas rutas de assets devuelven JSON con URL firmada solo al pedir as_url=1.
+    // Continuar con URL firmada si la ruta no soporta proxy.
   }
 
-  const sep = apiUrl.includes("?") ? "&" : "?";
-  const jsonRes = await fetch(`${apiUrl}${sep}as_url=1`, { credentials: "include" });
-  if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status} al obtener URL`);
-  const { url } = await jsonRes.json();
-  return fetchPublicBlob(url);
+  try {
+    const jsonRes = await fetch(`${apiUrl}${sep}as_url=1`, { credentials: "include" });
+    if (!jsonRes.ok) throw new Error(`HTTP ${jsonRes.status} al obtener URL`);
+    const { url } = await jsonRes.json();
+    return fetchPublicBlob(url);
+  } catch {
+    return fetchAuthedBlob(apiUrl);
+  }
 }
 
 async function fetchPdfBlobWithAuth(apiUrl: string): Promise<Blob> {
@@ -119,7 +123,7 @@ async function pdfBlobToPageImages(blob: Blob, name: string): Promise<SocialCase
     const page = await pdfDoc.getPage(pageNumber);
     const viewport = page.getViewport({ scale: 1.7 });
     const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    const context = canvas.getContext("2d", { willReadFrequently: true });
     if (!context) continue;
 
     canvas.width = Math.ceil(viewport.width);

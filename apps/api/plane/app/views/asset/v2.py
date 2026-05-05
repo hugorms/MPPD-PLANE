@@ -7,7 +7,7 @@ import uuid
 
 # Django imports
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.utils import timezone
 from django.db import IntegrityError
 
@@ -607,6 +607,7 @@ class ProjectAssetEndpoint(BaseAPIView):
     def get(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+        attributes = asset.attributes or {}
 
         # Check if the asset is uploaded
         if not asset.is_uploaded:
@@ -617,11 +618,21 @@ class ProjectAssetEndpoint(BaseAPIView):
 
         # Get the presigned URL
         storage = S3Storage(request=request)
+        if request.GET.get("proxy") == "1":
+            obj = storage.s3_client.get_object(Bucket=storage.aws_storage_bucket_name, Key=str(asset.asset.name))
+            response = StreamingHttpResponse(
+                obj["Body"].iter_chunks(),
+                content_type=obj.get("ContentType") or attributes.get("type") or "application/octet-stream",
+            )
+            response["Content-Length"] = obj.get("ContentLength", "")
+            response["Content-Disposition"] = storage._get_content_disposition("inline", attributes.get("name"))
+            return response
+
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
             disposition="attachment",
-            filename=asset.attributes.get("name"),
+            filename=attributes.get("name"),
         )
         # ?as_url=1 → devuelve la URL como JSON (para evitar CORS con MinIO)
         if request.GET.get("as_url") == "1":
