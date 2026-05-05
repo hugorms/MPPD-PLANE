@@ -336,9 +336,9 @@ const Overview = observer(function Overview() {
   const generating = generatingType !== null;
   const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   const [includeCover, setIncludeCover] = useState(true);
-  const [includePhotos, setIncludePhotos] = useState(true);
+  const [includePhotos, setIncludePhotos] = useState(false);
   const [includeDetails, setIncludeDetails] = useState(false);
-  const [includeAttachments, setIncludeAttachments] = useState(true);
+  const [includeAttachments, setIncludeAttachments] = useState(false);
   const [openAfter, setOpenAfter] = useState(true);
 
   // ── Carga de datos ───────────────────────────────────────────────────────────
@@ -612,34 +612,36 @@ const Overview = observer(function Overview() {
       }
 
       let done = 0;
-      const resolvedRows: ParsedIssueRow[] = await Promise.all(
-        rows.map(async (row) => {
-          let resolvedPhotoUrl = row.photoUrl;
-          if (includePhotos && row.photoUrl) {
-            try {
-              const raw = getFileURL(row.photoUrl) ?? row.photoUrl;
-              const apiUrl = raw.startsWith("http") ? raw : `${window.location.origin}${raw}`;
-              resolvedPhotoUrl = await fetchBase64WithAuth(apiUrl);
-            } catch {
-              resolvedPhotoUrl = null;
-            }
+      const resolvedRows: ParsedIssueRow[] = [];
+      for (const row of rows) {
+        let resolvedPhotoUrl = row.photoUrl;
+        if (includeDetails && includePhotos && row.photoUrl) {
+          try {
+            const raw = getFileURL(row.photoUrl) ?? row.photoUrl;
+            const apiUrl = raw.startsWith("http") ? raw : `${window.location.origin}${raw}`;
+            // oxlint-disable-next-line no-await-in-loop
+            resolvedPhotoUrl = await fetchBase64WithAuth(apiUrl);
+          } catch {
+            resolvedPhotoUrl = null;
           }
+        }
 
-          let attachments: AttachmentInfo[] = [];
-          if (includeAttachments && includeDetails) {
-            try {
-              const rawList = await attachmentService.getIssueAttachments(ws, pid, row.id);
-              attachments = (await Promise.all((rawList ?? []).map(resolveSocialCaseExportAttachment))).flat();
-            } catch {
-              attachments = [];
-            }
+        let attachments: AttachmentInfo[] = [];
+        if (includeDetails && includeAttachments) {
+          try {
+            // oxlint-disable-next-line no-await-in-loop
+            const rawList = await attachmentService.getIssueAttachments(ws, pid, row.id);
+            // oxlint-disable-next-line no-await-in-loop
+            attachments = (await Promise.all((rawList ?? []).map(resolveSocialCaseExportAttachment))).flat();
+          } catch {
+            attachments = [];
           }
+        }
 
-          done += 1;
-          setProgress({ current: done, total: rows.length });
-          return { ...row, photoUrl: resolvedPhotoUrl, attachments };
-        })
-      );
+        done += 1;
+        setProgress({ current: done, total: rows.length });
+        resolvedRows.push({ ...row, photoUrl: resolvedPhotoUrl, attachments });
+      }
 
       const blob = await pdf(
         <SocialCaseReportPDF
@@ -657,10 +659,9 @@ const Overview = observer(function Overview() {
           generatedAtLabel={generatedAtLabel}
           stateFlow={stateFlow}
           includeCover={includeCover}
-          includeGraphicSheet={includeCover}
-          includePhotos={includePhotos}
+          includePhotos={includeDetails && includePhotos}
           includeDetails={includeDetails}
-          includeAttachments={includeAttachments}
+          includeAttachments={includeDetails && includeAttachments}
           logoUrl={logoUrl}
         />
       ).toBlob();
@@ -1512,15 +1513,20 @@ const Overview = observer(function Overview() {
                         disabled={generating}
                       />
                     </div>
-                    <div className="flex cursor-pointer items-center justify-between gap-3">
+                    <div
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-3",
+                        !includeDetails && "opacity-40"
+                      )}
+                    >
                       <div>
                         <p className="text-13 text-secondary">Incluir fotos</p>
-                        <p className="text-11 text-tertiary">Puede tardar más según la cantidad de imágenes.</p>
+                        <p className="text-11 text-tertiary">Requiere reporte completo activado.</p>
                       </div>
                       <Checkbox
-                        checked={includePhotos}
+                        checked={includeDetails && includePhotos}
                         onChange={() => setIncludePhotos((v) => !v)}
-                        disabled={generating}
+                        disabled={generating || !includeDetails}
                       />
                     </div>
                     <div className="flex cursor-pointer items-center justify-between gap-3">
@@ -1545,7 +1551,7 @@ const Overview = observer(function Overview() {
                         <p className="text-11 text-tertiary">Requiere reporte completo activado.</p>
                       </div>
                       <Checkbox
-                        checked={includeAttachments}
+                        checked={includeDetails && includeAttachments}
                         onChange={() => setIncludeAttachments((v) => !v)}
                         disabled={generating || !includeDetails}
                       />

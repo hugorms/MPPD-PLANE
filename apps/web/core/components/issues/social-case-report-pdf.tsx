@@ -367,7 +367,6 @@ type Props = {
   includePhotos?: boolean;
   includeDetails?: boolean;
   includeAttachments?: boolean;
-  includeGraphicSheet?: boolean;
   logoUrl?: string | null;
 };
 
@@ -657,7 +656,6 @@ export const SocialCaseReportPDF = ({
   includePhotos = true,
   includeDetails = false,
   includeAttachments = false,
-  includeGraphicSheet: _includeGraphicSheet = false,
   logoUrl,
 }: Props) => {
   const total = rows.length;
