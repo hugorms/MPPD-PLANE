@@ -128,24 +128,77 @@ const S = StyleSheet.create({
   },
   detailPageProject: { fontSize: 11, fontFamily: "Helvetica-Bold", color: C.gray900 },
   detailPageTag: { fontSize: 8, color: C.gray500 },
-  detailHeader: { flexDirection: "row", alignItems: "flex-start", marginBottom: 14, gap: 14 },
-  detailPhoto: { width: 80, height: 106, borderRadius: 6, objectFit: "cover" },
+  detailHeader: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    marginBottom: 14,
+    padding: 12,
+    border: `1px solid ${C.border}`,
+    borderRadius: 8,
+    backgroundColor: C.gray50,
+    gap: 12,
+  },
+  detailPhotoFrame: {
+    width: 92,
+    padding: 5,
+    borderRadius: 7,
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    alignItems: "center",
+  },
+  detailPhoto: { width: 80, height: 106, borderRadius: 5, objectFit: "cover" },
   detailPhotoPlaceholder: {
     width: 80,
     height: 106,
-    borderRadius: 6,
+    borderRadius: 5,
     backgroundColor: C.gray100,
     justifyContent: "center",
     alignItems: "center",
   },
   detailPhotoText: { fontSize: 7, color: C.gray500 },
   detailMeta: { flex: 1 },
-  detailName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 2 },
-  detailId: { fontSize: 8, color: C.blue, marginBottom: 10 },
-  metaGrid: { flexDirection: "row", gap: 14 },
-  metaCol: { flex: 1 },
-  metaLabel: { fontSize: 7, color: C.gray500, marginBottom: 1 },
-  metaValue: { fontSize: 9, color: C.gray900, marginBottom: 8 },
+  detailTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    gap: 10,
+  },
+  detailNameWrap: { flex: 1 },
+  detailName: { fontSize: 15, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 3, lineHeight: 1.15 },
+  detailId: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.blue },
+  detailStatusBadge: {
+    minWidth: 72,
+    paddingVertical: 4,
+    paddingHorizontal: 7,
+    borderRadius: 4,
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    alignItems: "center",
+  },
+  detailStatusLabel: { fontSize: 6, color: C.gray500, marginBottom: 2 },
+  detailStatusText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, textAlign: "center" },
+  metaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  metaCol: {
+    flex: 1,
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    minHeight: 132,
+  },
+  metaGroupTitle: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.blue,
+    marginBottom: 6,
+    paddingBottom: 3,
+    borderBottom: `1px solid ${C.border}`,
+  },
+  metaItem: { marginBottom: 6 },
+  metaLabel: { fontSize: 6.5, color: C.gray500, marginBottom: 1.5 },
+  metaValue: { fontSize: 8.3, color: C.gray900, fontFamily: "Helvetica-Bold", lineHeight: 1.22 },
 
   // Sección de texto en detalle
   detailSection: { marginTop: 10 },
@@ -784,64 +837,87 @@ export const SocialCaseReportPDF = ({
                 </View>
 
                 <View style={S.detailHeader}>
-                  {resolvedPhoto ? (
-                    <Image src={resolvedPhoto} style={S.detailPhoto} />
-                  ) : (
-                    <View style={S.detailPhotoPlaceholder}>
-                      <Text style={S.detailPhotoText}>Sin foto</Text>
-                    </View>
-                  )}
+                  <View style={S.detailPhotoFrame}>
+                    {resolvedPhoto ? (
+                      <Image src={resolvedPhoto} style={S.detailPhoto} />
+                    ) : (
+                      <View style={S.detailPhotoPlaceholder}>
+                        <Text style={S.detailPhotoText}>Sin foto</Text>
+                      </View>
+                    )}
+                  </View>
                   <View style={S.detailMeta}>
-                    <Text style={S.detailName}>{row.nombre}</Text>
-                    <Text style={S.detailId}>{row.numeroCaso}</Text>
+                    <View style={S.detailTitleRow}>
+                      <View style={S.detailNameWrap}>
+                        <Text style={S.detailName}>{row.nombre}</Text>
+                        <Text style={S.detailId}>{row.numeroCaso}</Text>
+                      </View>
+                      <View style={S.detailStatusBadge}>
+                        <Text style={S.detailStatusLabel}>Estado del caso</Text>
+                        <Text style={S.detailStatusText}>{row.stateName}</Text>
+                      </View>
+                    </View>
                     <View style={S.metaGrid}>
                       <View style={S.metaCol}>
-                        <Text style={S.metaLabel}>Cédula</Text>
-                        <Text style={S.metaValue}>{row.cedula}</Text>
-                        <Text style={S.metaLabel}>Teléfono</Text>
-                        <Text style={S.metaValue}>{row.telefono || "—"}</Text>
-                        <Text style={S.metaLabel}>Municipio</Text>
-                        <Text style={S.metaValue}>{row.municipio}</Text>
+                        <Text style={S.metaGroupTitle}>IDENTIFICACIÓN</Text>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Cédula</Text>
+                          <Text style={S.metaValue}>{row.cedula}</Text>
+                        </View>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Teléfono</Text>
+                          <Text style={S.metaValue}>{row.telefono || "—"}</Text>
+                        </View>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Municipio</Text>
+                          <Text style={S.metaValue}>{row.municipio}</Text>
+                        </View>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Estado (Vzla.)</Text>
+                          <Text style={S.metaValue}>{row.entidad || "—"}</Text>
+                        </View>
                       </View>
                       <View style={S.metaCol}>
-                        <Text style={S.metaLabel}>Componente</Text>
-                        <Text style={S.metaValue}>{row.componente}</Text>
+                        <Text style={S.metaGroupTitle}>DATOS MILITARES</Text>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Componente</Text>
+                          <Text style={S.metaValue}>{row.componente}</Text>
+                        </View>
                         {row.esMilitar && row.condicionMilitar && row.condicionMilitar !== "-" ? (
-                          <>
+                          <View style={S.metaItem}>
                             <Text style={S.metaLabel}>Condición militar</Text>
                             <Text style={S.metaValue}>{row.condicionMilitar}</Text>
-                          </>
+                          </View>
                         ) : null}
                         {row.esMilitar && row.gradoMilitar && row.gradoMilitar !== "-" ? (
-                          <>
+                          <View style={S.metaItem}>
                             <Text style={S.metaLabel}>Grado militar</Text>
                             <Text style={S.metaValue}>{row.gradoMilitar}</Text>
-                          </>
+                          </View>
                         ) : null}
                         {row.unidadDependencia && row.unidadDependencia !== "-" ? (
-                          <>
+                          <View style={S.metaItem}>
                             <Text style={S.metaLabel}>Unidad / Dependencia</Text>
                             <Text style={S.metaValue}>{row.unidadDependencia}</Text>
-                          </>
+                          </View>
                         ) : null}
-                        <Text style={S.metaLabel}>Estado (Vzla.)</Text>
-                        <Text style={S.metaValue}>{row.entidad || "—"}</Text>
-                        <Text style={S.metaLabel}>Responsable</Text>
-                        <Text style={S.metaValue}>{row.responsable}</Text>
                       </View>
                       <View style={S.metaCol}>
-                        <Text style={S.metaLabel}>Estado del caso</Text>
-                        <Text style={S.metaValue}>{row.stateName}</Text>
-                        {row.fechaCierre ? (
-                          <>
-                            <Text style={S.metaLabel}>Fecha de cierre</Text>
-                            <Text style={S.metaValue}>{row.fechaCierre}</Text>
-                          </>
-                        ) : null}
-                        <Text style={S.metaLabel}>Resuelto</Text>
-                        <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
-                          {row.beneficiado ? "Sí" : "No"}
-                        </Text>
+                        <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Responsable</Text>
+                          <Text style={S.metaValue}>{row.responsable}</Text>
+                        </View>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Fecha de cierre</Text>
+                          <Text style={S.metaValue}>{row.fechaCierre || "-"}</Text>
+                        </View>
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Caso resuelto</Text>
+                          <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
+                            {row.beneficiado ? "Sí" : "No"}
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
