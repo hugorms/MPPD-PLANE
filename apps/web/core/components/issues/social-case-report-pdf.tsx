@@ -179,6 +179,33 @@ const S = StyleSheet.create({
   detailStatusLabel: { fontSize: 6, color: C.gray500, marginBottom: 2 },
   detailStatusText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, textAlign: "center" },
   metaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  metaColIdentity: {
+    width: "30%",
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    minHeight: 132,
+  },
+  metaColMilitary: {
+    width: "43%",
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    minHeight: 132,
+  },
+  metaColManagement: {
+    width: "23.6%",
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    minHeight: 132,
+  },
   metaCol: {
     flex: 1,
     backgroundColor: C.white,
@@ -858,7 +885,7 @@ export const SocialCaseReportPDF = ({
                       </View>
                     </View>
                     <View style={S.metaGrid}>
-                      <View style={S.metaCol}>
+                      <View style={S.metaColIdentity}>
                         <Text style={S.metaGroupTitle}>IDENTIFICACIÓN</Text>
                         <View style={S.metaItem}>
                           <Text style={S.metaLabel}>Cédula</Text>
@@ -877,7 +904,7 @@ export const SocialCaseReportPDF = ({
                           <Text style={S.metaValue}>{row.entidad || "—"}</Text>
                         </View>
                       </View>
-                      <View style={S.metaCol}>
+                      <View style={S.metaColMilitary}>
                         <Text style={S.metaGroupTitle}>DATOS MILITARES</Text>
                         <View style={S.metaItem}>
                           <Text style={S.metaLabel}>Componente</Text>
@@ -902,7 +929,7 @@ export const SocialCaseReportPDF = ({
                           </View>
                         ) : null}
                       </View>
-                      <View style={S.metaCol}>
+                      <View style={S.metaColManagement}>
                         <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
                         <View style={S.metaItem}>
                           <Text style={S.metaLabel}>Responsable</Text>
