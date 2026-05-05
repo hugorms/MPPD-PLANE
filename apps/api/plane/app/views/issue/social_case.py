@@ -73,6 +73,14 @@ class SocialCaseReportEndpoint(BaseAPIView):
                     ),
                     [],
                 ),
+                label_names=Coalesce(
+                    ArrayAgg(
+                        "label_issue__label__name",
+                        filter=Q(label_issue__label__name__isnull=False),
+                        distinct=True,
+                    ),
+                    [],
+                ),
             )
             .order_by("-created_at")
             .values(
@@ -84,6 +92,7 @@ class SocialCaseReportEndpoint(BaseAPIView):
                 "priority",
                 "assignee_ids",
                 "label_ids",
+                "label_names",
                 "project_id",
                 "created_at",
                 "updated_at",

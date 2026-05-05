@@ -57,6 +57,8 @@ const attachmentService = new IssueAttachmentService();
 
 type Preset = "today" | "week" | "month" | "3months" | "all" | "custom";
 type XlsAttachment = { attributes?: { name?: string }; asset_url?: string };
+type IssueLabelValue = string | { id?: string; name?: string };
+type ProjectLabelLike = { id: string; name: string };
 
 const CONDICION_OPTIONS = ["Civil", "Militar"] as const;
 
@@ -77,6 +79,42 @@ const FANB_COMPONENTES = [
 ] as const;
 
 const toUpperOrDash = (v: string | undefined | null) => (v ?? "-").toUpperCase();
+
+const getIssueLabelIds = (issue: any): string[] => {
+  const rawLabels: IssueLabelValue[] = Array.isArray(issue?.label_ids)
+    ? issue.label_ids
+    : Array.isArray(issue?.labels)
+      ? issue.labels
+      : [];
+
+  return rawLabels
+    .map((label) => (typeof label === "string" ? label : label?.id))
+    .filter((labelId): labelId is string => Boolean(labelId));
+};
+
+const getIssueLabelNames = (issue: any, projectLabels: ProjectLabelLike[]): string[] => {
+  const names = new Set<string>();
+
+  if (Array.isArray(issue?.label_names)) {
+    for (const labelName of issue.label_names) {
+      if (typeof labelName === "string" && labelName.trim()) names.add(labelName.trim());
+    }
+  }
+
+  if (Array.isArray(issue?.labels)) {
+    for (const label of issue.labels as IssueLabelValue[]) {
+      if (typeof label !== "string" && label?.name?.trim()) names.add(label.name.trim());
+    }
+  }
+
+  const labelById = new Map(projectLabels.map((label) => [label.id, label.name]));
+  for (const labelId of getIssueLabelIds(issue)) {
+    const labelName = labelById.get(labelId);
+    if (labelName) names.add(labelName);
+  }
+
+  return Array.from(names);
+};
 
 const getAttachmentExt = (attachment: XlsAttachment) => {
   const nameExt = (attachment.attributes?.name ?? "").split(".").pop()?.toLowerCase() ?? "";
@@ -460,9 +498,8 @@ const Overview = observer(function Overview() {
 
       // Filtro por etiquetas (label_ids nativos de Plane)
       if (labelFilter.length > 0) {
-        const matchingIds = projectLabels.filter((l) => labelFilter.includes(l.name)).map((l) => l.id);
-        const issueLabelIds: string[] = issue.label_ids ?? [];
-        if (!matchingIds.some((id) => issueLabelIds.includes(id))) continue;
+        const issueLabelNames = getIssueLabelNames(issue, projectLabels);
+        if (!labelFilter.some((labelName) => issueLabelNames.includes(labelName))) continue;
       }
 
       const photoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
@@ -511,9 +548,8 @@ const Overview = observer(function Overview() {
       if (entidad) parsedByEntidad[entidad] = (parsedByEntidad[entidad] ?? 0) + 1;
 
       // Etiquetas nativas de Plane
-      for (const labelId of issue.label_ids ?? []) {
-        const labelName = projectLabels.find((l) => l.id === labelId)?.name;
-        if (labelName) parsedByLabel[labelName] = (parsedByLabel[labelName] ?? 0) + 1;
+      for (const labelName of getIssueLabelNames(issue, projectLabels)) {
+        parsedByLabel[labelName] = (parsedByLabel[labelName] ?? 0) + 1;
       }
 
       if (issue.created_at) {
