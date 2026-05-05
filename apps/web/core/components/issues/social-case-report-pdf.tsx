@@ -17,6 +17,8 @@ const C = {
   gray50: "#fafafa",
   white: "#ffffff",
   blue: "#2563eb",
+  navy: "#0f3a73",
+  paleBlue: "#eff6ff",
   green: "#16a34a",
   border: "#e4e4e7",
 };
@@ -79,35 +81,31 @@ const S = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 12,
     paddingBottom: 8,
-    borderBottom: `2px solid ${C.blue}`,
+    borderBottom: `2px solid ${C.navy}`,
   },
-  detailPageProject: { fontSize: 11, fontFamily: "Helvetica-Bold", color: C.gray900 },
-  detailPageTag: { fontSize: 8, color: C.gray500 },
+  detailPageProject: { fontSize: 14, fontFamily: "Helvetica-Bold", color: C.navy },
+  detailPageTag: { fontSize: 7.5, color: C.navy, fontFamily: "Helvetica-Bold" },
   detailHeader: {
     flexDirection: "row",
-    alignItems: "stretch",
-    marginBottom: 14,
-    padding: 12,
-    border: `1px solid ${C.border}`,
-    borderRadius: 8,
-    backgroundColor: C.gray50,
-    gap: 12,
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 18,
   },
   detailPhotoFrame: {
-    width: 86,
-    padding: 5,
-    borderRadius: 7,
+    width: 112,
+    padding: 4,
+    borderRadius: 6,
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
     alignItems: "center",
   },
-  detailPhoto: { width: 74, height: 98, borderRadius: 5, objectFit: "cover" },
+  detailPhoto: { width: 102, height: 128, borderRadius: 4, objectFit: "cover" },
   detailPhotoPlaceholder: {
-    width: 74,
-    height: 98,
-    borderRadius: 5,
+    width: 102,
+    height: 128,
+    borderRadius: 4,
     backgroundColor: C.gray100,
     justifyContent: "center",
     alignItems: "center",
@@ -118,53 +116,48 @@ const S = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 0,
     gap: 10,
   },
   detailNameWrap: { flex: 1 },
-  detailName: { fontSize: 15, fontFamily: "Helvetica-Bold", color: C.gray900, marginBottom: 3, lineHeight: 1.15 },
-  detailId: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.blue },
+  detailName: { fontSize: 19, fontFamily: "Helvetica-Bold", color: C.navy, marginBottom: 6, lineHeight: 1.05 },
+  detailId: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.blue },
   detailStatusBadge: {
-    minWidth: 72,
-    paddingVertical: 4,
-    paddingHorizontal: 7,
+    minWidth: 90,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: 4,
-    backgroundColor: C.white,
-    border: `1px solid ${C.border}`,
+    backgroundColor: C.paleBlue,
+    border: `1px solid #bfdbfe`,
     alignItems: "center",
   },
-  detailStatusLabel: { fontSize: 6, color: C.gray500, marginBottom: 2 },
-  detailStatusText: { fontSize: 8, fontFamily: "Helvetica-Bold", color: C.gray900, textAlign: "center" },
-  metaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  detailStatusLabel: { fontSize: 6.5, color: C.navy, marginBottom: 3, fontFamily: "Helvetica-Bold" },
+  detailStatusText: { fontSize: 12, fontFamily: "Helvetica-Bold", color: C.navy, textAlign: "center" },
+  metaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
   metaColIdentity: {
-    width: "34%",
+    width: "39%",
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
-    borderRadius: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-    minHeight: 112,
+    borderRadius: 4,
+    minHeight: 145,
   },
   metaColMilitary: {
-    width: "63%",
+    width: "58%",
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
-    borderRadius: 5,
-    paddingVertical: 5,
-    paddingHorizontal: 6,
-    minHeight: 112,
+    borderRadius: 4,
+    minHeight: 145,
   },
   metaColManagement: {
     width: "100%",
     backgroundColor: C.white,
     border: `1px solid ${C.border}`,
-    borderRadius: 5,
-    paddingVertical: 6,
-    paddingHorizontal: 7,
-    marginTop: 6,
+    borderRadius: 4,
+    marginBottom: 10,
   },
-  metaManagementGrid: { flexDirection: "row", gap: 8 },
-  metaManagementItem: { flex: 1 },
+  metaManagementGrid: { flexDirection: "row", paddingVertical: 8, paddingHorizontal: 10 },
+  metaManagementItem: { flex: 1, paddingHorizontal: 7, borderRight: `1px solid ${C.border}` },
+  metaManagementItemLast: { flex: 1, paddingHorizontal: 7 },
   metaCol: {
     flex: 1,
     backgroundColor: C.white,
@@ -177,26 +170,37 @@ const S = StyleSheet.create({
   metaGroupTitle: {
     fontSize: 7,
     fontFamily: "Helvetica-Bold",
-    color: C.blue,
-    marginBottom: 6,
-    paddingBottom: 3,
-    borderBottom: `1px solid ${C.border}`,
+    color: C.white,
+    textAlign: "center",
+    backgroundColor: C.navy,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
   },
-  metaItem: { marginBottom: 6 },
-  metaLabel: { fontSize: 6.5, color: C.gray500, marginBottom: 1.5 },
-  metaValue: { fontSize: 8.3, color: C.gray900, fontFamily: "Helvetica-Bold", lineHeight: 1.22 },
+  metaCardBody: { paddingVertical: 10, paddingHorizontal: 11 },
+  metaItem: { marginBottom: 8 },
+  metaLabel: { fontSize: 6.4, color: C.navy, marginBottom: 1.5, fontFamily: "Helvetica-Bold" },
+  metaValue: { fontSize: 8.2, color: C.gray900, lineHeight: 1.22 },
 
   // Sección de texto en detalle
-  detailSection: { marginTop: 10 },
-  detailSectionTitle: {
-    fontSize: 8,
-    fontFamily: "Helvetica-Bold",
-    color: C.gray700,
-    marginBottom: 4,
-    paddingBottom: 3,
-    borderBottom: `1px solid ${C.border}`,
+  detailSection: {
+    marginTop: 8,
+    flexDirection: "row",
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    backgroundColor: C.white,
   },
-  detailText: { fontSize: 9, color: C.gray700, lineHeight: 1.5 },
+  detailSectionTitle: {
+    width: 96,
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.navy,
+    paddingVertical: 10,
+    paddingHorizontal: 9,
+    backgroundColor: C.gray50,
+  },
+  detailText: { flex: 1, fontSize: 8.2, color: C.gray700, lineHeight: 1.45, paddingVertical: 9, paddingHorizontal: 10 },
 
   // Timeline de estado (vertical)
   timelineWrap: { marginTop: 12, padding: 12, backgroundColor: C.gray100, borderRadius: 6 },
@@ -774,75 +778,78 @@ export const SocialCaseReportPDF = ({
                         <Text style={S.detailStatusText}>{row.stateName}</Text>
                       </View>
                     </View>
-                    <View style={S.metaGrid}>
-                      <View style={S.metaColIdentity}>
-                        <Text style={S.metaGroupTitle}>IDENTIFICACIÓN</Text>
-                        <View style={S.metaItem}>
-                          <Text style={S.metaLabel}>Cédula</Text>
-                          <Text style={S.metaValue}>{row.cedula}</Text>
-                        </View>
-                        <View style={S.metaItem}>
-                          <Text style={S.metaLabel}>Teléfono</Text>
-                          <Text style={S.metaValue}>{row.telefono || "—"}</Text>
-                        </View>
-                        <View style={S.metaItem}>
-                          <Text style={S.metaLabel}>Municipio</Text>
-                          <Text style={S.metaValue}>{row.municipio}</Text>
-                        </View>
-                        <View style={S.metaItem}>
-                          <Text style={S.metaLabel}>Estado (Vzla.)</Text>
-                          <Text style={S.metaValue}>{row.entidad || "—"}</Text>
-                        </View>
-                      </View>
-                      <View style={S.metaColMilitary}>
-                        <Text style={S.metaGroupTitle}>DATOS MILITARES</Text>
-                        <View style={S.metaItem}>
-                          <Text style={S.metaLabel}>Componente</Text>
-                          <Text style={S.metaValue}>{row.componente}</Text>
-                        </View>
-                        {row.esMilitar && row.condicionMilitar && row.condicionMilitar !== "-" ? (
-                          <View style={S.metaItem}>
-                            <Text style={S.metaLabel}>Condición militar</Text>
-                            <Text style={S.metaValue}>{row.condicionMilitar}</Text>
-                          </View>
-                        ) : null}
-                        {row.esMilitar && row.gradoMilitar && row.gradoMilitar !== "-" ? (
-                          <View style={S.metaItem}>
-                            <Text style={S.metaLabel}>Grado militar</Text>
-                            <Text style={S.metaValue}>{row.gradoMilitar}</Text>
-                          </View>
-                        ) : null}
-                        {row.unidadDependencia && row.unidadDependencia !== "-" ? (
-                          <View style={S.metaItem}>
-                            <Text style={S.metaLabel}>Unidad / Dependencia</Text>
-                            <Text style={S.metaValue}>{row.unidadDependencia}</Text>
-                          </View>
-                        ) : null}
-                      </View>
-                    </View>
-                    <View style={S.metaColManagement}>
-                      <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
-                      <View style={S.metaManagementGrid}>
-                        <View style={S.metaManagementItem}>
-                          <Text style={S.metaLabel}>Responsable</Text>
-                          <Text style={S.metaValue}>{row.responsable}</Text>
-                        </View>
-                        <View style={S.metaManagementItem}>
-                          <Text style={S.metaLabel}>Fecha de cierre</Text>
-                          <Text style={S.metaValue}>{row.fechaCierre || "-"}</Text>
-                        </View>
-                        <View style={S.metaManagementItem}>
-                          <Text style={S.metaLabel}>Caso resuelto</Text>
-                          <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
-                            {row.beneficiado ? "Sí" : "No"}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
                   </View>
                 </View>
 
-                <View style={S.divider} />
+                <View style={S.metaGrid}>
+                  <View style={S.metaColIdentity}>
+                    <Text style={S.metaGroupTitle}>IDENTIFICACIÓN</Text>
+                    <View style={S.metaCardBody}>
+                      <View style={S.metaItem}>
+                        <Text style={S.metaLabel}>Cédula</Text>
+                        <Text style={S.metaValue}>{row.cedula}</Text>
+                      </View>
+                      <View style={S.metaItem}>
+                        <Text style={S.metaLabel}>Teléfono</Text>
+                        <Text style={S.metaValue}>{row.telefono || "—"}</Text>
+                      </View>
+                      <View style={S.metaItem}>
+                        <Text style={S.metaLabel}>Municipio</Text>
+                        <Text style={S.metaValue}>{row.municipio}</Text>
+                      </View>
+                      <View style={S.metaItem}>
+                        <Text style={S.metaLabel}>Estado (Vzla.)</Text>
+                        <Text style={S.metaValue}>{row.entidad || "—"}</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={S.metaColMilitary}>
+                    <Text style={S.metaGroupTitle}>DATOS MILITARES</Text>
+                    <View style={S.metaCardBody}>
+                      <View style={S.metaItem}>
+                        <Text style={S.metaLabel}>Componente</Text>
+                        <Text style={S.metaValue}>{row.componente}</Text>
+                      </View>
+                      {row.esMilitar && row.condicionMilitar && row.condicionMilitar !== "-" ? (
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Condición militar</Text>
+                          <Text style={S.metaValue}>{row.condicionMilitar}</Text>
+                        </View>
+                      ) : null}
+                      {row.esMilitar && row.gradoMilitar && row.gradoMilitar !== "-" ? (
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Grado militar</Text>
+                          <Text style={S.metaValue}>{row.gradoMilitar}</Text>
+                        </View>
+                      ) : null}
+                      {row.unidadDependencia && row.unidadDependencia !== "-" ? (
+                        <View style={S.metaItem}>
+                          <Text style={S.metaLabel}>Unidad / Dependencia</Text>
+                          <Text style={S.metaValue}>{row.unidadDependencia}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  </View>
+                </View>
+                <View style={S.metaColManagement}>
+                  <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
+                  <View style={S.metaManagementGrid}>
+                    <View style={S.metaManagementItem}>
+                      <Text style={S.metaLabel}>Responsable</Text>
+                      <Text style={S.metaValue}>{row.responsable}</Text>
+                    </View>
+                    <View style={S.metaManagementItem}>
+                      <Text style={S.metaLabel}>Fecha de cierre</Text>
+                      <Text style={S.metaValue}>{row.fechaCierre || "-"}</Text>
+                    </View>
+                    <View style={S.metaManagementItemLast}>
+                      <Text style={S.metaLabel}>Caso resuelto</Text>
+                      <Text style={[S.metaValue, { color: row.beneficiado ? C.green : C.gray700 }]}>
+                        {row.beneficiado ? "Sí" : "No"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
 
                 <View style={S.detailSection}>
                   <Text style={S.detailSectionTitle}>SOLICITUD</Text>
