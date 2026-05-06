@@ -353,15 +353,6 @@ function PdfHBar({ label, count, total, color }: { label: string; count: number;
   );
 }
 
-function SectionHeader({ title, sub }: { title: string; sub?: string }) {
-  return (
-    <View style={{ marginBottom: 8, paddingBottom: 5, borderBottom: `1px solid ${C.border}` }}>
-      <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.navy }}>{title}</Text>
-      {sub ? <Text style={{ fontSize: 6.5, color: C.gray500, marginTop: 1 }}>{sub}</Text> : null}
-    </View>
-  );
-}
-
 function GraphicPage({
   projectName,
   dateRange,
@@ -392,7 +383,7 @@ function GraphicPage({
   byLabel?: [string, number][];
 }) {
   const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
-  const CHART_H = 68;
+  const CHART_H = 74;
   const BAR_COLOR = C.navy;
 
   // Solo los 5 FANB canónicos con count > 0
@@ -404,8 +395,98 @@ function GraphicPage({
   // oxlint-disable-next-line unicorn/no-array-sort
   const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a);
 
-  const civPct = total > 0 ? Math.round((cantCiviles / total) * 100) : 0;
-  const milPct = total > 0 ? Math.round((cantMilitares / total) * 100) : 0;
+  const pctText = (value: number) => (total > 0 ? `${Math.round((value / total) * 10000) / 100}%` : "0%");
+  const resolvedPct = pctText(conResultado);
+  const civPct = pctText(cantCiviles);
+  const milPct = pctText(cantMilitares);
+  const fanbTotal = fanbEntries.reduce((acc, [, count]) => acc + count, 0);
+  const stateTotal = stateEntries.reduce((acc, [, count]) => acc + count, 0);
+  const otherEntidad = Math.max(0, total - byEntidad.slice(0, 5).reduce((acc, [, count]) => acc + count, 0));
+
+  const Card = ({ children }: { children: React.ReactNode }) => (
+    <View
+      style={{
+        flex: 1,
+        minHeight: 124,
+        backgroundColor: C.white,
+        border: `1px solid ${C.border}`,
+        borderRadius: 6,
+        padding: 11,
+      }}
+    >
+      {children}
+    </View>
+  );
+
+  const CardTitle = ({ title, sub, icon }: { title: string; sub: string; icon: string }) => (
+    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+      <View
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: 13,
+          backgroundColor: C.paleBlue,
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: 8,
+        }}
+      >
+        <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.navy }}>{icon}</Text>
+      </View>
+      <View>
+        <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.navy }}>{title}</Text>
+        <Text style={{ fontSize: 6.2, color: C.gray500, marginTop: 1 }}>{sub}</Text>
+      </View>
+    </View>
+  );
+
+  const KpiCard = ({ label, value, pct, icon }: { label: string; value: number; pct: string; icon: string }) => (
+    <View
+      style={{
+        flex: 1,
+        minHeight: 72,
+        backgroundColor: C.white,
+        border: `1px solid ${C.border}`,
+        borderLeft: `4px solid ${C.navy}`,
+        borderRadius: 6,
+        paddingVertical: 11,
+        paddingHorizontal: 10,
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
+        <View
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            backgroundColor: C.paleBlue,
+            alignItems: "center",
+            justifyContent: "center",
+            marginRight: 8,
+          }}
+        >
+          <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.navy }}>{icon}</Text>
+        </View>
+        <Text style={{ fontSize: 22, fontFamily: "Helvetica-Bold", color: C.navy }}>{value}</Text>
+      </View>
+      <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.blue, marginBottom: 2 }}>{pct}</Text>
+      <Text style={{ fontSize: 6.8, color: C.gray500 }}>{label}</Text>
+    </View>
+  );
+
+  const SummaryRow = ({ label, value }: { label: string; value: string | number }) => (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 6,
+        borderBottom: `1px solid ${C.border}`,
+      }}
+    >
+      <Text style={{ fontSize: 7, color: C.gray700, flex: 1 }}>{label}</Text>
+      <Text style={{ fontSize: 7.2, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{value}</Text>
+    </View>
+  );
 
   return (
     <Page size="A4" style={S.page}>
@@ -414,14 +495,14 @@ function GraphicPage({
         style={{
           flexDirection: "row",
           alignItems: "center",
-          marginBottom: 16,
+          marginBottom: 18,
           paddingBottom: 8,
           borderBottom: `2px solid ${C.navy}`,
         }}
       >
         {logoUrl && <Image src={logoUrl} style={{ width: 96, height: 32, objectFit: "contain", marginRight: 10 }} />}
         <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy }}>{projectName}</Text>
+          <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: C.navy }}>{projectName}</Text>
           <Text style={{ fontSize: 7.5, color: C.gray500, marginTop: 2 }}>
             Análisis de Casos Sociales · Todos los registros
           </Text>
@@ -430,100 +511,99 @@ function GraphicPage({
       </View>
 
       {/* KPIs */}
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 14 }}>
-        {(
-          [
-            { label: "Total de fichas", value: total, pct: "" },
-            {
-              label: "Resueltos",
-              value: conResultado,
-              pct: total > 0 ? ` ${Math.round((conResultado / total) * 100)}%` : "",
-            },
-            { label: "Civiles", value: cantCiviles, pct: ` ${civPct}%` },
-            { label: "Militares", value: cantMilitares, pct: ` ${milPct}%` },
-          ] as const
-        ).map((k) => (
-          <View
-            key={k.label}
-            style={{
-              flex: 1,
-              backgroundColor: C.gray50,
-              paddingVertical: 10,
-              paddingHorizontal: 9,
-              borderLeft: `3px solid ${C.navy}`,
-              borderRadius: 4,
-              border: `1px solid ${C.border}`,
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "baseline" }}>
-              <Text style={{ fontSize: 19, fontFamily: "Helvetica-Bold", color: C.navy }}>{k.value}</Text>
-              {k.pct ? <Text style={{ fontSize: 7, color: C.gray500, marginLeft: 3 }}>{k.pct}</Text> : null}
-            </View>
-            <Text style={{ fontSize: 6.8, color: C.gray500, marginTop: 2 }}>{k.label}</Text>
-          </View>
-        ))}
+      <View style={{ flexDirection: "row", gap: 10, marginBottom: 14 }}>
+        <KpiCard icon="T" label="Total de fichas" value={total} pct="100%" />
+        <KpiCard icon="R" label="Resueltos" value={conResultado} pct={resolvedPct} />
+        <KpiCard icon="C" label="Civiles" value={cantCiviles} pct={civPct} />
+        <KpiCard icon="M" label="Militares" value={cantMilitares} pct={milPct} />
       </View>
 
-      {/* 2 columnas */}
-      <View style={{ flexDirection: "row", gap: 12 }}>
-        {/* Columna izquierda */}
-        <View style={{ flex: 1, gap: 11 }}>
-          {/* Componentes FANB */}
-          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
-            <SectionHeader title="COMPONENTES FANB" sub="Distribución por rama militar" />
-            {fanbEntries.map(([name, count]) => (
-              <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
-            ))}
+      <View style={{ flexDirection: "row", gap: 14, marginBottom: 14 }}>
+        <Card>
+          <CardTitle icon="F" title="COMPONENTES FANB" sub="Distribución por componente" />
+          {fanbEntries.map(([name, count]) => (
+            <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
+          ))}
+          <View style={{ flexDirection: "row", paddingTop: 5, borderTop: `1px solid ${C.border}`, marginTop: 2 }}>
+            <Text style={{ flex: 1, fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray700 }}>Total</Text>
+            <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{fanbTotal}</Text>
+            <Text style={{ fontSize: 6.2, color: C.gray500, marginLeft: 10 }}>{pctText(fanbTotal)}</Text>
           </View>
+        </Card>
 
-          {/* Estado de Venezuela */}
-          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
-            <SectionHeader title="ESTADO DE VENEZUELA" sub={`Top ${byEntidad.length}`} />
-            {byEntidad.length === 0 ? (
-              <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos registrados</Text>
-            ) : (
-              byEntidad
-                .slice(0, 6)
-                .map(([name, count]) => (
-                  <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
-                ))
-            )}
+        <Card>
+          <CardTitle icon="E" title="ESTADO DEL CASO" sub="Por estado" />
+          {stateEntries.map(([name, count]) => (
+            <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
+          ))}
+          <View style={{ flexDirection: "row", paddingTop: 5, borderTop: `1px solid ${C.border}`, marginTop: 2 }}>
+            <Text style={{ flex: 1, fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray700 }}>Total</Text>
+            <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{stateTotal}</Text>
+            <Text style={{ fontSize: 6.2, color: C.gray500, marginLeft: 10 }}>{pctText(stateTotal)}</Text>
           </View>
-        </View>
+        </Card>
+      </View>
 
-        {/* Columna derecha */}
-        <View style={{ flex: 1, gap: 11 }}>
-          {/* Estado del caso */}
-          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
-            <SectionHeader
-              title="ESTADO DEL CASO"
-              sub={`${stateEntries.length} estado${stateEntries.length !== 1 ? "s" : ""}`}
-            />
-            {stateEntries.map(([name, count]) => (
-              <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
-            ))}
-          </View>
+      <View style={{ flexDirection: "row", gap: 14, marginBottom: 14 }}>
+        <Card>
+          <CardTitle icon="L" title="ETIQUETAS" sub="Top etiquetas" />
+          {byLabel.length === 0 ? (
+            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin etiquetas asignadas</Text>
+          ) : (
+            byLabel.slice(0, 5).map(([name, count]) => {
+              const pct = total > 0 ? Math.max(18, Math.round((count / total) * 100)) : 18;
+              return (
+                <View key={name} style={{ marginBottom: 7 }}>
+                  <View
+                    style={{
+                      alignSelf: "flex-start",
+                      minWidth: `${pct}%`,
+                      maxWidth: "100%",
+                      backgroundColor: C.paleBlue,
+                      border: `1px solid #dbeafe`,
+                      borderRadius: 4,
+                      paddingVertical: 4,
+                      paddingHorizontal: 6,
+                      flexDirection: "row",
+                    }}
+                  >
+                    <Text style={{ flex: 1, fontSize: 6.4, color: C.gray700 }} numberOfLines={1}>
+                      {name}
+                    </Text>
+                    <Text style={{ fontSize: 6.6, fontFamily: "Helvetica-Bold", color: C.navy, marginLeft: 6 }}>
+                      {count}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </Card>
 
-          {/* Etiquetas */}
-          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
-            <SectionHeader title="ETIQUETAS" sub={`${byLabel.length} etiqueta${byLabel.length !== 1 ? "s" : ""}`} />
-            {byLabel.length === 0 ? (
-              <Text style={{ fontSize: 7, color: C.gray500 }}>Sin etiquetas asignadas</Text>
-            ) : (
-              byLabel
-                .slice(0, 6)
-                .map(([name, count]) => (
-                  <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
-                ))
-            )}
-          </View>
+        <Card>
+          <CardTitle icon="V" title="ESTADOS DE VENEZUELA" sub="Top estados" />
+          {byEntidad.length === 0 ? (
+            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos registrados</Text>
+          ) : (
+            <>
+              {byEntidad.slice(0, 5).map(([name, count]) => (
+                <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
+              ))}
+              {otherEntidad > 0 && (
+                <PdfHBar label="Otros estados" count={otherEntidad} total={total} color={BAR_COLOR} />
+              )}
+            </>
+          )}
+        </Card>
+      </View>
 
-          {/* Evolución mensual */}
-          <View style={{ backgroundColor: C.white, padding: 11, border: `1px solid ${C.border}`, borderRadius: 5 }}>
-            <SectionHeader title="EVOLUCIÓN MENSUAL" sub={`Últimos ${byMonth.length} meses`} />
-            {byMonth.length === 0 ? (
-              <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
-            ) : (
+      <View style={{ flexDirection: "row", gap: 14 }}>
+        <Card>
+          <CardTitle icon="M" title="EVOLUCIÓN MENSUAL" sub="Fichas creadas por mes" />
+          {byMonth.length === 0 ? (
+            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
+          ) : (
+            <>
               <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H, gap: 2, marginTop: 4 }}>
                 {byMonth.map(([month, count], idx) => {
                   const barH = Math.max(4, Math.round((count / maxMonth) * (CHART_H - 16)));
@@ -539,14 +619,27 @@ function GraphicPage({
                   );
                 })}
               </View>
-            )}
-          </View>
-        </View>
+              <View style={{ borderTop: `1px solid ${C.border}`, marginTop: 6 }} />
+            </>
+          )}
+        </Card>
+
+        <Card>
+          <CardTitle icon="R" title="RESUMEN GENERAL" sub="Indicadores clave" />
+          <SummaryRow label="Total de fichas" value={total} />
+          <SummaryRow label="Resueltos" value={conResultado} />
+          <SummaryRow label="Casos civiles" value={cantCiviles} />
+          <SummaryRow label="Casos militares" value={cantMilitares} />
+          <SummaryRow label="% casos resueltos" value={resolvedPct} />
+          <SummaryRow label="Fecha del reporte" value={generatedAtLabel} />
+        </Card>
       </View>
 
       <View style={S.footer} fixed>
-        <Text style={S.footerText}>{projectName} · Análisis de Casos Sociales</Text>
-        <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
+        <Text style={S.footerText}>
+          {projectName} | Generado el {generatedAtLabel}
+        </Text>
+        <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
       </View>
     </Page>
   );
