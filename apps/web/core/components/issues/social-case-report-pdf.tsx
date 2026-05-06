@@ -327,14 +327,6 @@ type Props = {
 
 // ── Helpers gráfica ───────────────────────────────────────────────────────────
 
-function pdfMonthLabel(yyyyMM: string): string {
-  const parts = yyyyMM.split("-");
-  return new Date(Number(parts[0]), Number(parts[1]) - 1, 1)
-    .toLocaleDateString("es-VE", { month: "short" })
-    .replace(".", "")
-    .toUpperCase();
-}
-
 function PdfHBar({ label, count, total, color }: { label: string; count: number; total: number; color: string }) {
   const pct = total > 0 ? Math.max(2, Math.round((count / total) * 100)) : 2;
   return (
@@ -365,7 +357,6 @@ function GraphicPage({
   byComponente,
   byState,
   byEntidad,
-  byMonth,
   byLabel = [],
 }: {
   projectName: string;
@@ -382,8 +373,6 @@ function GraphicPage({
   byMonth: [string, number][];
   byLabel?: [string, number][];
 }) {
-  const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
-  const CHART_H = 74;
   const BAR_COLOR = C.navy;
 
   // Solo los 5 FANB canónicos con count > 0
@@ -403,11 +392,11 @@ function GraphicPage({
   const stateTotal = stateEntries.reduce((acc, [, count]) => acc + count, 0);
   const otherEntidad = Math.max(0, total - byEntidad.slice(0, 5).reduce((acc, [, count]) => acc + count, 0));
 
-  const Card = ({ children }: { children: React.ReactNode }) => (
+  const Card = ({ children, minHeight = 124 }: { children: React.ReactNode; minHeight?: number }) => (
     <View
       style={{
         flex: 1,
-        minHeight: 124,
+        minHeight,
         backgroundColor: C.white,
         border: `1px solid ${C.border}`,
         borderRadius: 6,
@@ -418,21 +407,8 @@ function GraphicPage({
     </View>
   );
 
-  const CardTitle = ({ title, sub, icon }: { title: string; sub: string; icon: string }) => (
-    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-      <View
-        style={{
-          width: 26,
-          height: 26,
-          borderRadius: 13,
-          backgroundColor: C.paleBlue,
-          alignItems: "center",
-          justifyContent: "center",
-          marginRight: 8,
-        }}
-      >
-        <Text style={{ fontSize: 9, fontFamily: "Helvetica-Bold", color: C.navy }}>{icon}</Text>
-      </View>
+  const CardTitle = ({ title, sub }: { title: string; sub: string }) => (
+    <View style={{ marginBottom: 10 }}>
       <View>
         <Text style={{ fontSize: 8, fontFamily: "Helvetica-Bold", color: C.navy }}>{title}</Text>
         <Text style={{ fontSize: 6.2, color: C.gray500, marginTop: 1 }}>{sub}</Text>
@@ -440,7 +416,7 @@ function GraphicPage({
     </View>
   );
 
-  const KpiCard = ({ label, value, pct, icon }: { label: string; value: number; pct: string; icon: string }) => (
+  const KpiCard = ({ label, value, pct }: { label: string; value: number; pct: string }) => (
     <View
       style={{
         flex: 1,
@@ -454,37 +430,10 @@ function GraphicPage({
       }}
     >
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 6 }}>
-        <View
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: 14,
-            backgroundColor: C.paleBlue,
-            alignItems: "center",
-            justifyContent: "center",
-            marginRight: 8,
-          }}
-        >
-          <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: C.navy }}>{icon}</Text>
-        </View>
         <Text style={{ fontSize: 22, fontFamily: "Helvetica-Bold", color: C.navy }}>{value}</Text>
       </View>
       <Text style={{ fontSize: 7.5, fontFamily: "Helvetica-Bold", color: C.blue, marginBottom: 2 }}>{pct}</Text>
       <Text style={{ fontSize: 6.8, color: C.gray500 }}>{label}</Text>
-    </View>
-  );
-
-  const SummaryRow = ({ label, value }: { label: string; value: string | number }) => (
-    <View
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        paddingVertical: 6,
-        borderBottom: `1px solid ${C.border}`,
-      }}
-    >
-      <Text style={{ fontSize: 7, color: C.gray700, flex: 1 }}>{label}</Text>
-      <Text style={{ fontSize: 7.2, fontFamily: "Helvetica-Bold", color: C.gray900 }}>{value}</Text>
     </View>
   );
 
@@ -512,15 +461,15 @@ function GraphicPage({
 
       {/* KPIs */}
       <View style={{ flexDirection: "row", gap: 10, marginBottom: 14 }}>
-        <KpiCard icon="T" label="Total de fichas" value={total} pct="100%" />
-        <KpiCard icon="R" label="Resueltos" value={conResultado} pct={resolvedPct} />
-        <KpiCard icon="C" label="Civiles" value={cantCiviles} pct={civPct} />
-        <KpiCard icon="M" label="Militares" value={cantMilitares} pct={milPct} />
+        <KpiCard label="Total de fichas" value={total} pct="100%" />
+        <KpiCard label="Resueltos" value={conResultado} pct={resolvedPct} />
+        <KpiCard label="Civiles" value={cantCiviles} pct={civPct} />
+        <KpiCard label="Militares" value={cantMilitares} pct={milPct} />
       </View>
 
       <View style={{ flexDirection: "row", gap: 14, marginBottom: 14 }}>
         <Card>
-          <CardTitle icon="F" title="COMPONENTES FANB" sub="Distribución por componente" />
+          <CardTitle title="COMPONENTES FANB" sub="Distribución por componente" />
           {fanbEntries.map(([name, count]) => (
             <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
           ))}
@@ -532,7 +481,7 @@ function GraphicPage({
         </Card>
 
         <Card>
-          <CardTitle icon="E" title="ESTADO DEL CASO" sub="Por estado" />
+          <CardTitle title="ESTADO DEL CASO" sub="Por estado" />
           {stateEntries.map(([name, count]) => (
             <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
           ))}
@@ -545,34 +494,35 @@ function GraphicPage({
       </View>
 
       <View style={{ flexDirection: "row", gap: 14, marginBottom: 14 }}>
-        <Card>
-          <CardTitle icon="L" title="ETIQUETAS" sub="Top etiquetas" />
+        <Card minHeight={250}>
+          <CardTitle title="ETIQUETAS" sub="Top etiquetas" />
           {byLabel.length === 0 ? (
             <Text style={{ fontSize: 7, color: C.gray500 }}>Sin etiquetas asignadas</Text>
           ) : (
-            byLabel.slice(0, 5).map(([name, count]) => {
-              const pct = total > 0 ? Math.max(18, Math.round((count / total) * 100)) : 18;
+            byLabel.slice(0, 8).map(([name, count]) => {
+              const pct = total > 0 ? Math.max(3, Math.round((count / total) * 100)) : 3;
               return (
-                <View key={name} style={{ marginBottom: 7 }}>
-                  <View
-                    style={{
-                      alignSelf: "flex-start",
-                      minWidth: `${pct}%`,
-                      maxWidth: "100%",
-                      backgroundColor: C.paleBlue,
-                      border: `1px solid #dbeafe`,
-                      borderRadius: 4,
-                      paddingVertical: 4,
-                      paddingHorizontal: 6,
-                      flexDirection: "row",
-                    }}
-                  >
-                    <Text style={{ flex: 1, fontSize: 6.4, color: C.gray700 }} numberOfLines={1}>
+                <View
+                  key={name}
+                  style={{
+                    marginBottom: 8,
+                    paddingVertical: 6,
+                    paddingHorizontal: 7,
+                    border: `1px solid #dbeafe`,
+                    borderRadius: 4,
+                    backgroundColor: "#f8fbff",
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+                    <Text style={{ flex: 1, fontSize: 7, color: C.gray700 }} numberOfLines={1}>
                       {name}
                     </Text>
-                    <Text style={{ fontSize: 6.6, fontFamily: "Helvetica-Bold", color: C.navy, marginLeft: 6 }}>
+                    <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: C.navy, marginLeft: 8 }}>
                       {count}
                     </Text>
+                  </View>
+                  <View style={{ height: 5, borderRadius: 3, backgroundColor: "#e8eef7" }}>
+                    <View style={{ width: `${pct}%`, height: 5, borderRadius: 3, backgroundColor: BAR_COLOR }} />
                   </View>
                 </View>
               );
@@ -580,13 +530,13 @@ function GraphicPage({
           )}
         </Card>
 
-        <Card>
-          <CardTitle icon="V" title="ESTADOS DE VENEZUELA" sub="Top estados" />
+        <Card minHeight={250}>
+          <CardTitle title="ESTADOS DE VENEZUELA" sub="Top estados" />
           {byEntidad.length === 0 ? (
             <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos registrados</Text>
           ) : (
             <>
-              {byEntidad.slice(0, 5).map(([name, count]) => (
+              {byEntidad.slice(0, 6).map(([name, count]) => (
                 <PdfHBar key={name} label={name} count={count} total={total} color={BAR_COLOR} />
               ))}
               {otherEntidad > 0 && (
@@ -594,44 +544,6 @@ function GraphicPage({
               )}
             </>
           )}
-        </Card>
-      </View>
-
-      <View style={{ flexDirection: "row", gap: 14 }}>
-        <Card>
-          <CardTitle icon="M" title="EVOLUCIÓN MENSUAL" sub="Fichas creadas por mes" />
-          {byMonth.length === 0 ? (
-            <Text style={{ fontSize: 7, color: C.gray500 }}>Sin datos en el período</Text>
-          ) : (
-            <>
-              <View style={{ flexDirection: "row", alignItems: "flex-end", height: CHART_H, gap: 2, marginTop: 4 }}>
-                {byMonth.map(([month, count], idx) => {
-                  const barH = Math.max(4, Math.round((count / maxMonth) * (CHART_H - 16)));
-                  const opacity = 0.4 + (idx / Math.max(byMonth.length - 1, 1)) * 0.6;
-                  return (
-                    <View key={month} style={{ flex: 1, alignItems: "center" }}>
-                      <Text style={{ fontSize: 5.5, color: C.gray700, marginBottom: 1 }}>{count}</Text>
-                      <View style={{ width: "100%", height: barH, backgroundColor: BAR_COLOR, opacity }} />
-                      <Text style={{ fontSize: 5, color: C.gray500, marginTop: 1 }} numberOfLines={1}>
-                        {pdfMonthLabel(month)}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-              <View style={{ borderTop: `1px solid ${C.border}`, marginTop: 6 }} />
-            </>
-          )}
-        </Card>
-
-        <Card>
-          <CardTitle icon="R" title="RESUMEN GENERAL" sub="Indicadores clave" />
-          <SummaryRow label="Total de fichas" value={total} />
-          <SummaryRow label="Resueltos" value={conResultado} />
-          <SummaryRow label="Casos civiles" value={cantCiviles} />
-          <SummaryRow label="Casos militares" value={cantMilitares} />
-          <SummaryRow label="% casos resueltos" value={resolvedPct} />
-          <SummaryRow label="Fecha del reporte" value={generatedAtLabel} />
         </Card>
       </View>
 
