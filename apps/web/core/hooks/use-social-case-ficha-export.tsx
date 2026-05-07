@@ -13,19 +13,6 @@ import { fetchBase64WithAuth, resolveSocialCaseExportAttachment } from "@/utils/
 
 const attachmentService = new IssueAttachmentService();
 
-// URLs propias de Django (estáticos, cedula-photo, etc.) — con sesión
-async function urlToBase64Authed(url: string): Promise<string> {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("loadend", () => resolve(reader.result as string));
-    reader.addEventListener("error", () => reject(new Error("FileReader error")));
-    reader.readAsDataURL(blob);
-  });
-}
-
 type Params = {
   workspaceSlug: string;
   projectId: string;
@@ -57,22 +44,8 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
       const projectIdentifier = "MPPDGCS";
       const generatedAtLabel = new Date().toLocaleDateString("es-VE");
       const stateName = issue.state_id ? (getStateById(issue.state_id)?.name ?? "Sin estado") : "Sin estado";
-      const assignees = (issue.assignee_ids ?? [])
-        .map((id: string) => memberRoot.getUserDetails(id)?.display_name || memberRoot.getUserDetails(id)?.first_name)
-        .filter(Boolean) as string[];
-      const responsable = assignees.length > 0 ? assignees.join(", ") : "Sin asignar";
-
-      // Logo institucional
-      let logoUrl: string | null = null;
-      try {
-        logoUrl = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
-      } catch {
-        try {
-          logoUrl = await urlToBase64Authed(`${window.location.origin}/logo-mppd.png`);
-        } catch {
-          logoUrl = null;
-        }
-      }
+      const creator = issue.created_by ? memberRoot.getUserDetails(issue.created_by) : null;
+      const responsable = creator?.display_name || creator?.first_name || "Sin creador registrado";
 
       const d = extractFromHtml(issue.description_html ?? "");
       const photoUrlRaw = extractProfilePhotoFromHtml(issue.description_html ?? "");
@@ -133,8 +106,6 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
           photoUrl={resolvedPhotoUrl}
           attachments={fichaAttachments}
           generatedAtLabel={generatedAtLabel}
-          logoUrl={logoUrl}
-          startDate={issue.start_date ?? issue.created_at?.slice(0, 10) ?? null}
         />
       ).toBlob();
 

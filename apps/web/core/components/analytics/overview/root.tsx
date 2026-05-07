@@ -22,7 +22,6 @@ import {
   SocialCaseReportPDF,
   type ParsedIssueRow,
   type AttachmentInfo,
-  type StateFlowStep,
 } from "@/components/issues/social-case-report-pdf";
 import { VENEZUELA_ESTADOS } from "@/components/issues/social-case-estados";
 import { APIService } from "@/services/api.service";
@@ -410,8 +409,6 @@ const Overview = observer(function Overview() {
     [getProjectStates, selectedProjectId]
   );
 
-  const stateFlow = useMemo<StateFlowStep[]>(() => (states ?? []).map((s) => ({ id: s.id, name: s.name })), [states]);
-
   const stateNames = useMemo(() => {
     const map: Record<string, string> = {};
     (states ?? []).forEach((s) => {
@@ -571,10 +568,10 @@ const Overview = observer(function Overview() {
       .sort(([, a], [, b]) => b - a)
       .slice(0, 8);
 
+    const monthEntries = Object.entries(parsedByMonth);
     // oxlint-disable-next-line unicorn/no-array-sort
-    const monthEntries = Object.entries(parsedByMonth)
-      .toSorted(([a], [b]) => a.localeCompare(b))
-      .slice(-12);
+    monthEntries.sort(([a], [b]) => a.localeCompare(b));
+    const recentMonthEntries = monthEntries.slice(-12);
 
     // oxlint-disable-next-line unicorn/no-array-sort
     const topLabel = Object.entries(parsedByLabel).sort(([, a], [, b]) => b - a);
@@ -585,7 +582,7 @@ const Overview = observer(function Overview() {
       byComponente: parsedByComponente,
       byCondicion: parsedByCondicion,
       byEntidad: topEntidad,
-      byMonth: monthEntries,
+      byMonth: recentMonthEntries,
       byLabel: topLabel,
       conResultado: parsedConResultado,
     };
@@ -609,10 +606,12 @@ const Overview = observer(function Overview() {
 
   // Solo los 5 FANB canónicos con count > 0, ordenados por cantidad
   const byFANBComponente = useMemo(() => {
+    const entries = FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number]).filter(
+      ([, count]) => count > 0
+    );
     // oxlint-disable-next-line unicorn/no-array-sort
-    return FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number])
-      .filter(([, count]) => count > 0)
-      .toSorted(([, a], [, b]) => b - a);
+    entries.sort(([, a], [, b]) => b - a);
+    return entries;
   }, [byComponente]);
 
   const dateRangeLabel = useMemo(() => {
@@ -693,7 +692,6 @@ const Overview = observer(function Overview() {
           stateColorMap={stateColorMap}
           conResultado={conResultado}
           generatedAtLabel={generatedAtLabel}
-          stateFlow={stateFlow}
           includeCover={includeCover}
           includePhotos={includeMedia}
           includeDetails={includeDetails}
@@ -817,10 +815,11 @@ const Overview = observer(function Overview() {
         };
 
         // Solo los 5 componentes FANB canónicos (excluye "Civil" y "Militar / Sin componente")
+        const compEntries = FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number]).filter(
+          ([, count]) => count > 0
+        );
         // oxlint-disable-next-line unicorn/no-array-sort
-        const compEntries = FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number])
-          .filter(([, count]) => count > 0)
-          .toSorted(([, a], [, b]) => b - a);
+        compEntries.sort(([, a], [, b]) => b - a);
         // oxlint-disable-next-line unicorn/no-array-sort
         const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a) as [string, number][];
 

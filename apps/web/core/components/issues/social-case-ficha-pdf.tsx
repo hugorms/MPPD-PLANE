@@ -9,26 +9,146 @@ import {
 
 // ── Paleta ────────────────────────────────────────────────────────────────────
 const C = {
-  black: "#000000",
-  gray700: "#374151",
-  gray500: "#6b7280",
-  gray100: "#f3f4f6",
+  black: "#09090b",
+  gray900: "#18181b",
+  gray700: "#3f3f46",
+  gray500: "#71717a",
+  gray100: "#f4f4f5",
+  gray50: "#fafafa",
   white: "#ffffff",
-  border: "#9ca3af",
+  blue: "#2563eb",
+  navy: "#0f3a73",
+  paleBlue: "#eff6ff",
+  green: "#16a34a",
+  border: "#e4e4e7",
   borderLight: "#d1d5db",
-  headerBg: "#1e3a5f",
+  headerBg: "#0f3a73",
   headerText: "#ffffff",
 };
 
 // ── Estilos ───────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
   page: {
-    padding: 28,
+    padding: 36,
     fontSize: 9,
     fontFamily: "Helvetica",
     color: C.black,
     backgroundColor: C.white,
   },
+
+  detailPageHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottom: `2px solid ${C.navy}`,
+  },
+  detailPageProject: { fontSize: 14, fontFamily: "Helvetica-Bold", color: C.navy },
+  detailPageTag: { fontSize: 7.5, color: C.navy, fontFamily: "Helvetica-Bold" },
+  detailHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 18,
+  },
+  detailPhotoFrame: {
+    width: 112,
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    alignItems: "center",
+  },
+  detailPhoto: { width: 102, height: 128, borderRadius: 4, objectFit: "cover" },
+  detailPhotoPlaceholder: {
+    width: 102,
+    height: 128,
+    borderRadius: 4,
+    backgroundColor: C.gray100,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  detailPhotoText: { fontSize: 7, color: C.gray500 },
+  detailMeta: { flex: 1 },
+  detailTitleRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 0,
+    gap: 10,
+  },
+  detailNameWrap: { flex: 1 },
+  detailName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy, marginBottom: 6, lineHeight: 1.08 },
+  detailId: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.blue },
+  detailStatusBadge: {
+    minWidth: 90,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    backgroundColor: C.paleBlue,
+    border: `1px solid #bfdbfe`,
+    alignItems: "center",
+  },
+  detailStatusLabel: { fontSize: 6.5, color: C.navy, marginBottom: 3, fontFamily: "Helvetica-Bold" },
+  detailStatusText: { fontSize: 12, fontFamily: "Helvetica-Bold", color: C.navy, textAlign: "center" },
+  metaGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
+  metaColIdentity: {
+    width: "39%",
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    minHeight: 145,
+  },
+  metaColMilitary: {
+    width: "58%",
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    minHeight: 145,
+  },
+  metaColManagement: {
+    width: "100%",
+    backgroundColor: C.white,
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    marginBottom: 10,
+  },
+  metaManagementGrid: { flexDirection: "row", paddingVertical: 8, paddingHorizontal: 10 },
+  metaManagementItem: { flex: 1, paddingHorizontal: 7, borderRight: `1px solid ${C.border}` },
+  metaManagementItemLast: { flex: 1, paddingHorizontal: 7 },
+  metaGroupTitle: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.white,
+    textAlign: "center",
+    backgroundColor: C.navy,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+  },
+  metaCardBody: { paddingVertical: 10, paddingHorizontal: 11 },
+  metaItem: { marginBottom: 8 },
+  metaLabel: { fontSize: 6.4, color: C.navy, marginBottom: 1.5, fontFamily: "Helvetica-Bold" },
+  metaValue: { fontSize: 8.2, color: C.gray900, lineHeight: 1.22 },
+  detailSection: {
+    marginTop: 8,
+    flexDirection: "row",
+    border: `1px solid ${C.border}`,
+    borderRadius: 4,
+    backgroundColor: C.white,
+  },
+  detailSectionTitle: {
+    width: 96,
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: C.navy,
+    paddingVertical: 10,
+    paddingHorizontal: 9,
+    backgroundColor: C.gray50,
+  },
+  detailText: { flex: 1, fontSize: 8.2, color: C.gray700, lineHeight: 1.45, paddingVertical: 9, paddingHorizontal: 10 },
 
   // ── ENCABEZADO ──
   header: {
@@ -277,8 +397,6 @@ export type SocialCaseFichaProps = {
   photoUrl: string | null;
   attachments?: FichaAttachment[];
   generatedAtLabel: string;
-  logoUrl?: string | null;
-  startDate?: string | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -290,19 +408,6 @@ function formatDate(date: string): string {
   return m ? `${m[3]}-${m[2]}-${m[1]}` : date;
 }
 
-function Row({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
-  return (
-    <View style={last ? S.tableRowLast : S.tableRow}>
-      <View style={S.cellLabel}>
-        <Text style={S.cellLabelText}>{label}</Text>
-      </View>
-      <View style={S.cellValue}>
-        <Text style={S.cellValueText}>{value || "—"}</Text>
-      </View>
-    </View>
-  );
-}
-
 // ── Componente principal ───────────────────────────────────────────────────────
 
 export function SocialCaseFichaPDF({
@@ -311,12 +416,10 @@ export function SocialCaseFichaPDF({
   projectIdentifier,
   stateName,
   sequenceId,
-  responsable: _responsable,
+  responsable,
   photoUrl,
   attachments = [],
   generatedAtLabel,
-  logoUrl,
-  startDate,
 }: SocialCaseFichaProps) {
   const attachmentSections = groupSocialCaseAttachmentsBySection(attachments);
 
@@ -325,71 +428,141 @@ export function SocialCaseFichaPDF({
     : data.numeroCaso
       ? `#${data.numeroCaso}`
       : `#${sequenceId}`;
+  const isMilitar = data.esMilitar === "true" || Boolean(data.condicionMilitar || data.gradoMilitar || data.jornada);
+  const telefono = [data.telefono, data.telefono2].filter(Boolean).join(" / ") || "-";
+  const fechaCierre = data.fechaCierre ? formatDate(data.fechaCierre) : "-";
+  const casoResuelto = data.fechaCierre ? "Sí" : "No";
 
   return (
     <Document>
       <Page size="A4" style={S.page}>
-        {/* ── ENCABEZADO ── */}
-        <View style={S.header}>
-          {/* Logo izquierdo */}
-          {logoUrl ? (
-            <Image src={logoUrl} style={{ width: 150, height: 50, objectFit: "contain" }} />
-          ) : (
-            <View style={S.headerLogoBox}>
-              <Text style={{ fontSize: 6, color: C.gray500, textAlign: "center" }}>LOGO</Text>
-            </View>
-          )}
+        <View style={S.detailPageHeader} fixed>
+          <Text style={S.detailPageProject}>{projectName}</Text>
+          <Text style={S.detailPageTag}>Ficha Técnica Individual</Text>
+        </View>
 
-          {/* Centro: nombre organización + título */}
-          <View style={S.headerCenter}>
-            <Text style={S.headerOrgName}>{projectName}</Text>
-            <Text style={S.headerTitle}>Ficha Resumen</Text>
+        <View style={S.detailHeader}>
+          <View style={S.detailPhotoFrame}>
+            {photoUrl ? (
+              <Image src={photoUrl} style={S.detailPhoto} />
+            ) : (
+              <View style={S.detailPhotoPlaceholder}>
+                <Text style={S.detailPhotoText}>Sin foto</Text>
+              </View>
+            )}
           </View>
-
-          {/* Logo derecho (foto perfil ciudadano) */}
-          {photoUrl ? (
-            <Image src={photoUrl} style={{ width: 60, height: 40, objectFit: "contain" }} />
-          ) : (
-            <View style={S.headerLogoBox}>
-              <Text style={{ fontSize: 6, color: C.gray500, textAlign: "center" }}>SIN{"\n"}FOTO</Text>
+          <View style={S.detailMeta}>
+            <View style={S.detailTitleRow}>
+              <View style={S.detailNameWrap}>
+                <Text style={S.detailName}>{data.nombre || "-"}</Text>
+                <Text style={S.detailId}>{numeroCaso}</Text>
+              </View>
+              <View style={S.detailStatusBadge}>
+                <Text style={S.detailStatusLabel}>Estado del caso</Text>
+                <Text style={S.detailStatusText}>{stateName}</Text>
+              </View>
             </View>
-          )}
+          </View>
         </View>
 
-        {/* ── TABLA DE CAMPOS ── */}
-        <View style={S.table}>
-          <Row label="N° de caso" value={numeroCaso} />
-          <Row label="Cédula" value={data.cedula} />
-          <Row label="Nombre" value={data.nombre} />
-          <Row label="Teléfono" value={data.telefono} />
-          {data.telefono2 ? <Row label="Teléfono 2" value={data.telefono2} /> : null}
-          <Row label="Dirección de habitación" value={data.direccion} />
-          <Row label="Parroquia" value={data.parroquia} />
-          <Row label="Municipio" value={data.municipio} />
-          <Row label="Estado" value={data.entidad} />
-          {data.esMilitar === "true" && data.condicionMilitar ? (
-            <Row label="Condición militar" value={data.condicionMilitar} />
-          ) : null}
-          {data.esMilitar === "true" && data.gradoMilitar ? (
-            <Row label="Grado militar" value={data.gradoMilitar} />
-          ) : null}
-          {data.esMilitar === "true" && data.jornada ? <Row label="Componente" value={data.jornada} /> : null}
-          {data.unidadDependencia ? <Row label="Unidad / Dependencia" value={data.unidadDependencia} /> : null}
-          <Row label="Solicitud" value={data.referencia} />
-          {data.descripcionCaso ? <Row label="Descripción del caso" value={data.descripcionCaso} /> : null}
-          {data.institucionContactada ? (
-            <Row label="Órgano / Institución contactada" value={data.institucionContactada} />
-          ) : null}
-          <Row label="Acción tomada" value={data.accionTomada} />
-          <Row label="Resultado / Beneficio otorgado" value={data.resultado} />
-          {data.observacionCierre ? <Row label="Observación de cierre" value={data.observacionCierre} /> : null}
-          <Row label="Fecha de inicio" value={formatDate(startDate ?? "")} />
-          <Row
-            label="Estado del caso"
-            value={data.fechaCierre ? `${stateName} (${formatDate(data.fechaCierre)})` : stateName}
-            last
-          />
+        <View style={S.metaGrid}>
+          <View style={S.metaColIdentity}>
+            <Text style={S.metaGroupTitle}>IDENTIFICACIÓN</Text>
+            <View style={S.metaCardBody}>
+              <View style={S.metaItem}>
+                <Text style={S.metaLabel}>Cédula</Text>
+                <Text style={S.metaValue}>{data.cedula || "-"}</Text>
+              </View>
+              <View style={S.metaItem}>
+                <Text style={S.metaLabel}>Teléfono</Text>
+                <Text style={S.metaValue}>{telefono}</Text>
+              </View>
+              <View style={S.metaItem}>
+                <Text style={S.metaLabel}>Municipio</Text>
+                <Text style={S.metaValue}>{data.municipio || "-"}</Text>
+              </View>
+              <View style={S.metaItem}>
+                <Text style={S.metaLabel}>Estado (Vzla.)</Text>
+                <Text style={S.metaValue}>{data.entidad || "-"}</Text>
+              </View>
+            </View>
+          </View>
+          <View style={S.metaColMilitary}>
+            <Text style={S.metaGroupTitle}>DATOS MILITARES</Text>
+            <View style={S.metaCardBody}>
+              <View style={S.metaItem}>
+                <Text style={S.metaLabel}>Componente</Text>
+                <Text style={S.metaValue}>{data.jornada || (isMilitar ? "Militar / Sin componente" : "Civil")}</Text>
+              </View>
+              {isMilitar && data.condicionMilitar ? (
+                <View style={S.metaItem}>
+                  <Text style={S.metaLabel}>Condición militar</Text>
+                  <Text style={S.metaValue}>{data.condicionMilitar}</Text>
+                </View>
+              ) : null}
+              {isMilitar && data.gradoMilitar ? (
+                <View style={S.metaItem}>
+                  <Text style={S.metaLabel}>Grado militar</Text>
+                  <Text style={S.metaValue}>{data.gradoMilitar}</Text>
+                </View>
+              ) : null}
+              {data.unidadDependencia ? (
+                <View style={S.metaItem}>
+                  <Text style={S.metaLabel}>Unidad / Dependencia</Text>
+                  <Text style={S.metaValue}>{data.unidadDependencia}</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
         </View>
+        <View style={S.metaColManagement}>
+          <Text style={S.metaGroupTitle}>GESTIÓN DEL CASO</Text>
+          <View style={S.metaManagementGrid}>
+            <View style={S.metaManagementItem}>
+              <Text style={S.metaLabel}>Responsable</Text>
+              <Text style={S.metaValue}>{responsable}</Text>
+            </View>
+            <View style={S.metaManagementItem}>
+              <Text style={S.metaLabel}>Fecha de cierre</Text>
+              <Text style={S.metaValue}>{fechaCierre}</Text>
+            </View>
+            <View style={S.metaManagementItemLast}>
+              <Text style={S.metaLabel}>Caso resuelto</Text>
+              <Text style={[S.metaValue, { color: data.fechaCierre ? C.green : C.gray700 }]}>{casoResuelto}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={S.detailSection}>
+          <Text style={S.detailSectionTitle}>SOLICITUD</Text>
+          <Text style={S.detailText}>{data.referencia || "-"}</Text>
+        </View>
+        {data.descripcionCaso ? (
+          <View style={S.detailSection}>
+            <Text style={S.detailSectionTitle}>DESCRIPCIÓN DEL CASO</Text>
+            <Text style={S.detailText}>{data.descripcionCaso}</Text>
+          </View>
+        ) : null}
+        {data.institucionContactada ? (
+          <View style={S.detailSection}>
+            <Text style={S.detailSectionTitle}>ÓRGANO / INSTITUCIÓN CONTACTADA</Text>
+            <Text style={S.detailText}>{data.institucionContactada}</Text>
+          </View>
+        ) : null}
+        <View style={S.detailSection}>
+          <Text style={S.detailSectionTitle}>ACCIÓN TOMADA</Text>
+          <Text style={S.detailText}>{data.accionTomada || "-"}</Text>
+        </View>
+        <View style={S.detailSection}>
+          <Text style={S.detailSectionTitle}>RESULTADO</Text>
+          <Text style={S.detailText}>{data.resultado || "-"}</Text>
+        </View>
+        {data.observacionCierre ? (
+          <View style={S.detailSection}>
+            <Text style={S.detailSectionTitle}>OBSERVACIÓN DE CIERRE</Text>
+            <Text style={S.detailText}>{data.observacionCierre}</Text>
+          </View>
+        ) : null}
 
         {/* ── FOOTER ── */}
         <View style={S.footer} fixed>

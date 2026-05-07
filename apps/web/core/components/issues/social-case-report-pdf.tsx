@@ -294,8 +294,6 @@ export type ParsedIssueRow = {
   attachments?: AttachmentInfo[];
 };
 
-export type StateFlowStep = { id: string; name: string };
-
 const PDF_FANB_COMPONENTES = [
   "Ejército Nacional Bolivariano",
   "Armada Bolivariana de Venezuela",
@@ -317,7 +315,6 @@ type Props = {
   stateColorMap?: Record<string, string>;
   conResultado: number;
   generatedAtLabel: string;
-  stateFlow: StateFlowStep[];
   includeCover?: boolean;
   includePhotos?: boolean;
   includeDetails?: boolean;
@@ -332,9 +329,7 @@ function PdfHBar({ label, count, total, color }: { label: string; count: number;
   return (
     <View style={{ marginBottom: 7 }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 3 }}>
-        <Text style={{ fontSize: 7.2, color: C.gray700, flex: 1 }} numberOfLines={1}>
-          {label}
-        </Text>
+        <Text style={{ fontSize: 7.2, color: C.gray700, flex: 1 }}>{label}</Text>
         <Text style={{ fontSize: 7.2, fontFamily: "Helvetica-Bold", color: C.gray900, marginLeft: 4 }}>{count}</Text>
         <Text style={{ fontSize: 6.2, color: C.gray500, marginLeft: 3 }}>{pct}%</Text>
       </View>
@@ -376,10 +371,11 @@ function GraphicPage({
   const BAR_COLOR = C.navy;
 
   // Solo los 5 FANB canónicos con count > 0
+  const fanbEntries = PDF_FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number]).filter(
+    ([, count]) => count > 0
+  );
   // oxlint-disable-next-line unicorn/no-array-sort
-  const fanbEntries = PDF_FANB_COMPONENTES.map((c) => [c, byComponente[c] ?? 0] as [string, number])
-    .filter(([, count]) => count > 0)
-    .toSorted(([, a], [, b]) => b - a);
+  fanbEntries.sort(([, a], [, b]) => b - a);
 
   // oxlint-disable-next-line unicorn/no-array-sort
   const stateEntries = Object.entries(byState).sort(([, a], [, b]) => b - a);
@@ -514,9 +510,7 @@ function GraphicPage({
                   }}
                 >
                   <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-                    <Text style={{ flex: 1, fontSize: 7, color: C.gray700 }} numberOfLines={1}>
-                      {name}
-                    </Text>
+                    <Text style={{ flex: 1, fontSize: 7, color: C.gray700 }}>{name}</Text>
                     <Text style={{ fontSize: 7, fontFamily: "Helvetica-Bold", color: C.navy, marginLeft: 8 }}>
                       {count}
                     </Text>
