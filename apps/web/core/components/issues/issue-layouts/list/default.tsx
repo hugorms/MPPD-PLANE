@@ -24,6 +24,7 @@ import type {
 } from "@plane/types";
 // components
 import { MultipleSelectGroup } from "@/components/core/multiple-select";
+import { useSocialCaseEstadoFilter } from "@/components/issues/social-case-estado-provider";
 // hooks
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 // plane web components
@@ -86,6 +87,7 @@ export const List = observer(function List(props: IList) {
   const isBulkOperationsEnabled = useBulkOperationStatus();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { filteredIssueIds } = useSocialCaseEstadoFilter();
 
   const groups = getGroupByColumns({
     groupBy: group_by as GroupByColumnTypes,
@@ -111,7 +113,7 @@ export const List = observer(function List(props: IList) {
 
   const getGroupIndex = (groupId: string | undefined) => groups.findIndex(({ id }) => id === groupId);
 
-  const is_list = group_by === null ? true : false;
+  const is_list = group_by === null;
 
   // create groupIds array and entities object for bulk ops
   const groupIds = groups.map((g) => g.id);
@@ -122,9 +124,20 @@ export const List = observer(function List(props: IList) {
   let entities: Record<string, string[]> = {};
 
   if (is_list) {
-    entities = Object.assign(orderedGroups, { [groupIds[0]]: groupedIssueIds[ALL_ISSUES] ?? [] });
+    const allIssueIds = groupedIssueIds[ALL_ISSUES] ?? [];
+    entities = Object.assign(orderedGroups, {
+      [groupIds[0]]: filteredIssueIds ? allIssueIds.filter((id) => filteredIssueIds.has(id)) : allIssueIds,
+    });
   } else if (!isSubGrouped(groupedIssueIds)) {
-    entities = Object.assign(orderedGroups, { ...groupedIssueIds });
+    const visibleGroupedIssueIds = filteredIssueIds
+      ? Object.fromEntries(
+          Object.entries(groupedIssueIds).map(([groupId, issueIds]) => [
+            groupId,
+            (issueIds ?? []).filter((id) => filteredIssueIds.has(id)),
+          ])
+        )
+      : groupedIssueIds;
+    entities = Object.assign(orderedGroups, { ...visibleGroupedIssueIds });
   } else {
     entities = orderedGroups;
   }

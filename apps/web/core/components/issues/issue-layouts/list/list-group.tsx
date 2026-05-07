@@ -27,6 +27,7 @@ import { Row } from "@plane/ui";
 import { cn } from "@plane/utils";
 // components
 import { ListLoaderItemRow } from "@/components/ui/loader/layouts/list-layout-loader";
+import { useSocialCaseEstadoFilter } from "@/components/issues/social-case-estado-provider";
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -111,6 +112,7 @@ export const ListGroup = observer(function ListGroup(props: Props) {
   const {
     issues: { getGroupIssueCount, getPaginationData, getIssueLoader },
   } = useIssuesStore();
+  const { filteredIssueIds } = useSocialCaseEstadoFilter();
 
   const [intersectionElement, setIntersectionElement] = useState<HTMLDivElement | null>(null);
 
@@ -118,28 +120,36 @@ export const ListGroup = observer(function ListGroup(props: Props) {
     useWorkFlowFDragNDrop(group_by);
   const isWorkflowIssueCreationDisabled = getIsWorkflowWorkItemCreationDisabled(group.id);
 
-  const groupIssueCount = getGroupIssueCount(group.id, undefined, false) ?? 0;
+  const visibleGroupIssueIds = filteredIssueIds
+    ? groupIssueIds.filter((id) => filteredIssueIds.has(id))
+    : groupIssueIds;
+  const rawGroupIssueCount = getGroupIssueCount(group.id, undefined, false) ?? 0;
+  const groupIssueCount = filteredIssueIds ? visibleGroupIssueIds.length : rawGroupIssueCount;
   const nextPageResults = getPaginationData(group.id, undefined)?.nextPageResults;
   const isPaginating = !!getIssueLoader(group.id);
 
   useIntersectionObserver(containerRef, isPaginating ? null : intersectionElement, loadMoreIssues, `100% 0% 100% 0%`);
 
-  const shouldLoadMore =
-    nextPageResults === undefined && groupIssueCount !== undefined && groupIssueIds
+  const shouldLoadMore = filteredIssueIds
+    ? nextPageResults === undefined && groupIssueIds
+      ? groupIssueIds.length < rawGroupIssueCount
+      : !!nextPageResults
+    : nextPageResults === undefined && groupIssueCount !== undefined && groupIssueIds
       ? groupIssueIds.length < groupIssueCount
       : !!nextPageResults;
 
   const loadMore = isPaginating ? (
     <ListLoaderItemRow />
   ) : (
-    <div
+    <button
+      type="button"
       className={
-        "relative flex h-11 cursor-pointer items-center gap-3 border border-transparent border-t-subtle-1 bg-surface-1 p-3 pl-8 text-13 font-medium text-accent-primary hover:text-accent-secondary hover:underline"
+        "relative flex h-11 w-full cursor-pointer items-center gap-3 border border-transparent border-t-subtle-1 bg-surface-1 p-3 pl-8 text-left text-13 font-medium text-accent-primary hover:text-accent-secondary hover:underline"
       }
       onClick={() => loadMoreIssues(group.id)}
     >
       {t("common.load_more")} &darr;
-    </div>
+    </button>
   );
 
   const validateEmptyIssueGroups = (issueCount: number = 0) => {
@@ -198,7 +208,7 @@ export const ListGroup = observer(function ListGroup(props: Props) {
           const sourceGroupId = source?.data?.groupId as string | undefined;
           const currentGroupId = group.id;
 
-          sourceGroupId && handleWorkFlowState(sourceGroupId, currentGroupId);
+          if (sourceGroupId) handleWorkFlowState(sourceGroupId, currentGroupId);
 
           const sourceIndex = getGroupIndex(sourceGroupId);
           const currentIndex = getGroupIndex(currentGroupId);
@@ -237,13 +247,15 @@ export const ListGroup = observer(function ListGroup(props: Props) {
       })
     );
   }, [
-    groupRef?.current,
     group,
     orderBy,
     getGroupIndex,
-    setDragColumnOrientation,
-    setIsDraggingOverColumn,
     isWorkflowDropDisabled,
+    handleWorkFlowState,
+    handleOnDrop,
+    isExpanded,
+    handleCollapsedGroups,
+    t,
   ]);
 
   const isDragAllowed = group_by ? DRAG_ALLOWED_GROUPS.includes(group_by) : true;
@@ -295,9 +307,9 @@ export const ListGroup = observer(function ListGroup(props: Props) {
             isDraggingOverColumn={isDraggingOverColumn}
             isEpic={isEpic}
           />
-          {groupIssueIds && (
+          {visibleGroupIssueIds && (
             <IssueBlocksList
-              issueIds={groupIssueIds}
+              issueIds={visibleGroupIssueIds}
               groupId={group.id}
               issuesMap={issuesMap}
               updateIssue={updateIssue}
@@ -317,8 +329,8 @@ export const ListGroup = observer(function ListGroup(props: Props) {
               <>{loadMore}</>
             ) : (
               <>
-                {Array.from({ length: 2 }).map((_, index) => (
-                  <ListLoaderItemRow key={index} />
+                {["loader-a", "loader-b"].map((key) => (
+                  <ListLoaderItemRow key={key} />
                 ))}
                 <ListLoaderItemRow ref={setIntersectionElement} />
               </>

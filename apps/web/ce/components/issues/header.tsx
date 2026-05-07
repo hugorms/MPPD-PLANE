@@ -8,7 +8,7 @@ import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { Circle, MapPin } from "lucide-react";
+import { Circle, MapPin, Shield } from "lucide-react";
 // plane imports
 import {
   EUserPermissions,
@@ -61,9 +61,18 @@ export const IssuesHeader = observer(function IssuesHeader() {
   const SPACE_APP_URL = (SPACE_BASE_URL.trim() === "" ? window.location.origin : SPACE_BASE_URL) + SPACE_BASE_PATH;
   const publishedURL = `${SPACE_APP_URL}/issues/${currentProjectDetails?.anchor}`;
 
-  const { estadosFilter, toggleEstado, clearEstados, loadingFilter } = useSocialCaseEstadoFilter();
+  const {
+    estadosFilter,
+    condicionFilter,
+    toggleEstado,
+    toggleCondicion,
+    clearEstados,
+    clearCondiciones,
+    filteredIssueIds,
+    loadingFilter,
+  } = useSocialCaseEstadoFilter();
 
-  const issuesCount = getGroupIssueCount(undefined, undefined, false);
+  const issuesCount = filteredIssueIds ? filteredIssueIds.size : getGroupIssueCount(undefined, undefined, false);
   const canUserCreateIssue = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
     EUserPermissionsLevel.PROJECT
@@ -169,6 +178,73 @@ export const IssuesHeader = observer(function IssuesHeader() {
                     </button>
                   );
                 })}
+              </div>
+              {loadingFilter && (
+                <div className="text-xs animate-pulse border-t border-subtle px-3 py-2 text-tertiary">Filtrando...</div>
+              )}
+            </div>
+          </FiltersDropdown>
+          <FiltersDropdown
+            miniIcon={<Shield className="size-3.5" />}
+            title={
+              condicionFilter.length === 1
+                ? condicionFilter[0]
+                : condicionFilter.length === 0 || condicionFilter.length === 2
+                  ? "Condición"
+                  : `${condicionFilter.length} condiciones`
+            }
+            placement="bottom-end"
+            isFiltersApplied={condicionFilter.length === 1}
+          >
+            <div className="flex w-52 flex-col overflow-hidden">
+              <div className="flex items-center justify-between border-b border-subtle px-3 py-2">
+                <span className="text-xs font-medium text-tertiary">Condición del caso</span>
+                {condicionFilter.length !== 2 && (
+                  <button
+                    type="button"
+                    onClick={clearCondiciones}
+                    className="text-xs text-accent-primary hover:underline"
+                  >
+                    Mostrar todo
+                  </button>
+                )}
+              </div>
+              <div className="py-1">
+                {(["Militar", "Civil"] as const).map((condicion) => {
+                  const selected = condicionFilter.includes(condicion);
+                  return (
+                    <button
+                      key={condicion}
+                      type="button"
+                      onClick={() => toggleCondicion(condicion)}
+                      className={`text-sm flex w-full items-center gap-2.5 px-3 py-1.5 transition-colors hover:bg-surface-2 ${
+                        selected ? "text-accent-primary" : "text-secondary"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                          selected ? "border-accent-primary bg-accent-primary" : "border-custom-border-300"
+                        }`}
+                      >
+                        {selected && (
+                          <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                            <path
+                              d="M1.5 5L4 7.5L8.5 2.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </span>
+                      <span>{condicion}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="text-xs border-t border-subtle px-3 py-2 text-tertiary">
+                Ambos o ninguno muestran todos los casos.
               </div>
               {loadingFilter && (
                 <div className="text-xs animate-pulse border-t border-subtle px-3 py-2 text-tertiary">Filtrando...</div>

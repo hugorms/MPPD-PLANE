@@ -38,6 +38,12 @@ class SocialCaseReportEndpoint(BaseAPIView):
         # Soporta múltiples estados: ?estados=Carabobo,Miranda,Lara
         estados_raw = request.query_params.get("estados", "").strip()
         estados = [e.strip() for e in estados_raw.split(",") if e.strip()] if estados_raw else []
+        condiciones_raw = request.query_params.get("condiciones", "").strip()
+        condiciones = (
+            [c.strip().lower() for c in condiciones_raw.split(",") if c.strip()]
+            if condiciones_raw
+            else []
+        )
 
         base_filters = {
             "workspace__slug": slug,
@@ -53,6 +59,32 @@ class SocialCaseReportEndpoint(BaseAPIView):
             for e in estados:
                 estado_q |= Q(description_html__icontains=f'>{e}<')
             queryset = queryset.filter(estado_q)
+
+        if len(condiciones) == 1:
+            military_q = (
+                Q(description_html__icontains='"esMilitar":"true"')
+                | Q(
+                    description_html__iregex=(
+                        r'data-key="esMilitar"[^<]*</td>\s*'
+                        r'<td[^>]*>\s*true\s*</td>'
+                    )
+                )
+                | Q(
+                    description_html__iregex=(
+                        r'data-key="(condicionMilitar|gradoMilitar)"[^<]*</td>\s*'
+                        r'<td[^>]*>\s*[^<\s-][^<]*</td>'
+                    )
+                )
+                | Q(description_html__icontains="Ejército Nacional Bolivariano")
+                | Q(description_html__icontains="Armada Bolivariana de Venezuela")
+                | Q(description_html__icontains="Aviación Militar Bolivariana")
+                | Q(description_html__icontains="Guardia Nacional Bolivariana")
+                | Q(description_html__icontains="Milicia Nacional Bolivariana")
+            )
+            if condiciones[0] == "militar":
+                queryset = queryset.filter(military_q)
+            elif condiciones[0] == "civil":
+                queryset = queryset.exclude(military_q)
 
         queryset = (
             queryset

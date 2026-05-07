@@ -35,6 +35,7 @@ import {
   getIssueBlockId,
 } from "@/components/issues/issue-layouts/utils";
 import { KanbanIssueBlockLoader } from "@/components/ui/loader/layouts/kanban-layout-loader";
+import { useSocialCaseEstadoFilter } from "@/components/issues/social-case-estado-provider";
 // hooks
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
@@ -193,6 +194,8 @@ export const KanbanGroup = observer(function KanbanGroup(props: IKanbanGroup) {
     isWorkflowDropDisabled,
     dropErrorMessage,
     handleOnDrop,
+    handleWorkFlowState,
+    t,
   ]);
 
   const prePopulateQuickAddData = (
@@ -248,27 +251,38 @@ export const KanbanGroup = observer(function KanbanGroup(props: IKanbanGroup) {
   };
 
   const isSubGroup = !!sub_group_id && sub_group_id !== "null";
+  const { filteredIssueIds } = useSocialCaseEstadoFilter();
 
   const issueIds = isSubGroup
     ? ((groupedIssueIds as TSubGroupedIssues)?.[groupId]?.[sub_group_id] ?? [])
     : ((groupedIssueIds as TGroupedIssues)?.[groupId] ?? []);
 
-  const groupIssueCount = getGroupIssueCount(groupId, sub_group_id, false) ?? 0;
+  const rawGroupIssueCount = getGroupIssueCount(groupId, sub_group_id, false) ?? 0;
+  const groupIssueCount = filteredIssueIds
+    ? issueIds.filter((id) => filteredIssueIds.has(id)).length
+    : rawGroupIssueCount;
 
   const nextPageResults = getPaginationData(groupId, sub_group_id)?.nextPageResults;
 
   const loadMore = isPaginating ? (
     <KanbanIssueBlockLoader />
   ) : (
-    <div
-      className="sticky bottom-0 w-full cursor-pointer p-3 text-13 font-medium text-accent-primary hover:text-accent-secondary hover:underline"
+    <button
+      type="button"
+      className="sticky bottom-0 w-full cursor-pointer p-3 text-left text-13 font-medium text-accent-primary hover:text-accent-secondary hover:underline"
       onClick={loadMoreIssuesInThisGroup}
     >
       {t("common.load_more")} &darr;
-    </div>
+    </button>
   );
 
-  const shouldLoadMore = nextPageResults === undefined ? issueIds?.length < groupIssueCount : !!nextPageResults;
+  const shouldLoadMore = filteredIssueIds
+    ? nextPageResults === undefined
+      ? issueIds?.length < rawGroupIssueCount
+      : !!nextPageResults
+    : nextPageResults === undefined
+      ? issueIds?.length < groupIssueCount
+      : !!nextPageResults;
   const canOverlayBeVisible = isWorkflowDropDisabled || orderBy !== "sort_order" || isDropDisabled;
   const shouldOverlayBeVisible = isDraggingOverColumn && canOverlayBeVisible;
   const canDragIssuesInCurrentGrouping =
@@ -316,8 +330,8 @@ export const KanbanGroup = observer(function KanbanGroup(props: IKanbanGroup) {
           <>{loadMore}</>
         ) : (
           <div className="flex flex-col gap-2">
-            {Array.from({ length: 2 }).map((_, index) => (
-              <KanbanIssueBlockLoader key={index} />
+            {["loader-a", "loader-b"].map((key) => (
+              <KanbanIssueBlockLoader key={key} />
             ))}
             <KanbanIssueBlockLoader ref={setIntersectionElement} />
           </div>

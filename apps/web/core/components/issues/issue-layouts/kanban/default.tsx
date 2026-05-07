@@ -22,6 +22,7 @@ import type {
 import { ContentWrapper } from "@plane/ui";
 // components
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
+import { useSocialCaseEstadoFilter } from "@/components/issues/social-case-estado-provider";
 import { KanbanColumnLoader } from "@/components/ui/loader/layouts/kanban-layout-loader";
 // hooks
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
@@ -105,6 +106,7 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
   const isDragDisabled = !issueKanBanView?.getCanUserDragDrop(group_by, sub_group_by);
 
   const { getIsWorkflowWorkItemCreationDisabled } = useWorkFlowFDragNDrop(group_by, sub_group_by);
+  const { filteredIssueIds } = useSocialCaseEstadoFilter();
 
   const list = getGroupByColumns({
     groupBy: group_by as GroupByColumnTypes,
@@ -122,7 +124,9 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
         showIssues: true,
       };
       if (!showEmptyGroup) {
-        groupVisibility.showGroup = (getGroupIssueCount(_list.id, undefined, false) ?? 0) > 0;
+        const issueIds = (groupedIssueIds as TGroupedIssues)?.[_list.id] ?? [];
+        const visibleCount = filteredIssueIds ? issueIds.filter((id) => filteredIssueIds.has(id)).length : undefined;
+        groupVisibility.showGroup = (visibleCount ?? getGroupIssueCount(_list.id, undefined, false) ?? 0) > 0;
       }
       return groupVisibility;
     } else {
@@ -131,7 +135,9 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
         showIssues: true,
       };
       if (!showEmptyGroup) {
-        if ((getGroupIssueCount(_list.id, undefined, false) ?? 0) > 0) groupVisibility.showGroup = true;
+        const issueIds = (groupedIssueIds as TGroupedIssues)?.[_list.id] ?? [];
+        const visibleCount = filteredIssueIds ? issueIds.filter((id) => filteredIssueIds.has(id)).length : undefined;
+        if ((visibleCount ?? getGroupIssueCount(_list.id, undefined, false) ?? 0) > 0) groupVisibility.showGroup = true;
         else groupVisibility.showGroup = false;
       }
       if (collapsedGroups?.group_by.includes(_list.id)) groupVisibility.showIssues = false;
@@ -155,7 +161,8 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
           const issueIds = isSubGroup
             ? ((groupedIssueIds as TSubGroupedIssues)?.[subList.id]?.[sub_group_id] ?? [])
             : ((groupedIssueIds as TGroupedIssues)?.[subList.id] ?? []);
-          const issueLength = issueIds?.length;
+          const visibleIssueIds = filteredIssueIds ? issueIds.filter((id) => filteredIssueIds.has(id)) : issueIds;
+          const issueLength = visibleIssueIds?.length;
           const groupHeight = issueLength * approximateCardHeight;
 
           return (
@@ -173,7 +180,11 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
                     column_id={subList.id}
                     icon={subList.icon}
                     title={subList.name}
-                    count={getGroupIssueCount(subList.id, undefined, false) ?? 0}
+                    count={
+                      filteredIssueIds
+                        ? visibleIssueIds.length
+                        : (getGroupIssueCount(subList.id, undefined, false) ?? 0)
+                    }
                     issuePayload={subList.payload}
                     disableIssueCreation={
                       disableIssueCreation ||

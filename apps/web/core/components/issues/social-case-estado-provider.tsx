@@ -9,9 +9,17 @@ class SocialCaseFilterService extends APIService {
   constructor() {
     super(API_BASE_URL);
   }
-  async getIdsByEstados(workspaceSlug: string, projectId: string, estados: string[]): Promise<string[]> {
-    const param = estados.map(encodeURIComponent).join(",");
-    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/social-cases/?estados=${param}`)
+  async getIdsByFilters(
+    workspaceSlug: string,
+    projectId: string,
+    estados: string[],
+    condiciones: SocialCaseCondicionFilter[]
+  ): Promise<string[]> {
+    const params = new URLSearchParams();
+    if (estados.length > 0) params.set("estados", estados.join(","));
+    if (condiciones.length === 1) params.set("condiciones", condiciones[0]);
+
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/social-cases/?${params.toString()}`)
       .then((res) => (res?.data ?? []).map((i: { id: string }) => i.id))
       .catch(() => []);
   }
@@ -20,10 +28,17 @@ const filterService = new SocialCaseFilterService();
 
 // ── Context ───────────────────────────────────────────────────────────────────
 
+export type SocialCaseCondicionFilter = "Militar" | "Civil";
+
+const DEFAULT_CONDICIONES_FILTER: SocialCaseCondicionFilter[] = ["Militar", "Civil"];
+
 type ContextValue = {
   estadosFilter: string[];
+  condicionFilter: SocialCaseCondicionFilter[];
   toggleEstado: (estado: string) => void;
+  toggleCondicion: (condicion: SocialCaseCondicionFilter) => void;
   clearEstados: () => void;
+  clearCondiciones: () => void;
   /** null = sin filtro (mostrar todos), Set<string> = solo estos IDs */
   filteredIssueIds: Set<string> | null;
   loadingFilter: boolean;
@@ -31,8 +46,11 @@ type ContextValue = {
 
 const SocialCaseEstadoFilterContext = createContext<ContextValue>({
   estadosFilter: [],
+  condicionFilter: DEFAULT_CONDICIONES_FILTER,
   toggleEstado: () => {},
+  toggleCondicion: () => {},
   clearEstados: () => {},
+  clearCondiciones: () => {},
   filteredIssueIds: null,
   loadingFilter: false,
 });
@@ -44,6 +62,7 @@ export const useSocialCaseEstadoFilter = () => useContext(SocialCaseEstadoFilter
 export function SocialCaseEstadoProvider({ children }: { children: ReactNode }) {
   const { workspaceSlug, projectId } = useParams();
   const [estadosFilter, setEstadosFilter] = useState<string[]>([]);
+  const [condicionFilter, setCondicionFilter] = useState<SocialCaseCondicionFilter[]>(DEFAULT_CONDICIONES_FILTER);
   const [filteredIssueIds, setFilteredIssueIds] = useState<Set<string> | null>(null);
   const [loadingFilter, setLoadingFilter] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -52,10 +71,19 @@ export function SocialCaseEstadoProvider({ children }: { children: ReactNode }) 
     setEstadosFilter((prev) => (prev.includes(estado) ? prev.filter((e) => e !== estado) : [...prev, estado]));
   };
 
+  const toggleCondicion = (condicion: SocialCaseCondicionFilter) => {
+    setCondicionFilter((prev) =>
+      prev.includes(condicion) ? prev.filter((c) => c !== condicion) : [...prev, condicion]
+    );
+  };
+
   const clearEstados = () => setEstadosFilter([]);
+  const clearCondiciones = () => setCondicionFilter(DEFAULT_CONDICIONES_FILTER);
 
   useEffect(() => {
-    if (estadosFilter.length === 0) {
+    const activeCondicionFilter = condicionFilter.length === 1 ? condicionFilter : [];
+
+    if (estadosFilter.length === 0 && activeCondicionFilter.length === 0) {
       setFilteredIssueIds(null);
       return;
     }
@@ -69,15 +97,24 @@ export function SocialCaseEstadoProvider({ children }: { children: ReactNode }) 
 
     setLoadingFilter(true);
     filterService
-      .getIdsByEstados(ws, pid, estadosFilter)
+      .getIdsByFilters(ws, pid, estadosFilter, activeCondicionFilter)
       .then((ids) => setFilteredIssueIds(new Set(ids)))
       .finally(() => setLoadingFilter(false));
-  }, [estadosFilter, workspaceSlug, projectId]);
+  }, [estadosFilter, condicionFilter, workspaceSlug, projectId]);
 
   const contextValue = useMemo(
-    () => ({ estadosFilter, toggleEstado, clearEstados, filteredIssueIds, loadingFilter }),
+    () => ({
+      estadosFilter,
+      condicionFilter,
+      toggleEstado,
+      toggleCondicion,
+      clearEstados,
+      clearCondiciones,
+      filteredIssueIds,
+      loadingFilter,
+    }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [estadosFilter, filteredIssueIds, loadingFilter]
+    [estadosFilter, condicionFilter, filteredIssueIds, loadingFilter]
   );
 
   return (
