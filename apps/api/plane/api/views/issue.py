@@ -2251,15 +2251,26 @@ class IssueSearchEndpoint(BaseAPIView):
 
         # Build search query
         fields = ["name", "sequence_id", "project__identifier"]
+        social_fields = ["social_case_cedula", "social_case_nombre"]
+        content_fields = ["description_stripped", "description_html"]
+        sequences = re.findall(r"\b\d+\b", query)
         q = Q()
         for field in fields:
             if field == "sequence_id":
                 # Match whole integers only (exclude decimal numbers)
-                sequences = re.findall(r"\b\d+\b", query)
                 for sequence_id in sequences:
                     q |= Q(**{"sequence_id": sequence_id})
             else:
                 q |= Q(**{f"{field}__icontains": query})
+
+        for field in social_fields + content_fields:
+            q |= Q(**{f"{field}__icontains": query})
+            for sequence_id in sequences:
+                q |= Q(**{f"{field}__icontains": sequence_id})
+                digits = "".join(re.findall(r"\d", sequence_id))
+                if len(digits) >= 3:
+                    digit_pattern = r"\D*".join(re.escape(digit) for digit in digits)
+                    q |= Q(**{f"{field}__iregex": digit_pattern})
 
         # Filter issues
         issues = Issue.issue_objects.filter(

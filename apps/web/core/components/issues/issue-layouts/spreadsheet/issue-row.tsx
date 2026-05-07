@@ -402,16 +402,16 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
       </td>
       {/* Citizen photo column — always rendered to keep column alignment */}
       {!isEpic && (
-        <td className="w-14 max-w-14 min-w-14 border-r-[0.5px] border-b-[0.5px] border-subtle-1 bg-surface-1">
+        <td className="w-12 max-w-12 min-w-12 border-r-[0.5px] border-b-[0.5px] border-subtle-1 bg-surface-1">
           <div className="flex h-11 items-center justify-center">
             {issueDetail.social_case_foto_url ? (
               <img
                 src={getFileURL(issueDetail.social_case_foto_url) ?? ""}
                 alt={issueDetail.social_case_nombre ?? ""}
-                className="h-8 w-8 flex-shrink-0 rounded-full border border-subtle object-cover"
+                className="h-10 w-10 flex-shrink-0 rounded-full border border-subtle object-cover"
               />
             ) : (
-              <div className="h-8 w-8 flex-shrink-0 rounded-full bg-surface-2" />
+              <div className="h-10 w-10 flex-shrink-0 rounded-full bg-surface-2" />
             )}
           </div>
         </td>

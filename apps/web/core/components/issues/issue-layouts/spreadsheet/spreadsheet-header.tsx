@@ -78,7 +78,7 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
 
         {/* Citizen photo column header */}
         {!isEpic && (
-          <th className="h-11 w-14 max-w-14 min-w-14 border border-t-0 border-b-0 border-subtle bg-layer-1 py-1 text-center text-13 font-medium">
+          <th className="h-11 w-12 max-w-12 min-w-12 border border-t-0 border-b-0 border-subtle bg-layer-1 py-1 text-center text-13 font-medium">
             <span className="px-2 text-secondary">Foto</span>
           </th>
         )}

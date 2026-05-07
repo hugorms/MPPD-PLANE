@@ -21,6 +21,7 @@ def build_digit_fuzzy_regex(value):
 def search_issues(query, queryset):
     fields = ["name", "sequence_id", "project__identifier"]
     social_fields = ["social_case_cedula", "social_case_nombre"]
+    content_fields = ["description_stripped", "description_html"]
     sequences = re.findall(r"\b\d+\b", query)
     q = Q()
 
@@ -32,6 +33,14 @@ def search_issues(query, queryset):
             q |= Q(**{f"{field}__icontains": query})
 
     for field in social_fields:
+        q |= Q(**{f"{field}__icontains": query})
+        for sequence_id in sequences:
+            q |= Q(**{f"{field}__icontains": sequence_id})
+            digit_pattern = build_digit_fuzzy_regex(sequence_id)
+            if digit_pattern:
+                q |= Q(**{f"{field}__iregex": digit_pattern})
+
+    for field in content_fields:
         q |= Q(**{f"{field}__icontains": query})
         for sequence_id in sequences:
             q |= Q(**{f"{field}__icontains": sequence_id})

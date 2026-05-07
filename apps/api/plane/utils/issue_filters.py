@@ -479,9 +479,21 @@ def apply_filters_with_social_search(queryset, filter_dict, extra=None):
         if len(digits) >= 3:
             digit_pattern = r"\D*".join(re.escape(digit) for digit in digits)
 
-        social_q = Q(social_case_cedula__icontains=name_query) | Q(social_case_nombre__icontains=name_query)
+        social_q = (
+            Q(social_case_cedula__icontains=name_query)
+            | Q(social_case_nombre__icontains=name_query)
+            | Q(description_stripped__icontains=name_query)
+            | Q(description_html__icontains=name_query)
+        )
         if digit_pattern:
-            social_q |= Q(social_case_cedula__icontains=digits) | Q(social_case_cedula__iregex=digit_pattern)
+            social_q |= (
+                Q(social_case_cedula__icontains=digits)
+                | Q(social_case_cedula__iregex=digit_pattern)
+                | Q(description_stripped__icontains=digits)
+                | Q(description_stripped__iregex=digit_pattern)
+                | Q(description_html__icontains=digits)
+                | Q(description_html__iregex=digit_pattern)
+            )
 
         queryset = queryset.filter(
             Q(name__icontains=name_query)

@@ -52,6 +52,7 @@ def build_digit_fuzzy_regex(value):
 def build_issue_search_query(query):
     fields = ["name", "sequence_id", "project__identifier"]
     social_fields = ["social_case_cedula", "social_case_nombre"]
+    content_fields = ["description_stripped", "description_html"]
     q = Q()
 
     if not query:
@@ -67,6 +68,14 @@ def build_issue_search_query(query):
             q |= Q(**{f"{field}__icontains": query})
 
     for field in social_fields:
+        q |= Q(**{f"{field}__icontains": query})
+        for sequence_id in sequences:
+            q |= Q(**{f"{field}__icontains": sequence_id})
+            digit_pattern = build_digit_fuzzy_regex(sequence_id)
+            if digit_pattern:
+                q |= Q(**{f"{field}__iregex": digit_pattern})
+
+    for field in content_fields:
         q |= Q(**{f"{field}__icontains": query})
         for sequence_id in sequences:
             q |= Q(**{f"{field}__icontains": sequence_id})
