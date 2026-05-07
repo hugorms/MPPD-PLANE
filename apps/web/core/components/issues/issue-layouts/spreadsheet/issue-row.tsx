@@ -38,6 +38,18 @@ import type { TRenderQuickActions } from "../list/list-view-types";
 import { isIssueNew } from "../utils";
 import { IssueColumn } from "./issue-column";
 
+const formatSocialCaseCedula = (cedula?: string | null) => {
+  const value = cedula?.trim();
+  if (!value) return "-";
+
+  const cleanedValue = value.replace(/^c\.?i\.?\s*/i, "").trim();
+  const normalizedValue = /^[A-Za-z]\s*-?\s*\d+/.test(cleanedValue)
+    ? cleanedValue.replace(/^([A-Za-z])\s*-?\s*/, (_match, letter: string) => `${letter.toUpperCase()}-`)
+    : `V-${cleanedValue}`;
+
+  return `C.I. ${normalizedValue}`;
+};
+
 interface Props {
   displayProperties: IIssueDisplayProperties;
   isEstimateEnabled: boolean;
@@ -407,7 +419,9 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
       {!isEpic && (
         <td className="w-28 max-w-28 min-w-28 border-r-[0.5px] border-b-[0.5px] border-subtle-1 bg-surface-1">
           <div className="flex h-11 items-center px-3">
-            <span className="truncate text-13 font-medium text-secondary">{issueDetail.social_case_cedula || "-"}</span>
+            <span className="truncate rounded-sm border border-subtle bg-surface-2 px-1.5 py-0.5 text-11 font-medium text-tertiary">
+              {formatSocialCaseCedula(issueDetail.social_case_cedula)}
+            </span>
           </div>
         </td>
       )}

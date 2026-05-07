@@ -13,12 +13,20 @@ from django.db.models import Q
 
 def search_issues(query, queryset):
     fields = ["name", "sequence_id", "project__identifier"]
+    social_fields = ["social_case_cedula", "social_case_nombre"]
+    sequences = re.findall(r"\b\d+\b", query)
     q = Q()
+
     for field in fields:
         if field == "sequence_id" and len(query) <= 20:
-            sequences = re.findall(r"\b\d+\b", query)
             for sequence_id in sequences:
                 q |= Q(**{"sequence_id": sequence_id})
         else:
             q |= Q(**{f"{field}__icontains": query})
+
+    for field in social_fields:
+        q |= Q(**{f"{field}__icontains": query})
+        for sequence_id in sequences:
+            q |= Q(**{f"{field}__icontains": sequence_id})
+
     return queryset.filter(q).distinct()
