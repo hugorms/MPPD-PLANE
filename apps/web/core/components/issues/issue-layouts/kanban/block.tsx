@@ -111,7 +111,10 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
             "hidden group-hover/kanban-block:block": !isMobile,
             "!block": isMenuActive,
           })}
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
         >
           {quickActions({
             issue,
@@ -122,8 +125,8 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
       </div>
 
       {/* Social case citizen block */}
-      {(issue.social_case_foto_url || issue.social_case_nombre) && (
-        <div className="flex items-start gap-2 mt-1 mb-0.5">
+      {(issue.social_case_foto_url || issue.social_case_nombre || issue.social_case_cedula) && (
+        <div className="mt-1 mb-0.5 flex items-start gap-2">
           {issue.social_case_foto_url ? (
             <img
               src={getFileURL(issue.social_case_foto_url) ?? ""}
@@ -133,8 +136,15 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
           ) : (
             <div className="h-9 w-9 flex-shrink-0 rounded-full bg-surface-2" />
           )}
-          {issue.social_case_nombre && (
-            <p className="truncate pt-0.5 text-xs text-secondary">{issue.social_case_nombre}</p>
+          {(issue.social_case_nombre || issue.social_case_cedula) && (
+            <div className="min-w-0 pt-0.5">
+              {issue.social_case_nombre && (
+                <p className="text-xs truncate text-secondary">{issue.social_case_nombre}</p>
+              )}
+              {issue.social_case_cedula && (
+                <p className="truncate text-[11px] font-medium text-tertiary">C.I. {issue.social_case_cedula}</p>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -262,13 +272,13 @@ export const KanbanIssueBlock = observer(function KanbanIssueBlock(props: IssueB
       })
     );
   }, [
-	issue?.id,
-	isDragAllowed,
-	canDropOverIssue,
-	setIsCurrentBlockDragging,
-	setIsDraggingOverBlock,
-	setIsKanbanDragging
-]);
+    issue?.id,
+    isDragAllowed,
+    canDropOverIssue,
+    setIsCurrentBlockDragging,
+    setIsDraggingOverBlock,
+    setIsKanbanDragging,
+  ]);
 
   if (!issue) return null;
 

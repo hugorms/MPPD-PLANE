@@ -404,6 +404,13 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
           </div>
         </td>
       )}
+      {!isEpic && (
+        <td className="w-28 max-w-28 min-w-28 border-r-[0.5px] border-b-[0.5px] border-subtle-1 bg-surface-1">
+          <div className="flex h-11 items-center px-3">
+            <span className="truncate text-13 font-medium text-secondary">{issueDetail.social_case_cedula || "-"}</span>
+          </div>
+        </td>
+      )}
       {/* Rest of the columns */}
       {spreadsheetColumnsList.map((property) => (
         <IssueColumn

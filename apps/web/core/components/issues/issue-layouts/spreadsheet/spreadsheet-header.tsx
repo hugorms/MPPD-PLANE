@@ -83,6 +83,12 @@ export const SpreadsheetHeader = observer(function SpreadsheetHeader(props: Prop
           </th>
         )}
 
+        {!isEpic && (
+          <th className="h-11 w-28 max-w-28 min-w-28 border border-t-0 border-b-0 border-subtle bg-layer-1 py-1 text-left text-13 font-medium">
+            <span className="px-3 text-secondary">Cédula</span>
+          </th>
+        )}
+
         {spreadsheetColumnsList.map((property) => (
           <SpreadsheetHeaderColumn
             key={property}

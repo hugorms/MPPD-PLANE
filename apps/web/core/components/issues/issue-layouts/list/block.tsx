@@ -208,7 +208,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
         }}
       >
         <div className="flex w-full gap-2 truncate">
-          <div className="flex flex-grow items-center gap-0.5 truncate">
+          <div className="flex min-w-0 flex-grow items-center gap-0.5 truncate">
             <div className="flex items-center gap-1" style={isSubIssue ? { marginLeft } : {}}>
               {/* select checkbox */}
               {projectId && canSelectIssues && !isEpic && (
@@ -284,6 +284,11 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
             >
               <p className="cursor-pointer truncate text-body-xs-medium text-primary">{issue.name}</p>
             </Tooltip>
+            {issue.social_case_cedula && (
+              <span className="ml-2 flex-shrink-0 rounded-sm border border-subtle bg-surface-2 px-1.5 py-0.5 text-11 font-medium text-tertiary">
+                C.I. {issue.social_case_cedula}
+              </span>
+            )}
             {isEpic && displayProperties && (
               <WithDisplayPropertiesHOC
                 displayProperties={displayProperties}
@@ -321,6 +326,7 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
                 isEpic={isEpic}
               />
               <div
+                role="none"
                 className={cn("hidden", {
                   "md:flex": isSidebarCollapsed,
                   "lg:flex": !isSidebarCollapsed,
