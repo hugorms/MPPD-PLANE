@@ -20,6 +20,29 @@ type Props = {
   results: IWorkspaceSearchResults;
 };
 
+const formatCedulaWithDots = (value: string) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+const buildCedulaSearchVariants = (cedula?: string | null) => {
+  const raw = cedula?.trim();
+  if (!raw) return [];
+
+  const digits = raw.replace(/\D/g, "");
+  const formattedDigits = digits ? formatCedulaWithDots(digits) : "";
+  const variants = [
+    raw,
+    digits,
+    formattedDigits,
+    `V-${digits}`,
+    `V-${formattedDigits}`,
+    `CI V-${digits}`,
+    `CI V-${formattedDigits}`,
+    `C.I. V-${digits}`,
+    `C.I. V-${formattedDigits}`,
+  ];
+
+  return Array.from(new Set(variants.filter(Boolean)));
+};
+
 export const PowerKModalSearchResults = observer(function PowerKModalSearchResults(props: Props) {
   const { closePalette, results } = props;
   // router
@@ -50,8 +73,8 @@ export const PowerKModalSearchResults = observer(function PowerKModalSearchResul
                 value = `${value}-${item.sequence_id}`;
               }
 
-              if ("social_case_cedula" in item && item.social_case_cedula) {
-                value = `${value}-${item.social_case_cedula}`;
+              if ("social_case_cedula" in item && typeof item.social_case_cedula === "string") {
+                value = `${value}-${buildCedulaSearchVariants(item.social_case_cedula).join("-")}`;
               }
 
               if ("social_case_nombre" in item && item.social_case_nombre) {
