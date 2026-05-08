@@ -40,8 +40,10 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
     setIsExporting(true);
     try {
       const projectDetails = getProjectById(projectId);
-      const projectName = projectDetails?.name ?? "Proyecto";
-      const projectIdentifier = "MPPDGCS";
+      // Nombre institucional fijo — independiente del nombre del proyecto en Plane
+      const projectName = "MPPD-GCS";
+      // Identifier real del proyecto en Plane (ej. "MPPDGHP") para numerar los casos
+      const projectIdentifier = projectDetails?.identifier ?? null;
       const generatedAtLabel = new Date().toLocaleDateString("es-VE");
       const stateName = issue.state_id ? (getStateById(issue.state_id)?.name ?? "Sin estado") : "Sin estado";
       const creator = issue.created_by ? memberRoot.getUserDetails(issue.created_by) : null;

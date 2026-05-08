@@ -26,7 +26,7 @@ def build_social_digit_terms(query):
 def build_sequence_terms(query):
     sequences = re.findall(r"\b\d+\b", query or "")
     digits = "".join(re.findall(r"\d", query or ""))
-    cedula_hint = re.search(r"\b(c\.?i\.?|cedula|cÃ©dula|[ve]\s*[-.]?\s*\d)", query or "", re.IGNORECASE)
+    cedula_hint = re.search(r"\b(c\.?i\.?|cedula|cédula|[ve]\s*[-.]?\s*\d)", query or "", re.IGNORECASE)
     if len(digits) >= 6 and (cedula_hint or sequences != [digits]):
         return []
     return sequences

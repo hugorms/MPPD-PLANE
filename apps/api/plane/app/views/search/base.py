@@ -72,9 +72,10 @@ def build_sequence_terms(query):
 
 
 def build_issue_search_query(query):
-    fields = ["name", "sequence_id", "project__identifier"]
+    fields = ["name", "project__identifier"]
     social_fields = ["social_case_cedula", "social_case_nombre"]
-    content_fields = ["description_stripped", "description_html"]
+    # Content fields only searched for cedula/digit queries to avoid false positives on title searches
+    content_fields = ["description_stripped"]
     q = Q()
 
     if not query:
@@ -82,32 +83,34 @@ def build_issue_search_query(query):
 
     sequence_terms = build_sequence_terms(query)
     social_digit_terms = build_social_digit_terms(query)
-    for field in fields:
-        if field == "sequence_id":
-            # Match whole integers only (exclude decimal numbers)
-            for term in sequence_terms:
-                q |= Q(**{"sequence_id": term})
-        else:
-            q |= Q(**{f"{field}__icontains": query})
 
+    # Title and identifier search
+    for field in fields:
+        q |= Q(**{f"{field}__icontains": query})
+
+    # Sequence ID search — guard against non-integer values to avoid DB cast errors
+    for term in sequence_terms:
+        try:
+            q |= Q(sequence_id=int(term))
+        except (ValueError, TypeError):
+            pass
+
+    # Social case field search (cedula, nombre)
     for field in social_fields:
         q |= Q(**{f"{field}__icontains": query})
         for term in social_digit_terms:
-            q |= Q(**{f"{field}__icontains": term})
-            digit_pattern = build_digit_fuzzy_regex(term)
-            if digit_pattern:
-                q |= Q(**{f"{field}__iregex": digit_pattern})
+            if term and term != query:
+                q |= Q(**{f"{field}__icontains": term})
 
-    for field in content_fields:
-        q |= Q(**{f"{field}__icontains": query})
+    # Description content search — only for cedula/digit queries, not generic title searches
+    if social_digit_terms:
+        for field in content_fields:
+            for term in social_digit_terms:
+                q |= Q(**{f"{field}__icontains": term})
+
+        # Annotated digits field — catches cases where social_case_cedula is empty but cedula is in description
         for term in social_digit_terms:
-            q |= Q(**{f"{field}__icontains": term})
-            digit_pattern = build_digit_fuzzy_regex(term)
-            if digit_pattern:
-                q |= Q(**{f"{field}__iregex": digit_pattern})
-
-    for term in social_digit_terms:
-        q |= Q(**{f"{SOCIAL_CASE_SEARCH_DIGITS_ALIAS}__icontains": term})
+            q |= Q(**{f"{SOCIAL_CASE_SEARCH_DIGITS_ALIAS}__icontains": term})
 
     return q
 
