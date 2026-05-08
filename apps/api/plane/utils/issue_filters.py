@@ -476,6 +476,7 @@ def apply_filters_with_social_search(queryset, filter_dict, extra=None):
     if name_query:
         digit_pattern = None
         digits = "".join(re.findall(r"\d", name_query))
+        digit_terms = [digits] if len(digits) >= 6 else []
         if len(digits) >= 3:
             digit_pattern = "[^0-9]*".join(re.escape(digit) for digit in digits)
 
@@ -485,6 +486,12 @@ def apply_filters_with_social_search(queryset, filter_dict, extra=None):
             | Q(description_stripped__icontains=name_query)
             | Q(description_html__icontains=name_query)
         )
+        for term in digit_terms:
+            social_q |= (
+                Q(social_case_cedula__icontains=term)
+                | Q(description_stripped__icontains=term)
+                | Q(description_html__icontains=term)
+            )
         if digit_pattern:
             social_q |= (
                 Q(social_case_cedula__icontains=digits)
