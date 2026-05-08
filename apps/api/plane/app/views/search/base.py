@@ -46,7 +46,7 @@ def build_digit_fuzzy_regex(value):
     digits = "".join(re.findall(r"\d", value))
     if len(digits) < 3:
         return None
-    return r"\D*".join(re.escape(digit) for digit in digits)
+    return "[^0-9]*".join(re.escape(digit) for digit in digits)
 
 
 def build_issue_search_query(query):

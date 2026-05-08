@@ -2269,7 +2269,7 @@ class IssueSearchEndpoint(BaseAPIView):
                 q |= Q(**{f"{field}__icontains": sequence_id})
                 digits = "".join(re.findall(r"\d", sequence_id))
                 if len(digits) >= 3:
-                    digit_pattern = r"\D*".join(re.escape(digit) for digit in digits)
+                    digit_pattern = "[^0-9]*".join(re.escape(digit) for digit in digits)
                     q |= Q(**{f"{field}__iregex": digit_pattern})
 
         # Filter issues

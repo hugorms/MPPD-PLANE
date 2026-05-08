@@ -477,7 +477,7 @@ def apply_filters_with_social_search(queryset, filter_dict, extra=None):
         digit_pattern = None
         digits = "".join(re.findall(r"\d", name_query))
         if len(digits) >= 3:
-            digit_pattern = r"\D*".join(re.escape(digit) for digit in digits)
+            digit_pattern = "[^0-9]*".join(re.escape(digit) for digit in digits)
 
         social_q = (
             Q(social_case_cedula__icontains=name_query)
