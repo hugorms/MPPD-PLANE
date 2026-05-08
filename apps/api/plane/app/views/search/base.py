@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+import logging
+
 # Python imports
 import re
 
@@ -44,6 +46,8 @@ from plane.utils.social_case_search import (
     SOCIAL_CASE_SEARCH_DIGITS_ALIAS,
     annotate_social_case_search_digits,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def build_digit_fuzzy_regex(value):
@@ -146,10 +150,22 @@ class GlobalSearchEndpoint(BaseAPIView):
         )
 
     def filter_issues(self, query, slug, project_id, workspace_search):
+        social_digit_terms = build_social_digit_terms(query)
+        should_log_cedula_search = bool(social_digit_terms)
         q = build_issue_search_query(query)
         issue_queryset = Issue.issue_objects
-        if build_social_digit_terms(query):
+        if social_digit_terms:
             issue_queryset = annotate_social_case_search_digits(issue_queryset)
+
+        if should_log_cedula_search:
+            logger.info(
+                "[PowerK cedula search] filter_issues request query=%s digits=%s slug=%s project_id=%s workspace_search=%s",
+                query,
+                social_digit_terms,
+                slug,
+                project_id,
+                workspace_search,
+            )
 
         issues = issue_queryset.filter(
             q,
@@ -162,7 +178,7 @@ class GlobalSearchEndpoint(BaseAPIView):
         if workspace_search == "false" and project_id:
             issues = issues.filter(project_id=project_id)
 
-        return issues.distinct().values(
+        result_queryset = issues.distinct().values(
             "name",
             "id",
             "sequence_id",
@@ -173,6 +189,17 @@ class GlobalSearchEndpoint(BaseAPIView):
             "workspace__slug",
             "type_id",
         )[:100]
+
+        if should_log_cedula_search:
+            result_preview = list(result_queryset[:10])
+            logger.info(
+                "[PowerK cedula search] filter_issues response count=%s preview=%s",
+                len(result_preview),
+                result_preview,
+            )
+            return result_preview
+
+        return result_queryset
 
     def filter_cycles(self, query, slug, project_id, workspace_search):
         fields = ["name"]
