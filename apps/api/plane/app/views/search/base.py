@@ -40,6 +40,10 @@ from plane.db.models import (
     ProjectPage,
     WorkspaceMember,
 )
+from plane.utils.social_case_search import (
+    SOCIAL_CASE_SEARCH_DIGITS_ALIAS,
+    annotate_social_case_search_digits,
+)
 
 
 def build_digit_fuzzy_regex(value):
@@ -98,6 +102,9 @@ def build_issue_search_query(query):
             if digit_pattern:
                 q |= Q(**{f"{field}__iregex": digit_pattern})
 
+    for term in social_digit_terms:
+        q |= Q(**{f"{SOCIAL_CASE_SEARCH_DIGITS_ALIAS}__icontains": term})
+
     return q
 
 
@@ -140,8 +147,11 @@ class GlobalSearchEndpoint(BaseAPIView):
 
     def filter_issues(self, query, slug, project_id, workspace_search):
         q = build_issue_search_query(query)
+        issue_queryset = Issue.issue_objects
+        if build_social_digit_terms(query):
+            issue_queryset = annotate_social_case_search_digits(issue_queryset)
 
-        issues = Issue.issue_objects.filter(
+        issues = issue_queryset.filter(
             q,
             project__project_projectmember__member=self.request.user,
             project__project_projectmember__is_active=True,

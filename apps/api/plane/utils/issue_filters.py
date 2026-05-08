@@ -8,6 +8,10 @@ from datetime import timedelta
 
 from django.db.models import Q
 from django.utils import timezone
+from plane.utils.social_case_search import (
+    SOCIAL_CASE_SEARCH_DIGITS_ALIAS,
+    annotate_social_case_search_digits,
+)
 
 # The date from pattern
 pattern = re.compile(r"\d+_(weeks|months)$")
@@ -501,6 +505,10 @@ def apply_filters_with_social_search(queryset, filter_dict, extra=None):
                 | Q(description_html__icontains=digits)
                 | Q(description_html__iregex=digit_pattern)
             )
+        for term in digit_terms:
+            social_q |= Q(**{f"{SOCIAL_CASE_SEARCH_DIGITS_ALIAS}__icontains": term})
+        if digit_terms:
+            queryset = annotate_social_case_search_digits(queryset)
 
         queryset = queryset.filter(
             Q(name__icontains=name_query)

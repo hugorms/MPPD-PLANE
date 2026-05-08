@@ -86,6 +86,10 @@ from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from .base import BaseAPIView
 from plane.utils.host import base_host
 from plane.utils.issue_relation_mapper import get_actual_relation
+from plane.utils.social_case_search import (
+    SOCIAL_CASE_SEARCH_DIGITS_ALIAS,
+    annotate_social_case_search_digits,
+)
 from plane.bgtasks.webhook_task import model_activity
 from plane.app.permissions import ROLE
 from plane.utils.openapi import (
@@ -2276,8 +2280,15 @@ class IssueSearchEndpoint(BaseAPIView):
                     digit_pattern = "[^0-9]*".join(re.escape(digit) for digit in term)
                     q |= Q(**{f"{field}__iregex": digit_pattern})
 
+        for term in social_digit_terms:
+            q |= Q(**{f"{SOCIAL_CASE_SEARCH_DIGITS_ALIAS}__icontains": term})
+
         # Filter issues
-        issues = Issue.issue_objects.filter(
+        issue_queryset = Issue.issue_objects
+        if social_digit_terms:
+            issue_queryset = annotate_social_case_search_digits(issue_queryset)
+
+        issues = issue_queryset.filter(
             q,
             project__project_projectmember__member=self.request.user,
             project__project_projectmember__is_active=True,

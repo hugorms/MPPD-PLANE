@@ -9,6 +9,10 @@ import re
 from django.db.models import Q
 
 # Module imports
+from plane.utils.social_case_search import (
+    SOCIAL_CASE_SEARCH_DIGITS_ALIAS,
+    annotate_social_case_search_digits,
+)
 
 
 def build_digit_fuzzy_regex(value):
@@ -62,5 +66,10 @@ def search_issues(query, queryset):
             digit_pattern = build_digit_fuzzy_regex(term)
             if digit_pattern:
                 q |= Q(**{f"{field}__iregex": digit_pattern})
+
+    for term in social_digit_terms:
+        q |= Q(**{f"{SOCIAL_CASE_SEARCH_DIGITS_ALIAS}__icontains": term})
+    if social_digit_terms:
+        queryset = annotate_social_case_search_digits(queryset)
 
     return queryset.filter(q).distinct()
