@@ -50,6 +50,14 @@ export const PowerKModalSearchResults = observer(function PowerKModalSearchResul
                 value = `${value}-${item.sequence_id}`;
               }
 
+              if ("social_case_cedula" in item && item.social_case_cedula) {
+                value = `${value}-${item.social_case_cedula}`;
+              }
+
+              if ("social_case_nombre" in item && item.social_case_nombre) {
+                value = `${value}-${item.social_case_nombre}`;
+              }
+
               return (
                 <PowerKModalCommandItem
                   key={item.id}

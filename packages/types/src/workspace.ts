@@ -133,6 +133,8 @@ export interface IWorkspaceIssueSearchResult {
   project__identifier: string;
   project_id: string;
   sequence_id: number;
+  social_case_cedula?: string | null;
+  social_case_nombre?: string | null;
   workspace__slug: string;
   type_id: string;
 }

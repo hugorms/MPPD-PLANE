@@ -168,7 +168,10 @@ class GlobalSearchEndpoint(BaseAPIView):
             "sequence_id",
             "project__identifier",
             "project_id",
+            "social_case_cedula",
+            "social_case_nombre",
             "workspace__slug",
+            "type_id",
         )[:100]
 
     def filter_cycles(self, query, slug, project_id, workspace_search):

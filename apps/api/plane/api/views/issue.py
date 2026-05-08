@@ -2307,7 +2307,10 @@ class IssueSearchEndpoint(BaseAPIView):
             "sequence_id",
             "project__identifier",
             "project_id",
+            "social_case_cedula",
+            "social_case_nombre",
             "workspace__slug",
+            "type_id",
         )[: int(limit)]
 
         return Response({"issues": issue_results}, status=status.HTTP_200_OK)
