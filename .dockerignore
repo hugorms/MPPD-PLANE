@@ -16,6 +16,8 @@ out/
 **/out/
 dist/
 **/dist/
+# Exception: compiled type packages must be present in Docker build context
+!packages/types/dist/
 # Logs
 npm-debug.log*
 pnpm-debug.log*
