@@ -34,6 +34,7 @@ on:
       - "turbo.json"
       - "pnpm-workspace.yaml"
       - ".github/workflows/ghcr-admin.yml"
+      - ".dockerignore"
   workflow_dispatch:
 
 env:

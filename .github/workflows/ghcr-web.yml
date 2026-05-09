@@ -24,6 +24,7 @@ on:
       - "turbo.json"
       - "pnpm-workspace.yaml"
       - ".github/workflows/ghcr-web.yml"
+      - ".dockerignore"
   workflow_dispatch:
 
 env:

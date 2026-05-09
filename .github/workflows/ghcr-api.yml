@@ -18,6 +18,7 @@ on:
     paths:
       - "apps/api/**"
       - ".github/workflows/ghcr-api.yml"
+      - ".dockerignore"
   workflow_dispatch:
 
 env:

@@ -23,6 +23,7 @@ on:
       - "turbo.json"
       - "pnpm-workspace.yaml"
       - ".github/workflows/ghcr-live.yml"
+      - ".dockerignore"
   workflow_dispatch:
 
 env:
