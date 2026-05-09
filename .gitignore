@@ -19,6 +19,8 @@ node_modules
 dist/
 out/
 build/
+# Exception: compiled type packages must be committed so Docker builds pick them up
+!packages/*/dist/
 .react-router/
 
 # Misc
