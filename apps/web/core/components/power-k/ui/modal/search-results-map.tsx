@@ -52,7 +52,12 @@ export const POWER_K_SEARCH_RESULTS_GROUPS_MAP: Record<TPowerKSearchResultsKeys,
         />
         <span className="truncate">{workItem.name}</span>
         {workItem.social_case_cedula && (
-          <span className="text-custom-text-400 shrink-0 text-[11px]">{workItem.social_case_cedula}</span>
+          <>
+            <span className="text-custom-text-400 shrink-0">·</span>
+            <span className="text-custom-text-400 shrink-0 text-[11px] font-medium">
+              C.I. V-{workItem.social_case_cedula.replace(/^(C\.?I\.?\s*V?-?\s*)/i, "").trim()}
+            </span>
+          </>
         )}
       </div>
     ),
