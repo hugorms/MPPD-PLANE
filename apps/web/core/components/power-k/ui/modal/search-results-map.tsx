@@ -42,15 +42,18 @@ export const POWER_K_SEARCH_RESULTS_GROUPS_MAP: Record<TPowerKSearchResultsKeys,
   },
   issue: {
     itemName: (workItem: IWorkspaceIssueSearchResult) => (
-      <div className="flex gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <IssueIdentifier
           projectId={workItem.project_id}
           issueTypeId={workItem.type_id}
           projectIdentifier={workItem.project__identifier}
           issueSequenceId={workItem.sequence_id}
           size="xs"
-        />{" "}
-        {workItem.name}
+        />
+        <span className="truncate">{workItem.name}</span>
+        {workItem.social_case_cedula && (
+          <span className="text-custom-text-400 shrink-0 text-[11px]">{workItem.social_case_cedula}</span>
+        )}
       </div>
     ),
     path: (workItem: IWorkspaceIssueSearchResult) =>
