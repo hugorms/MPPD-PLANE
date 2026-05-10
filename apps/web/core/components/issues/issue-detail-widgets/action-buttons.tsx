@@ -5,10 +5,11 @@
  */
 
 import React, { useRef, useState } from "react";
-import { Paperclip, X } from "lucide-react";
+import { Paperclip } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
+import { EModalWidth, ModalCore } from "@plane/ui";
 // plane web imports
 import { WorkItemAdditionalWidgetActionButtons } from "@/plane-web/components/issues/issue-detail-widgets/action-buttons";
 // local imports
@@ -56,45 +57,28 @@ export function IssueDetailWidgetActionButtons(props: Props) {
     <div className="flex flex-wrap items-center gap-2">
       {!hideWidgets?.includes("attachments") && (
         <>
-          {showConfirm && (
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-              onClick={() => setShowConfirm(false)}
-              onKeyDown={(e) => e.key === "Escape" && setShowConfirm(false)}
-            >
-              <div
-                role="document"
-                className="border-custom-border-200 bg-custom-background-100 shadow-2xl relative w-80 rounded-xl border p-5"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  className="text-custom-text-400 hover:text-custom-text-200 absolute top-3 right-3"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-                <div className="mb-1 flex items-center gap-2">
-                  <Paperclip className="text-custom-text-300 h-4 w-4 shrink-0" strokeWidth={2} />
-                  <p className="text-sm text-custom-text-100 font-semibold">Adjuntar solicitud</p>
-                </div>
-                <p className="text-xs text-custom-text-300 mb-4 leading-relaxed">
+          <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
+            <div className="flex items-start gap-4 p-5">
+              <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
+                <Paperclip className="size-5" strokeWidth={2} />
+              </span>
+              <div>
+                <h3 className="text-16 font-medium">Adjuntar solicitud</h3>
+                <p className="mt-1 text-13 text-secondary">
                   El papel que trajo el ciudadano. Carta, formulario o constancia — lo que justifique su caso. Si no
                   tiene nada, omite este paso.
                 </p>
-                <div className="flex justify-end gap-2">
-                  <Button variant="neutral-primary" size="sm" onClick={() => setShowConfirm(false)}>
-                    Cancelar
-                  </Button>
-                  <Button variant="primary" size="sm" onClick={handleConfirm}>
-                    Adjuntar archivo
-                  </Button>
-                </div>
               </div>
             </div>
-          )}
+            <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
+              <Button variant="secondary" onClick={() => setShowConfirm(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={handleConfirm}>
+                Adjuntar archivo
+              </Button>
+            </div>
+          </ModalCore>
           <div ref={containerRef} onClickCapture={handleClickCapture}>
             <IssueAttachmentActionButton
               workspaceSlug={workspaceSlug}

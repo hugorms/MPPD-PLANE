@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Paperclip, Check, Loader2, X } from "lucide-react";
+import { Paperclip, Check, Loader2 } from "lucide-react";
 import { Button } from "@plane/propel/button";
+import { EModalWidth, ModalCore } from "@plane/ui";
 import { extractFromHtml, EVIDENCE_SLOTS } from "./social-case-form";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -26,38 +27,25 @@ function SlotConfirmModal({
   onClose: () => void;
 }) {
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
-      onKeyDown={(e) => e.key === "Escape" && onClose()}
-    >
-      <div
-        role="document"
-        className="border-custom-border-200 bg-custom-background-100 shadow-2xl relative w-80 rounded-xl border p-5"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
-        <button onClick={onClose} className="text-custom-text-400 hover:text-custom-text-200 absolute top-3 right-3">
-          <X className="h-4 w-4" />
-        </button>
-        <div className="mb-1 flex items-center gap-2">
-          <Paperclip className="text-custom-text-300 h-4 w-4 shrink-0" strokeWidth={2} />
-          <p className="text-sm text-custom-text-100 font-semibold">{label}</p>
-        </div>
-        <p className="text-xs text-custom-text-300 mb-4 leading-relaxed">{description}</p>
-        <div className="flex justify-end gap-2">
-          <Button variant="neutral-primary" size="sm" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button variant="primary" size="sm" onClick={onConfirm}>
-            Adjuntar archivo
-          </Button>
+    <ModalCore isOpen handleClose={onClose} width={EModalWidth.XL}>
+      <div className="flex items-start gap-4 p-5">
+        <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
+          <Paperclip className="size-5" strokeWidth={2} />
+        </span>
+        <div>
+          <h3 className="text-16 font-medium">{label}</h3>
+          <p className="mt-1 text-13 text-secondary">{description}</p>
         </div>
       </div>
-    </div>
+      <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
+        <Button variant="secondary" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button variant="primary" onClick={onConfirm}>
+          Adjuntar archivo
+        </Button>
+      </div>
+    </ModalCore>
   );
 }
 
