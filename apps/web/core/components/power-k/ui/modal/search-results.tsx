@@ -22,8 +22,6 @@ type Props = {
 
 const formatCedulaWithDots = (value: string) => value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-const shouldLogCedulaSearchResult = (value: string) => value.replace(/\D/g, "").length >= 6;
-
 const buildCedulaSearchVariants = (cedula?: string | null) => {
   const raw = cedula?.trim();
   if (!raw) return [];
@@ -81,16 +79,6 @@ export const PowerKModalSearchResults = observer(function PowerKModalSearchResul
 
               if ("social_case_nombre" in item && item.social_case_nombre) {
                 value = `${value}-${item.social_case_nombre}`;
-              }
-
-              if (key === "issue" && shouldLogCedulaSearchResult(value)) {
-                console.info("[PowerK cedula search] command item", {
-                  id: item.id,
-                  name: item.name,
-                  value,
-                  social_case_cedula: "social_case_cedula" in item ? item.social_case_cedula : undefined,
-                  social_case_nombre: "social_case_nombre" in item ? item.social_case_nombre : undefined,
-                });
               }
 
               return (

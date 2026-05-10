@@ -281,7 +281,6 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
   "nombre",
   "telefono",
   "direccion",
-  "unidadDependencia",
   "referencia",
   "descripcionCaso",
   "resultado",
@@ -289,7 +288,12 @@ const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
 ];
 
 // Campos adicionales solo para militares (deben coincidir con FIELDS_MILITAR en use-social-case-state-change.ts)
-const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = ["condicionMilitar", "gradoMilitar", "jornada"];
+const ARTICULACION_MILITAR: (keyof SocialCaseData)[] = [
+  "condicionMilitar",
+  "gradoMilitar",
+  "jornada",
+  "unidadDependencia",
+];
 
 const FANB_INSTITUCIONES = [
   { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
@@ -335,10 +339,11 @@ const InstitucionSelect = ({
     onChange(e.target.value);
   };
 
+  const prevValueRef = useRef(value);
   const handleCancel = () => {
     setAdding(false);
     setCustom("");
-    onChange("");
+    onChange(prevValueRef.current);
   };
 
   return (

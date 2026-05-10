@@ -24,9 +24,6 @@ import { PowerKModalSearchResults } from "./search-results";
 // services init
 const workspaceService = new WorkspaceService();
 
-const shouldLogCedulaSearch = (value: string | false) =>
-  typeof value === "string" && value.replace(/\D/g, "").length >= 6;
-
 const getDigits = (value?: string | null) => value?.replace(/\D/g, "") ?? "";
 
 type TWorkspaceIssueSearchResultWithSocial = IWorkspaceIssueSearchResult & {
@@ -67,9 +64,9 @@ export function PowerKModalSearchMenu(props: Props) {
         search: debouncedSearchTerm,
         workspace_search: !projectId ? true : isWorkspaceLevel,
       };
-      const logCedulaSearch = shouldLogCedulaSearch(debouncedSearchTerm);
       const searchedDigits = getDigits(debouncedSearchTerm);
-      const localCedulaMatches: TWorkspaceIssueSearchResultWithSocial[] = logCedulaSearch
+      const isCedulaSearch = searchedDigits.length >= 6;
+      const localCedulaMatches: TWorkspaceIssueSearchResultWithSocial[] = isCedulaSearch
         ? Object.values(issueMap)
             .filter((issue) => {
               const cedulaDigits = getDigits(issue.social_case_cedula);
@@ -89,21 +86,6 @@ export function PowerKModalSearchMenu(props: Props) {
               type_id: issue.type_id ?? "",
             }))
         : [];
-      if (logCedulaSearch) {
-        console.info("[PowerK cedula search] request", {
-          digits: searchedDigits,
-          localCedulaMatches: localCedulaMatches.map((issue) => ({
-            id: issue.id,
-            key: `${issue.project__identifier}-${issue.sequence_id}`,
-            name: issue.name,
-            social_case_cedula: issue.social_case_cedula,
-          })),
-          params,
-          projectId: projectId?.toString(),
-          workspaceSlug: workspaceSlug.toString(),
-        });
-      }
-
       workspaceService
         .searchWorkspace(workspaceSlug.toString(), params)
         .then((searchResults) => {
@@ -123,27 +105,10 @@ export function PowerKModalSearchMenu(props: Props) {
               mergedResults.results[key as keyof typeof mergedResults.results]?.length + accumulator,
             0
           );
-          if (logCedulaSearch) {
-            console.info("[PowerK cedula search] response", {
-              issueCount: searchResults.results.issue?.length ?? 0,
-              mergedIssueCount: mergedResults.results.issue?.length ?? 0,
-              totalCount: count,
-              issues: mergedResults.results.issue?.map((issue) => ({
-                id: issue.id,
-                key: `${issue.project__identifier}-${issue.sequence_id}`,
-                name: issue.name,
-                social_case_cedula: "social_case_cedula" in issue ? issue.social_case_cedula : undefined,
-                social_case_nombre: "social_case_nombre" in issue ? issue.social_case_nombre : undefined,
-              })),
-            });
-          }
           setResultsCount(count);
           return mergedResults;
         })
-        .catch((error) => {
-          if (logCedulaSearch) {
-            console.error("[PowerK cedula search] error", error);
-          }
+        .catch(() => {
           setResults(WORKSPACE_DEFAULT_SEARCH_RESULT);
           setResultsCount(0);
         })

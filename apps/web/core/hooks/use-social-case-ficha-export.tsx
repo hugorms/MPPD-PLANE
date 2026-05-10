@@ -111,7 +111,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
 
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank", "noopener,noreferrer");
-      window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
     } finally {
       setIsExporting(false);
     }
