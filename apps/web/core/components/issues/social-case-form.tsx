@@ -349,6 +349,21 @@ const InstitucionSelect = ({
   };
 
   const prevValueRef = useRef(value);
+
+  useEffect(() => {
+    if (!adding) prevValueRef.current = value;
+  }, [value, adding]);
+
+  useEffect(() => {
+    if (adding) return;
+    const isNowCustom = value !== "" && !FANB_INSTITUCIONES.some((i) => i.full === value);
+    if (isNowCustom) {
+      setAdding(true);
+      setCustom(value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   const handleCancel = () => {
     setAdding(false);
     setCustom("");

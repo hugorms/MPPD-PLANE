@@ -12,7 +12,7 @@ type Props = {
   onSlotUpload: (slotPrefix: string, file: File) => Promise<void>;
 };
 
-const SLOT_PREFIXES_LIST = ["[CI_BEN]", "[ENTREGA]"];
+const SLOT_PREFIXES_LIST = EVIDENCE_SLOTS.map((s) => s.prefix);
 
 function SlotConfirmModal({
   label,
@@ -198,7 +198,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
             label={displayLabel}
             description={slot.description}
             isDone={isDone}
-            uploading={!!slotUploading[slot.prefix]}
+            uploading={Object.entries(slotUploading).some(([k, v]) => k.startsWith(slot.prefix) && v)}
             disabled={reachedMax}
             accept="image/*,.pdf"
             onFile={(file) => {

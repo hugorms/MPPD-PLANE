@@ -42,8 +42,14 @@ export function IssueDetailWidgetActionButtons(props: Props) {
 
   const handleConfirm = () => {
     setShowConfirm(false);
+    const btn = containerRef.current?.querySelector("button");
+    if (!btn) return;
     bypassModalRef.current = true;
-    containerRef.current?.querySelector("button")?.click();
+    btn.click();
+    // Reset bypass in case click was silently swallowed
+    setTimeout(() => {
+      bypassModalRef.current = false;
+    }, 500);
   };
 
   return (
