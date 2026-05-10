@@ -295,7 +295,10 @@ const FANB_INSTITUCIONES = [
   { short: "IPSFA", full: "IPSFA — Instituto de Previsión Social de las Fuerzas Armadas" },
   { short: "SEGUROS HORIZONTE", full: "SEGUROS HORIZONTE" },
   { short: "DIGESALUD", full: "DIGESALUD — Dirección General de Salud de la FANB" },
-] as const;
+  { short: "FUNDASMIN", full: "FUNDASMIN — Fundación Asistencia Social del Ministerio de la Defensa" },
+];
+
+const ADD_NEW_KEY = "__agregar_nueva__";
 
 const InstitucionSelect = ({
   id,
@@ -309,21 +312,73 @@ const InstitucionSelect = ({
   disabled: boolean;
   className: string;
   onChange: (value: string) => void;
-}) => (
-  <div>
-    <label htmlFor={id} className={labelClass}>
-      Órgano / Institución contactada
-    </label>
-    <select id={id} disabled={disabled} className={className} value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">-- Seleccionar institución --</option>
-      {FANB_INSTITUCIONES.map((inst) => (
-        <option key={inst.short} value={inst.full}>
-          {inst.full}
-        </option>
-      ))}
-    </select>
-  </div>
-);
+}) => {
+  const isCustom = value !== "" && !FANB_INSTITUCIONES.some((i) => i.full === value);
+  const [adding, setAdding] = useState(isCustom);
+  const [custom, setCustom] = useState(isCustom ? value : "");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === ADD_NEW_KEY) {
+      setAdding(true);
+      setCustom("");
+      onChange("");
+      setTimeout(() => inputRef.current?.focus(), 0);
+    } else {
+      setAdding(false);
+      onChange(e.target.value);
+    }
+  };
+
+  const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCustom(e.target.value);
+    onChange(e.target.value);
+  };
+
+  const handleCancel = () => {
+    setAdding(false);
+    setCustom("");
+    onChange("");
+  };
+
+  return (
+    <div>
+      <label htmlFor={id} className={labelClass}>
+        Órgano / Institución contactada
+      </label>
+      {adding ? (
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type="text"
+            disabled={disabled}
+            placeholder="Nombre de la institución"
+            value={custom}
+            onChange={handleCustomChange}
+            className={className}
+          />
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="text-xs text-custom-text-400 hover:text-custom-text-200 shrink-0"
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : (
+        <select id={id} disabled={disabled} className={className} value={value} onChange={handleSelect}>
+          <option value="">-- Seleccionar institución --</option>
+          {FANB_INSTITUCIONES.map((inst) => (
+            <option key={inst.short} value={inst.full}>
+              {inst.full}
+            </option>
+          ))}
+          <option value={ADD_NEW_KEY}>＋ Agregar otra institución...</option>
+        </select>
+      )}
+    </div>
+  );
+};
 
 // Campos requeridos para iniciar el proceso (recibido → proceso)
 const RECIBIDO_REQUIRED: { key: keyof SocialCaseData; label: string }[] = [
