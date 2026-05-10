@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Paperclip, Check, Loader2 } from "lucide-react";
+import { Paperclip, Check, Loader2, X } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import { extractFromHtml, EVIDENCE_SLOTS } from "./social-case-form";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -14,8 +14,56 @@ type Props = {
 
 const SLOT_PREFIXES_LIST = ["[CI_BEN]", "[ENTREGA]"];
 
+function SlotConfirmModal({
+  label,
+  description,
+  onConfirm,
+  onClose,
+}: {
+  label: string;
+  description: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={onClose}
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
+    >
+      <div
+        role="document"
+        className="border-custom-border-200 bg-custom-background-100 shadow-2xl relative w-80 rounded-xl border p-5"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <button onClick={onClose} className="text-custom-text-400 hover:text-custom-text-200 absolute top-3 right-3">
+          <X className="h-4 w-4" />
+        </button>
+        <div className="mb-1 flex items-center gap-2">
+          <Paperclip className="text-custom-text-300 h-4 w-4 shrink-0" strokeWidth={2} />
+          <p className="text-sm text-custom-text-100 font-semibold">{label}</p>
+        </div>
+        <p className="text-xs text-custom-text-300 mb-4 leading-relaxed">{description}</p>
+        <div className="flex justify-end gap-2">
+          <Button variant="neutral-primary" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="primary" size="sm" onClick={onConfirm}>
+            Adjuntar archivo
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SlotButton({
   label,
+  description,
   isDone,
   uploading,
   disabled,
@@ -23,6 +71,7 @@ function SlotButton({
   onFile,
 }: {
   label: string;
+  description: string;
   isDone: boolean;
   uploading: boolean;
   disabled: boolean;
@@ -30,6 +79,7 @@ function SlotButton({
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   return (
     <>
@@ -46,11 +96,22 @@ function SlotButton({
           e.target.value = "";
         }}
       />
+      {showConfirm && (
+        <SlotConfirmModal
+          label={label}
+          description={description}
+          onConfirm={() => {
+            setShowConfirm(false);
+            inputRef.current?.click();
+          }}
+          onClose={() => setShowConfirm(false)}
+        />
+      )}
       <Button
         variant="secondary"
         size="lg"
         disabled={uploading || disabled}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => setShowConfirm(true)}
         className={isDone ? "border-green-500 text-green-600 dark:text-green-400" : ""}
       >
         {uploading ? (
@@ -135,6 +196,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
           <SlotButton
             key={slot.prefix}
             label={displayLabel}
+            description={slot.description}
             isDone={isDone}
             uploading={!!slotUploading[slot.prefix]}
             disabled={reachedMax}

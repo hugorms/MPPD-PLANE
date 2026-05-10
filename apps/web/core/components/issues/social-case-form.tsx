@@ -270,9 +270,18 @@ const fieldReadonly = "border-subtle bg-surface-1 text-primary cursor-default ou
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-export const EVIDENCE_SLOTS: { prefix: string; label: string; maxFiles?: number }[] = [
-  { prefix: "[CI_BEN]", label: "Adj. Cédula / Credencial", maxFiles: 2 },
-  { prefix: "[ENTREGA]", label: "Adj. Registro Fotográfico" },
+export const EVIDENCE_SLOTS: { prefix: string; label: string; description: string; maxFiles?: number }[] = [
+  {
+    prefix: "[CI_BEN]",
+    label: "Adj. Cédula / Credencial",
+    description: "La identificación del ciudadano. Sin esto, el caso no tiene quién lo respalde.",
+    maxFiles: 2,
+  },
+  {
+    prefix: "[ENTREGA]",
+    label: "Adj. Registro Fotográfico",
+    description: "La prueba de que el beneficio fue entregado. Cierra y valida el caso.",
+  },
 ];
 
 // Campos base requeridos para articulación/cierre (civiles y militares)
