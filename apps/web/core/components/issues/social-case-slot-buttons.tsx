@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Paperclip, Check, Loader2 } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import { EModalWidth, ModalCore } from "@plane/ui";
@@ -22,6 +22,7 @@ function SlotButton({
   uploading,
   disabled,
   accept,
+  inputId,
   onFile,
 }: {
   label: string;
@@ -30,20 +31,20 @@ function SlotButton({
   uploading: boolean;
   disabled: boolean;
   accept: string;
+  inputId: string;
   onFile: (file: File) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
     <>
-      {/* Input lives inside ModalCore so headlessui does not mark it inert */}
       <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
+        {/* label+input inside the Dialog — native browser behavior, no programmatic click needed */}
         <input
-          ref={inputRef}
+          id={inputId}
           type="file"
           accept={accept}
-          className="hidden"
+          className="sr-only"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (!file) return;
@@ -65,9 +66,12 @@ function SlotButton({
           <Button variant="secondary" onClick={() => setShowConfirm(false)}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={() => inputRef.current?.click()}>
+          <label
+            htmlFor={inputId}
+            className="bg-custom-primary-100 text-sm hover:bg-custom-primary-200 cursor-pointer rounded-md px-4 py-2 font-medium text-white"
+          >
             Adjuntar archivo
-          </Button>
+          </label>
         </div>
       </ModalCore>
       <Button
@@ -163,6 +167,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
         return (
           <SlotButton
             key={slot.prefix}
+            inputId={`sc-slot-${slot.prefix.replace(/[\[\]]/g, "")}`}
             label={displayLabel}
             description={slot.description}
             isDone={isDone}

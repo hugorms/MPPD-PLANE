@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import { Paperclip } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
@@ -21,6 +21,8 @@ import { WorkItemAdditionalWidgetActionButtons } from "@/plane-web/components/is
 import { extractFromHtml } from "@/components/issues/social-case-form";
 import { IssueDetailWidgetButton } from "./widget-button";
 
+const FILE_INPUT_ID = "adjuntar-solicitud-file-input";
+
 type Props = {
   workspaceSlug: string;
   projectId: string;
@@ -33,7 +35,6 @@ type Props = {
 
 export function IssueDetailWidgetActionButtons(props: Props) {
   const { workspaceSlug, projectId, issueId, disabled, issueServiceType, hideWidgets, extraButtons } = props;
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -70,9 +71,9 @@ export function IssueDetailWidgetActionButtons(props: Props) {
     <div className="flex flex-wrap items-center gap-2">
       {isSocialCase && !hideWidgets?.includes("attachments") && (
         <>
-          {/* Input inside ModalCore so headlessui does not mark it inert */}
           <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
-            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+            {/* label+input inside Dialog — native behavior avoids headlessui focus-trap interference */}
+            <input id={FILE_INPUT_ID} type="file" className="sr-only" onChange={handleFileChange} />
             <div className="flex items-start gap-4 p-5">
               <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
                 <Paperclip className="size-5" strokeWidth={2} />
@@ -89,9 +90,18 @@ export function IssueDetailWidgetActionButtons(props: Props) {
               <Button variant="secondary" onClick={() => setShowConfirm(false)}>
                 Cancelar
               </Button>
-              <Button variant="primary" loading={isUploading} onClick={() => fileInputRef.current?.click()}>
-                Adjuntar archivo
-              </Button>
+              {isUploading ? (
+                <Button variant="primary" loading>
+                  Subiendo...
+                </Button>
+              ) : (
+                <label
+                  htmlFor={FILE_INPUT_ID}
+                  className="bg-custom-primary-100 text-sm hover:bg-custom-primary-200 cursor-pointer rounded-md px-4 py-2 font-medium text-white"
+                >
+                  Adjuntar archivo
+                </label>
+              )}
             </div>
           </ModalCore>
           <IssueDetailWidgetButton
