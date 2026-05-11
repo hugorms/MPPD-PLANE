@@ -68,7 +68,7 @@ export function IssueDetailWidgetActionButtons(props: Props) {
     <div className="flex flex-wrap items-center gap-2">
       {isSocialCase && !hideWidgets?.includes("attachments") && (
         <>
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+          <input ref={fileInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFileChange} />
           {showConfirm && (
             <div
               role="dialog"
