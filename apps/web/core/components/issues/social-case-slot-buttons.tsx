@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Paperclip, Check, Loader2 } from "lucide-react";
 import { Button } from "@plane/propel/button";
-import { EModalWidth, ModalCore } from "@plane/ui";
 import { extractFromHtml, EVIDENCE_SLOTS } from "./social-case-form";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -15,6 +14,50 @@ type Props = {
 
 const SLOT_PREFIXES_LIST = EVIDENCE_SLOTS.map((s) => s.prefix);
 
+// Simple overlay — no headlessui, no focus trap, no inert on external elements
+function ConfirmOverlay({
+  label,
+  description,
+  onConfirm,
+  onClose,
+}: {
+  label: string;
+  description: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onKeyDown={(e) => e.key === "Escape" && onClose()}
+    >
+      <div role="presentation" className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={onClose} />
+      <div className="border-custom-border-200 bg-custom-background-100 shadow-xl relative z-10 w-96 rounded-lg border">
+        <div className="flex items-start gap-4 p-5">
+          <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
+            <Paperclip className="size-5" strokeWidth={2} />
+          </span>
+          <div>
+            <h3 className="text-base text-custom-text-100 font-semibold">{label}</h3>
+            <p className="text-sm text-custom-text-300 mt-1 leading-relaxed">{description}</p>
+          </div>
+        </div>
+        <div className="border-custom-border-200 flex flex-row justify-end gap-2 border-t px-5 py-4">
+          <Button variant="neutral-primary" size="sm" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button variant="primary" size="sm" onClick={onConfirm}>
+            Adjuntar archivo
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SlotButton({
   label,
   description,
@@ -22,7 +65,6 @@ function SlotButton({
   uploading,
   disabled,
   accept,
-  inputId,
   onFile,
 }: {
   label: string;
@@ -31,49 +73,37 @@ function SlotButton({
   uploading: boolean;
   disabled: boolean;
   accept: string;
-  inputId: string;
   onFile: (file: File) => void;
 }) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   return (
     <>
-      <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
-        {/* label+input inside the Dialog — native browser behavior, no programmatic click needed */}
-        <input
-          id={inputId}
-          type="file"
-          accept={accept}
-          className="sr-only"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        disabled={uploading || disabled}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          onFile(file);
+          e.target.value = "";
+        }}
+      />
+      {showConfirm && (
+        <ConfirmOverlay
+          label={label}
+          description={description}
+          onConfirm={() => {
             setShowConfirm(false);
-            onFile(file);
-            e.target.value = "";
+            inputRef.current?.click();
           }}
+          onClose={() => setShowConfirm(false)}
         />
-        <div className="flex items-start gap-4 p-5">
-          <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
-            <Paperclip className="size-5" strokeWidth={2} />
-          </span>
-          <div>
-            <h3 className="text-16 font-medium">{label}</h3>
-            <p className="mt-1 text-13 text-secondary">{description}</p>
-          </div>
-        </div>
-        <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
-          <Button variant="secondary" onClick={() => setShowConfirm(false)}>
-            Cancelar
-          </Button>
-          <label
-            htmlFor={inputId}
-            className="bg-custom-primary-100 text-sm hover:bg-custom-primary-200 cursor-pointer rounded-md px-4 py-2 font-medium text-white"
-          >
-            Adjuntar archivo
-          </label>
-        </div>
-      </ModalCore>
+      )}
       <Button
         variant="secondary"
         size="lg"
@@ -107,7 +137,6 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
   const issue = getIssueById(issueId);
   const projectStates = getProjectStates(projectId);
 
-  // Calcular qué slots ya tienen archivo subido leyendo directamente los adjuntos del store
   const storeSlotFiles = (getAttachmentsByIssueId(issueId) ?? []).reduce<Record<string, string>>((acc, attId) => {
     const att = getAttachmentById(attId);
     if (!att) return acc;
@@ -123,7 +152,6 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     return acc;
   }, {});
 
-  // Unir estado del store con uploads de la sesión actual
   const slotFiles = { ...storeSlotFiles, ...sessionUploads };
 
   const hasSocialCaseWorkflow = Boolean(
@@ -167,7 +195,6 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
         return (
           <SlotButton
             key={slot.prefix}
-            inputId={`sc-slot-${slot.prefix.replace(/[\[\]]/g, "")}`}
             label={displayLabel}
             description={slot.description}
             isDone={isDone}

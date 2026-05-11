@@ -4,14 +4,13 @@
  * See the LICENSE file for details.
  */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Paperclip } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
-import { EModalWidth, ModalCore } from "@plane/ui";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -20,8 +19,6 @@ import { WorkItemAdditionalWidgetActionButtons } from "@/plane-web/components/is
 // local imports
 import { extractFromHtml } from "@/components/issues/social-case-form";
 import { IssueDetailWidgetButton } from "./widget-button";
-
-const FILE_INPUT_ID = "adjuntar-solicitud-file-input";
 
 type Props = {
   workspaceSlug: string;
@@ -35,6 +32,7 @@ type Props = {
 
 export function IssueDetailWidgetActionButtons(props: Props) {
   const { workspaceSlug, projectId, issueId, disabled, issueServiceType, hideWidgets, extraButtons } = props;
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -56,7 +54,6 @@ export function IssueDetailWidgetActionButtons(props: Props) {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = "";
-    setShowConfirm(false);
     setIsUploading(true);
     try {
       await createAttachment(workspaceSlug, projectId, issueId, file);
@@ -71,39 +68,53 @@ export function IssueDetailWidgetActionButtons(props: Props) {
     <div className="flex flex-wrap items-center gap-2">
       {isSocialCase && !hideWidgets?.includes("attachments") && (
         <>
-          <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
-            {/* label+input inside Dialog — native behavior avoids headlessui focus-trap interference */}
-            <input id={FILE_INPUT_ID} type="file" className="sr-only" onChange={handleFileChange} />
-            <div className="flex items-start gap-4 p-5">
-              <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
-                <Paperclip className="size-5" strokeWidth={2} />
-              </span>
-              <div>
-                <h3 className="text-16 font-medium">Adjuntar solicitud</h3>
-                <p className="mt-1 text-13 text-secondary">
-                  El papel que trajo el ciudadano. Carta, formulario o constancia — lo que justifique su caso. Si no
-                  tiene nada, omite este paso.
-                </p>
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+          {showConfirm && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Adjuntar solicitud"
+              className="fixed inset-0 z-50 flex items-center justify-center"
+              onKeyDown={(e) => e.key === "Escape" && setShowConfirm(false)}
+            >
+              <div
+                role="presentation"
+                className="absolute inset-0 bg-black/50"
+                onClick={() => setShowConfirm(false)}
+                onKeyDown={() => setShowConfirm(false)}
+              />
+              <div className="border-custom-border-200 bg-custom-background-100 shadow-xl relative z-10 w-96 rounded-lg border">
+                <div className="flex items-start gap-4 p-5">
+                  <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
+                    <Paperclip className="size-5" strokeWidth={2} />
+                  </span>
+                  <div>
+                    <h3 className="text-base text-custom-text-100 font-semibold">Adjuntar solicitud</h3>
+                    <p className="text-sm text-custom-text-300 mt-1 leading-relaxed">
+                      El papel que trajo el ciudadano. Carta, formulario o constancia — lo que justifique su caso. Si no
+                      tiene nada, omite este paso.
+                    </p>
+                  </div>
+                </div>
+                <div className="border-custom-border-200 flex flex-row justify-end gap-2 border-t px-5 py-4">
+                  <Button variant="neutral-primary" size="sm" onClick={() => setShowConfirm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    loading={isUploading}
+                    onClick={() => {
+                      setShowConfirm(false);
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    Adjuntar archivo
+                  </Button>
+                </div>
               </div>
             </div>
-            <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
-              <Button variant="secondary" onClick={() => setShowConfirm(false)}>
-                Cancelar
-              </Button>
-              {isUploading ? (
-                <Button variant="primary" loading>
-                  Subiendo...
-                </Button>
-              ) : (
-                <label
-                  htmlFor={FILE_INPUT_ID}
-                  className="bg-custom-primary-100 text-sm hover:bg-custom-primary-200 cursor-pointer rounded-md px-4 py-2 font-medium text-white"
-                >
-                  Adjuntar archivo
-                </label>
-              )}
-            </div>
-          </ModalCore>
+          )}
           <IssueDetailWidgetButton
             title="Adjuntar solicitud"
             icon={<Paperclip className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />}
