@@ -15,40 +15,6 @@ type Props = {
 
 const SLOT_PREFIXES_LIST = EVIDENCE_SLOTS.map((s) => s.prefix);
 
-function SlotConfirmModal({
-  label,
-  description,
-  onConfirm,
-  onClose,
-}: {
-  label: string;
-  description: string;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <ModalCore isOpen handleClose={onClose} width={EModalWidth.XL}>
-      <div className="flex items-start gap-4 p-5">
-        <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
-          <Paperclip className="size-5" strokeWidth={2} />
-        </span>
-        <div>
-          <h3 className="text-16 font-medium">{label}</h3>
-          <p className="mt-1 text-13 text-secondary">{description}</p>
-        </div>
-      </div>
-      <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
-        <Button variant="secondary" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button variant="primary" onClick={onConfirm}>
-          Adjuntar archivo
-        </Button>
-      </div>
-    </ModalCore>
-  );
-}
-
 function SlotButton({
   label,
   description,
@@ -71,30 +37,39 @@ function SlotButton({
 
   return (
     <>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        className="hidden"
-        disabled={uploading || disabled}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          onFile(file);
-          e.target.value = "";
-        }}
-      />
-      {showConfirm && (
-        <SlotConfirmModal
-          label={label}
-          description={description}
-          onConfirm={() => {
+      {/* Input lives inside ModalCore so headlessui does not mark it inert */}
+      <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
             setShowConfirm(false);
-            setTimeout(() => inputRef.current?.click(), 100);
+            onFile(file);
+            e.target.value = "";
           }}
-          onClose={() => setShowConfirm(false)}
         />
-      )}
+        <div className="flex items-start gap-4 p-5">
+          <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
+            <Paperclip className="size-5" strokeWidth={2} />
+          </span>
+          <div>
+            <h3 className="text-16 font-medium">{label}</h3>
+            <p className="mt-1 text-13 text-secondary">{description}</p>
+          </div>
+        </div>
+        <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
+          <Button variant="secondary" onClick={() => setShowConfirm(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={() => inputRef.current?.click()}>
+            Adjuntar archivo
+          </Button>
+        </div>
+      </ModalCore>
       <Button
         variant="secondary"
         size="lg"

@@ -8,7 +8,9 @@ import React, { useRef, useState } from "react";
 import { Paperclip } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
+import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
+import { EIssueServiceType } from "@plane/types";
 import { EModalWidth, ModalCore } from "@plane/ui";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -17,7 +19,6 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { WorkItemAdditionalWidgetActionButtons } from "@/plane-web/components/issues/issue-detail-widgets/action-buttons";
 // local imports
 import { extractFromHtml } from "@/components/issues/social-case-form";
-import { IssueAttachmentActionButton } from "./attachments";
 import { IssueDetailWidgetButton } from "./widget-button";
 
 type Props = {
@@ -32,13 +33,14 @@ type Props = {
 
 export function IssueDetailWidgetActionButtons(props: Props) {
   const { workspaceSlug, projectId, issueId, disabled, issueServiceType, hideWidgets, extraButtons } = props;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const bypassModalRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     issue: { getIssueById },
-  } = useIssueDetail();
+    attachment: { createAttachment },
+  } = useIssueDetail(EIssueServiceType.ISSUES);
   const { getProjectStates } = useProjectState();
   const issue = getIssueById(issueId);
   const projectStates = getProjectStates(projectId);
@@ -49,33 +51,28 @@ export function IssueDetailWidgetActionButtons(props: Props) {
   );
   const isSocialCase = hasSocialCaseWorkflow && Boolean(extractFromHtml(issue?.description_html ?? ""));
 
-  const handleClickCapture = (e: React.MouseEvent) => {
-    if (bypassModalRef.current) {
-      bypassModalRef.current = false;
-      return;
-    }
-    e.stopPropagation();
-    setShowConfirm(true);
-  };
-
-  const handleConfirm = () => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
     setShowConfirm(false);
-    setTimeout(() => {
-      const btn = containerRef.current?.querySelector("button");
-      if (!btn) return;
-      bypassModalRef.current = true;
-      btn.click();
-      setTimeout(() => {
-        bypassModalRef.current = false;
-      }, 500);
-    }, 100);
+    setIsUploading(true);
+    try {
+      await createAttachment(workspaceSlug, projectId, issueId, file);
+    } catch {
+      setToast({ type: TOAST_TYPE.ERROR, title: "Error", message: "No se pudo adjuntar el archivo." });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       {isSocialCase && !hideWidgets?.includes("attachments") && (
         <>
+          {/* Input inside ModalCore so headlessui does not mark it inert */}
           <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
+            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
             <div className="flex items-start gap-4 p-5">
               <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
                 <Paperclip className="size-5" strokeWidth={2} />
@@ -92,27 +89,17 @@ export function IssueDetailWidgetActionButtons(props: Props) {
               <Button variant="secondary" onClick={() => setShowConfirm(false)}>
                 Cancelar
               </Button>
-              <Button variant="primary" onClick={handleConfirm}>
+              <Button variant="primary" loading={isUploading} onClick={() => fileInputRef.current?.click()}>
                 Adjuntar archivo
               </Button>
             </div>
           </ModalCore>
-          <div ref={containerRef} onClickCapture={handleClickCapture}>
-            <IssueAttachmentActionButton
-              workspaceSlug={workspaceSlug}
-              projectId={projectId}
-              issueId={issueId}
-              customButton={
-                <IssueDetailWidgetButton
-                  title="Adjuntar solicitud"
-                  icon={<Paperclip className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />}
-                  disabled={disabled}
-                />
-              }
-              disabled={disabled}
-              issueServiceType={issueServiceType}
-            />
-          </div>
+          <IssueDetailWidgetButton
+            title="Adjuntar solicitud"
+            icon={<Paperclip className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />}
+            disabled={disabled}
+            onClick={() => setShowConfirm(true)}
+          />
         </>
       )}
       <WorkItemAdditionalWidgetActionButtons
