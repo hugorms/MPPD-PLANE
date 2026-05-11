@@ -90,7 +90,7 @@ function SlotButton({
           description={description}
           onConfirm={() => {
             setShowConfirm(false);
-            inputRef.current?.click();
+            setTimeout(() => inputRef.current?.click(), 100);
           }}
           onClose={() => setShowConfirm(false)}
         />
