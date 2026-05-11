@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import { cn, getFileURL } from "@plane/utils";
 import { VENEZUELA_ESTADOS } from "./social-case-estados";
@@ -1322,13 +1322,19 @@ export const SocialCaseForm = ({
                   {isRecibido && (
                     <>
                       {!recibidoComplete && (
-                        <span className="text-xs text-custom-text-400">
-                          Falta:{" "}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <AlertTriangle className="text-amber-500 h-3.5 w-3.5 shrink-0" />
                           {effectiveRecibidoRequired
                             .filter(({ key }) => !data[key]?.trim())
-                            .map(({ label }) => label)
-                            .join(", ")}
-                        </span>
+                            .map(({ label }) => (
+                              <span
+                                key={label}
+                                className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                              >
+                                {label}
+                              </span>
+                            ))}
+                        </div>
                       )}
                       {onSinResolucion && (
                         <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
@@ -1380,7 +1386,35 @@ export const SocialCaseForm = ({
                   {isArticulacion && !isClosed && (
                     <>
                       {!articulacionComplete && (
-                        <span className="text-xs text-custom-text-400">Completa los campos requeridos</span>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <AlertTriangle className="text-amber-500 h-3.5 w-3.5 shrink-0" />
+                          {effectiveArticulacionRequired
+                            .filter((k) => !data[k]?.trim())
+                            .map((k) => {
+                              const labelMap: Record<string, string> = {
+                                cedula: "Cédula",
+                                nombre: "Nombre",
+                                telefono: "Teléfono",
+                                direccion: "Dirección",
+                                referencia: "Solicitud",
+                                descripcionCaso: "Descripción del caso",
+                                resultado: "Resultado",
+                                accionTomada: "Acción tomada",
+                                condicionMilitar: "Condición militar",
+                                gradoMilitar: "Grado militar",
+                                jornada: "Componente",
+                                unidadDependencia: "Unidad / Dependencia",
+                              };
+                              return (
+                                <span
+                                  key={k}
+                                  className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                                >
+                                  {labelMap[k] ?? k}
+                                </span>
+                              );
+                            })}
+                        </div>
                       )}
                       <Button
                         type="button"
