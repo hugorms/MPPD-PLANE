@@ -1,6 +1,9 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 import type { SocialCaseData } from "./social-case-form";
+
+const capitalizeWords = (str: string): string =>
+  str.toLowerCase().replace(/(^|[\s\-'.])(\S)/g, (_, sep, char) => sep + char.toUpperCase());
 import {
   cleanSocialCaseAttachmentName,
   getSocialCaseAttachmentSectionTitle,
@@ -78,7 +81,7 @@ const S = StyleSheet.create({
     marginBottom: 0,
     gap: 10,
   },
-  detailNameWrap: { flex: 1 },
+  detailNameWrap: { flex: 1, paddingBottom: 6 },
   detailName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy, marginBottom: 6, lineHeight: 1.08 },
   detailId: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.blue },
   detailStatusBadge: {
@@ -454,7 +457,7 @@ export function SocialCaseFichaPDF({
           <View style={S.detailMeta}>
             <View style={S.detailTitleRow}>
               <View style={S.detailNameWrap}>
-                <Text style={S.detailName}>{data.nombre || "-"}</Text>
+                <Text style={S.detailName}>{data.nombre ? capitalizeWords(data.nombre) : "-"}</Text>
                 <Text style={S.detailId}>{numeroCaso}</Text>
               </View>
               <View style={S.detailStatusBadge}>
@@ -520,7 +523,7 @@ export function SocialCaseFichaPDF({
           <View style={S.metaManagementGrid}>
             <View style={S.metaManagementItem}>
               <Text style={S.metaLabel}>Responsable</Text>
-              <Text style={S.metaValue}>{responsable}</Text>
+              <Text style={S.metaValue}>{capitalizeWords(responsable)}</Text>
             </View>
             <View style={S.metaManagementItem}>
               <Text style={S.metaLabel}>Fecha de cierre</Text>
@@ -576,7 +579,7 @@ export function SocialCaseFichaPDF({
           <Page key={`ficha-att-${att.sourceName ?? att.name}-${att.pageNumber ?? att.name}`} size="A4" style={S.page}>
             <View style={S.attachHeader}>
               <Text style={S.attachHeaderText}>
-                {numeroCaso} - {data.nombre}
+                {numeroCaso} - {data.nombre ? capitalizeWords(data.nombre) : ""}
               </Text>
               <Text style={S.attachHeaderText}>
                 {attIdx + 1} / {section.attachments.length}
@@ -598,7 +601,7 @@ export function SocialCaseFichaPDF({
             )}
 
             <View style={S.footer} fixed>
-              <Text style={S.footerText}>{projectName} - Ficha Tecnica Individual</Text>
+              <Text style={S.footerText}>{projectName} - Ficha Técnica Individual</Text>
               <Text style={S.footerText}>Generado el {generatedAtLabel}</Text>
             </View>
           </Page>

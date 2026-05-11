@@ -1,5 +1,8 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
+
+const capitalizeWords = (str: string): string =>
+  str.toLowerCase().replace(/(^|[\s\-'.])(\S)/g, (_, sep, char) => sep + char.toUpperCase());
 import {
   cleanSocialCaseAttachmentName,
   getSocialCaseAttachmentSectionTitle,
@@ -119,7 +122,7 @@ const S = StyleSheet.create({
     marginBottom: 0,
     gap: 10,
   },
-  detailNameWrap: { flex: 1 },
+  detailNameWrap: { flex: 1, paddingBottom: 6 },
   detailName: { fontSize: 16, fontFamily: "Helvetica-Bold", color: C.navy, marginBottom: 6, lineHeight: 1.08 },
   detailId: { fontSize: 9, fontFamily: "Helvetica-Bold", color: C.blue },
   detailStatusBadge: {
@@ -666,7 +669,7 @@ export const SocialCaseReportPDF = ({
               <Text style={S.cellBold}>{row.numeroCaso}</Text>
             </View>
             <View style={S.cNombre}>
-              <Text style={S.cell}>{row.nombre}</Text>
+              <Text style={S.cell}>{capitalizeWords(row.nombre)}</Text>
             </View>
             <View style={S.cCedula}>
               <Text style={S.cell}>{row.cedula}</Text>
@@ -678,7 +681,7 @@ export const SocialCaseReportPDF = ({
               <Text style={S.cell}>{row.componente}</Text>
             </View>
             <View style={S.cResponsable}>
-              <Text style={S.cell}>{row.responsable}</Text>
+              <Text style={S.cell}>{capitalizeWords(row.responsable)}</Text>
             </View>
             <View style={S.cTelefono}>
               <Text style={S.cell}>{row.telefono || "—"}</Text>
@@ -732,7 +735,7 @@ export const SocialCaseReportPDF = ({
                   <View style={S.detailMeta}>
                     <View style={S.detailTitleRow}>
                       <View style={S.detailNameWrap}>
-                        <Text style={S.detailName}>{row.nombre}</Text>
+                        <Text style={S.detailName}>{capitalizeWords(row.nombre)}</Text>
                         <Text style={S.detailId}>{row.numeroCaso}</Text>
                       </View>
                       <View style={S.detailStatusBadge}>
@@ -798,7 +801,7 @@ export const SocialCaseReportPDF = ({
                   <View style={S.metaManagementGrid}>
                     <View style={S.metaManagementItem}>
                       <Text style={S.metaLabel}>Responsable</Text>
-                      <Text style={S.metaValue}>{row.responsable}</Text>
+                      <Text style={S.metaValue}>{capitalizeWords(row.responsable)}</Text>
                     </View>
                     <View style={S.metaManagementItem}>
                       <Text style={S.metaLabel}>Fecha de cierre</Text>
@@ -857,7 +860,7 @@ export const SocialCaseReportPDF = ({
                   >
                     <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
                       <Text style={{ fontSize: 8, color: C.gray500 }}>
-                        {row.numeroCaso} · {row.nombre}
+                        {row.numeroCaso} · {capitalizeWords(row.nombre)}
                       </Text>
                       <Text style={{ fontSize: 8, color: C.gray500 }}>
                         {attIdx + 1} / {section.attachments.length}
