@@ -31,25 +31,32 @@ function ConfirmOverlay({
       role="dialog"
       aria-modal="true"
       aria-label={label}
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex min-h-full items-center justify-center p-4 sm:p-0"
       onKeyDown={(e) => e.key === "Escape" && onClose()}
     >
-      <div role="presentation" className="absolute inset-0 bg-black/50" onClick={onClose} onKeyDown={onClose} />
-      <div className="border-custom-border-200 bg-custom-background-100 shadow-xl relative z-10 w-96 rounded-lg border">
+      {/* Backdrop — same token as ModalCore */}
+      <div
+        role="presentation"
+        className="fixed inset-0 bg-backdrop transition-opacity"
+        onClick={onClose}
+        onKeyDown={onClose}
+      />
+      {/* Panel — same classes as ModalCore Dialog.Panel */}
+      <div className="animate-in fade-in zoom-in-95 relative w-full max-w-md transform rounded-lg bg-surface-1 text-left shadow-raised-200 transition-all duration-200">
         <div className="flex items-start gap-4 p-5">
           <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
             <Paperclip className="size-5" strokeWidth={2} />
           </span>
           <div>
-            <h3 className="text-base text-custom-text-100 font-semibold">{label}</h3>
-            <p className="text-sm text-custom-text-300 mt-1 leading-relaxed">{description}</p>
+            <h3 className="text-16 font-medium">{label}</h3>
+            <p className="mt-1 text-13 text-secondary">{description}</p>
           </div>
         </div>
-        <div className="border-custom-border-200 flex flex-row justify-end gap-2 border-t px-5 py-4">
-          <Button variant="neutral-primary" size="sm" onClick={onClose}>
+        <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
+          <Button variant="secondary" onClick={onClose}>
             Cancelar
           </Button>
-          <Button variant="primary" size="sm" onClick={onConfirm}>
+          <Button variant="primary" onClick={onConfirm}>
             Adjuntar archivo
           </Button>
         </div>

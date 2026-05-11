@@ -74,35 +74,34 @@ export function IssueDetailWidgetActionButtons(props: Props) {
               role="dialog"
               aria-modal="true"
               aria-label="Adjuntar solicitud"
-              className="fixed inset-0 z-50 flex items-center justify-center"
+              className="fixed inset-0 z-50 flex min-h-full items-center justify-center p-4 sm:p-0"
               onKeyDown={(e) => e.key === "Escape" && setShowConfirm(false)}
             >
               <div
                 role="presentation"
-                className="absolute inset-0 bg-black/50"
+                className="fixed inset-0 bg-backdrop transition-opacity"
                 onClick={() => setShowConfirm(false)}
                 onKeyDown={() => setShowConfirm(false)}
               />
-              <div className="border-custom-border-200 bg-custom-background-100 shadow-xl relative z-10 w-96 rounded-lg border">
+              <div className="animate-in fade-in zoom-in-95 relative w-full max-w-md transform rounded-lg bg-surface-1 text-left shadow-raised-200 transition-all duration-200">
                 <div className="flex items-start gap-4 p-5">
                   <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-accent-primary/20 text-accent-primary">
                     <Paperclip className="size-5" strokeWidth={2} />
                   </span>
                   <div>
-                    <h3 className="text-base text-custom-text-100 font-semibold">Adjuntar solicitud</h3>
-                    <p className="text-sm text-custom-text-300 mt-1 leading-relaxed">
+                    <h3 className="text-16 font-medium">Adjuntar solicitud</h3>
+                    <p className="mt-1 text-13 text-secondary">
                       El papel que trajo el ciudadano. Carta, formulario o constancia — lo que justifique su caso. Si no
                       tiene nada, omite este paso.
                     </p>
                   </div>
                 </div>
-                <div className="border-custom-border-200 flex flex-row justify-end gap-2 border-t px-5 py-4">
-                  <Button variant="neutral-primary" size="sm" onClick={() => setShowConfirm(false)}>
+                <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
+                  <Button variant="secondary" onClick={() => setShowConfirm(false)}>
                     Cancelar
                   </Button>
                   <Button
                     variant="primary"
-                    size="sm"
                     loading={isUploading}
                     onClick={() => {
                       setShowConfirm(false);
