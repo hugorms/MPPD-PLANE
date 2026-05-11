@@ -153,6 +153,11 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     projectStates?.some((s) => s.name?.toLowerCase().includes("recib"))
   );
 
+  const currentStateName = issue?.state_id
+    ? (projectStates?.find((s) => s.id === issue.state_id)?.name?.toLowerCase() ?? "")
+    : "";
+  const isArticulacion = currentStateName.includes("articulaci");
+
   const data = extractFromHtml(issue?.description_html ?? "");
 
   if (!hasSocialCaseWorkflow || !data) return null;
@@ -169,7 +174,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
 
   return (
     <>
-      {EVIDENCE_SLOTS.map((slot) => {
+      {EVIDENCE_SLOTS.filter((slot) => slot.prefix !== "[ENTREGA]" || isArticulacion).map((slot) => {
         const isRegistro = slot.prefix === "[ENTREGA]";
         const isCedula = slot.prefix === "[CI_BEN]";
         const countable = isRegistro || isCedula;
