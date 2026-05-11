@@ -284,6 +284,21 @@ export const EVIDENCE_SLOTS: { prefix: string; label: string; description: strin
   },
 ];
 
+const ARTICULACION_FIELD_LABELS: Record<string, string> = {
+  cedula: "Cédula",
+  nombre: "Nombre",
+  telefono: "Teléfono",
+  direccion: "Dirección",
+  unidadDependencia: "Unidad / Dependencia",
+  referencia: "Solicitud",
+  descripcionCaso: "Descripción del caso",
+  resultado: "Resultado",
+  accionTomada: "Acción tomada",
+  condicionMilitar: "Condición militar",
+  gradoMilitar: "Grado militar",
+  jornada: "Componente",
+};
+
 // Campos base requeridos para articulación/cierre (civiles y militares)
 const ARTICULACION_BASE: (keyof SocialCaseData)[] = [
   "cedula",
@@ -1317,7 +1332,7 @@ export const SocialCaseForm = ({
                 </div>
 
                 {/* Derecha: guardar / avanzar */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {/* Estado: Recibido */}
                   {isRecibido && (
                     <>
@@ -1359,6 +1374,19 @@ export const SocialCaseForm = ({
                   {/* Estado: En proceso */}
                   {isEnProceso && !isArticulacion && !isClosed && (
                     <>
+                      {!procesoComplete && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <AlertTriangle className="text-amber-500 h-3.5 w-3.5 shrink-0" />
+                          {PROCESO_REQUIRED.filter((k) => !data[k]?.trim()).map((k) => (
+                            <span
+                              key={k}
+                              className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                            >
+                              {k === "resultado" ? "Resultado" : "Acción tomada"}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                       {onSinResolucion && (
                         <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
                           Sin resolución
@@ -1390,30 +1418,14 @@ export const SocialCaseForm = ({
                           <AlertTriangle className="text-amber-500 h-3.5 w-3.5 shrink-0" />
                           {effectiveArticulacionRequired
                             .filter((k) => !data[k]?.trim())
-                            .map((k) => {
-                              const labelMap: Record<string, string> = {
-                                cedula: "Cédula",
-                                nombre: "Nombre",
-                                telefono: "Teléfono",
-                                direccion: "Dirección",
-                                referencia: "Solicitud",
-                                descripcionCaso: "Descripción del caso",
-                                resultado: "Resultado",
-                                accionTomada: "Acción tomada",
-                                condicionMilitar: "Condición militar",
-                                gradoMilitar: "Grado militar",
-                                jornada: "Componente",
-                                unidadDependencia: "Unidad / Dependencia",
-                              };
-                              return (
-                                <span
-                                  key={k}
-                                  className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                                >
-                                  {labelMap[k] ?? k}
-                                </span>
-                              );
-                            })}
+                            .map((k) => (
+                              <span
+                                key={k}
+                                className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                              >
+                                {ARTICULACION_FIELD_LABELS[k] ?? k}
+                              </span>
+                            ))}
                         </div>
                       )}
                       <Button
