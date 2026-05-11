@@ -10,9 +10,13 @@ import { Paperclip } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import type { TIssueServiceType, TWorkItemWidgets } from "@plane/types";
 import { EModalWidth, ModalCore } from "@plane/ui";
+// hooks
+import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web imports
 import { WorkItemAdditionalWidgetActionButtons } from "@/plane-web/components/issues/issue-detail-widgets/action-buttons";
 // local imports
+import { extractFromHtml } from "@/components/issues/social-case-form";
 import { IssueAttachmentActionButton } from "./attachments";
 import { IssueDetailWidgetButton } from "./widget-button";
 
@@ -31,6 +35,19 @@ export function IssueDetailWidgetActionButtons(props: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bypassModalRef = useRef(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const {
+    issue: { getIssueById },
+  } = useIssueDetail();
+  const { getProjectStates } = useProjectState();
+  const issue = getIssueById(issueId);
+  const projectStates = getProjectStates(projectId);
+  const hasSocialCaseWorkflow = Boolean(
+    projectStates?.some((s) => s.name?.toLowerCase().includes("proceso")) &&
+    projectStates?.some((s) => s.name?.toLowerCase().includes("articulaci")) &&
+    projectStates?.some((s) => s.name?.toLowerCase().includes("recib"))
+  );
+  const isSocialCase = hasSocialCaseWorkflow && Boolean(extractFromHtml(issue?.description_html ?? ""));
 
   const handleClickCapture = (e: React.MouseEvent) => {
     if (bypassModalRef.current) {
@@ -55,7 +72,7 @@ export function IssueDetailWidgetActionButtons(props: Props) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {!hideWidgets?.includes("attachments") && (
+      {isSocialCase && !hideWidgets?.includes("attachments") && (
         <>
           <ModalCore isOpen={showConfirm} handleClose={() => setShowConfirm(false)} width={EModalWidth.XL}>
             <div className="flex items-start gap-4 p-5">

@@ -135,7 +135,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     const name = att.attributes?.name ?? "";
     const prefix = SLOT_PREFIXES_LIST.find((p) => name.startsWith(p));
     if (!prefix) return acc;
-    if (prefix === "[ENTREGA]" || prefix === "[CI_BEN]") {
+    if (SLOT_PREFIXES_LIST.includes(prefix)) {
       const count = Object.keys(acc).filter((k) => k.startsWith(prefix)).length;
       acc[`${prefix}_${count + 1}`] = name;
     } else {
