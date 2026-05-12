@@ -7,6 +7,7 @@
 import { set, sortBy } from "lodash-es";
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { computedFn } from "mobx-utils";
+import { mutate } from "swr";
 // types
 import type { IIssueLabel, IIssueLabelTree } from "@plane/types";
 // helpers
@@ -52,6 +53,12 @@ export interface ILabelStore {
   ) => Promise<void>;
   deleteLabel: (workspaceSlug: string, projectId: string, labelId: string) => Promise<void>;
 }
+
+// Invalidates all analytics chart SWR caches so charts re-fetch after label changes
+const invalidateAnalyticsCache = () =>
+  mutate((key: unknown) => typeof key === "string" && key.startsWith("customized-insights-chart-"), undefined, {
+    revalidate: true,
+  });
 
 export class LabelStore implements ILabelStore {
   // root store
@@ -217,6 +224,7 @@ export class LabelStore implements ILabelStore {
       runInAction(() => {
         set(this.labelMap, [response.id], response);
       });
+      invalidateAnalyticsCache();
       return response;
     });
 
@@ -235,6 +243,7 @@ export class LabelStore implements ILabelStore {
         set(this.labelMap, [labelId], { ...originalLabel, ...data });
       });
       const response = await this.issueLabelService.patchIssueLabel(workspaceSlug, projectId, labelId, data);
+      invalidateAnalyticsCache();
       return response;
     } catch (error) {
       console.log("Failed to update label from project store");
@@ -321,6 +330,7 @@ export class LabelStore implements ILabelStore {
       runInAction(() => {
         delete this.labelMap[labelId];
       });
+      invalidateAnalyticsCache();
       return undefined;
     });
   };
