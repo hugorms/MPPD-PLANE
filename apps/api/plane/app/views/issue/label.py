@@ -88,6 +88,7 @@ class LabelViewSet(BaseViewSet):
 
 
 class BulkCreateIssueLabelsEndpoint(BaseAPIView):
+    @invalidate_cache(path="/api/workspaces/:slug/labels/", url_params=True, user=False, multiple=True)
     @allow_permission([ROLE.ADMIN])
     def post(self, request, slug, project_id):
         label_data = request.data.get("label_data", [])

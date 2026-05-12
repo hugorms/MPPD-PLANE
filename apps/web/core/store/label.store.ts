@@ -54,11 +54,21 @@ export interface ILabelStore {
   deleteLabel: (workspaceSlug: string, projectId: string, labelId: string) => Promise<void>;
 }
 
-// Invalidates all analytics chart SWR caches so charts re-fetch after label changes
+const ANALYTICS_SWR_PREFIXES = [
+  "customized-insights-chart-",
+  "total-insights-",
+  "insights-table-work-items-",
+  "created-vs-resolved-",
+  "radar-chart-project-insights-",
+];
+
+// Invalidates all analytics SWR caches so charts re-fetch after label changes
 const invalidateAnalyticsCache = () =>
-  mutate((key: unknown) => typeof key === "string" && key.startsWith("customized-insights-chart-"), undefined, {
-    revalidate: true,
-  });
+  mutate(
+    (key: unknown) => typeof key === "string" && ANALYTICS_SWR_PREFIXES.some((prefix) => key.startsWith(prefix)),
+    undefined,
+    { revalidate: true }
+  );
 
 export class LabelStore implements ILabelStore {
   // root store
@@ -194,15 +204,27 @@ export class LabelStore implements ILabelStore {
   fetchWorkspaceLabels = async (workspaceSlug: string) =>
     await this.issueLabelService.getWorkspaceIssueLabels(workspaceSlug).then((response) => {
       runInAction(() => {
-        // Remove stale workspace-level entries that the server no longer returns
-        const workspaceDetails = this.rootStore.workspaceRoot.getWorkspaceBySlug(workspaceSlug);
-        if (workspaceDetails) {
-          const incomingIds = new Set(response.map((l) => l.id));
+        // Remove stale workspace-level entries that the server no longer returns.
+        // Use the incoming response itself to identify the workspace_id so this
+        // works even if the workspace store hasn't hydrated yet.
+        const incomingIds = new Set(response.map((l) => l.id));
+        const workspaceId = response[0]?.workspace_id;
+        if (workspaceId) {
           Object.keys(this.labelMap).forEach((id) => {
-            if (this.labelMap[id]?.workspace_id === workspaceDetails.id && !incomingIds.has(id)) {
+            if (this.labelMap[id]?.workspace_id === workspaceId && !incomingIds.has(id)) {
               delete this.labelMap[id];
             }
           });
+        } else {
+          // Fallback: purge by slug lookup if response is empty
+          const workspaceDetails = this.rootStore.workspaceRoot.getWorkspaceBySlug(workspaceSlug);
+          if (workspaceDetails) {
+            Object.keys(this.labelMap).forEach((id) => {
+              if (this.labelMap[id]?.workspace_id === workspaceDetails.id && !incomingIds.has(id)) {
+                delete this.labelMap[id];
+              }
+            });
+          }
         }
         response.forEach((label) => {
           set(this.labelMap, [label.id], label);
