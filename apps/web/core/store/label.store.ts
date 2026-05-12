@@ -163,6 +163,13 @@ export class LabelStore implements ILabelStore {
   fetchProjectLabels = async (workspaceSlug: string, projectId: string) =>
     await this.issueLabelService.getProjectLabels(workspaceSlug, projectId).then((response) => {
       runInAction(() => {
+        // Remove stale entries for this project that the server no longer returns
+        const incomingIds = new Set(response.map((l) => l.id));
+        Object.keys(this.labelMap).forEach((id) => {
+          if (this.labelMap[id]?.project_id === projectId && !incomingIds.has(id)) {
+            delete this.labelMap[id];
+          }
+        });
         response.forEach((label) => {
           set(this.labelMap, [label.id], label);
         });
@@ -180,6 +187,16 @@ export class LabelStore implements ILabelStore {
   fetchWorkspaceLabels = async (workspaceSlug: string) =>
     await this.issueLabelService.getWorkspaceIssueLabels(workspaceSlug).then((response) => {
       runInAction(() => {
+        // Remove stale workspace-level entries that the server no longer returns
+        const workspaceDetails = this.rootStore.workspaceRoot.getWorkspaceBySlug(workspaceSlug);
+        if (workspaceDetails) {
+          const incomingIds = new Set(response.map((l) => l.id));
+          Object.keys(this.labelMap).forEach((id) => {
+            if (this.labelMap[id]?.workspace_id === workspaceDetails.id && !incomingIds.has(id)) {
+              delete this.labelMap[id];
+            }
+          });
+        }
         response.forEach((label) => {
           set(this.labelMap, [label.id], label);
         });
@@ -304,6 +321,7 @@ export class LabelStore implements ILabelStore {
       runInAction(() => {
         delete this.labelMap[labelId];
       });
+      return undefined;
     });
   };
 }
