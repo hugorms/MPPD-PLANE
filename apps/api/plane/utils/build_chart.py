@@ -48,7 +48,10 @@ def get_x_axis_field() -> Dict[str, Tuple[str, str, Optional[Dict[str, Any]]]]:
         "LABELS": (
             "labels__id",
             "labels__name",
-            {"label_issue__deleted_at__isnull": True},
+            {
+                "label_issue__deleted_at__isnull": True,
+                "label_issue__label__deleted_at__isnull": True,
+            },
         ),
         "ASSIGNEES": (
             "assignees__id",

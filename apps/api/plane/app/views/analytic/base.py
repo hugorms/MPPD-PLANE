@@ -101,6 +101,7 @@ class AnalyticsEndpoint(BaseAPIView):
                     **filters,
                     labels__id__isnull=False,
                     label_issue__deleted_at__isnull=True,
+                    label_issue__label__deleted_at__isnull=True,
                 )
                 .distinct("labels__id")
                 .order_by("labels__id")
