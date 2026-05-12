@@ -109,8 +109,8 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
 
   const handleAddLabel = async (labelName: string) => {
     setSubmitting(true);
-    const label = await onAddLabel(workspaceSlug, projectId, { name: labelName, color: getRandomLabelColor() });
-    onSelect([...values, label.id]);
+    const newLabel = await onAddLabel(workspaceSlug, projectId, { name: labelName, color: getRandomLabelColor() });
+    onSelect([...values, newLabel.id]);
     setQuery("");
     setSubmitting(false);
   };
@@ -141,7 +141,7 @@ export const IssueLabelSelect = observer(function IssueLabelSelect(props: IIssue
 
         <Combobox.Options className="fixed z-10">
           <div
-            className={`z-10 my-1 w-48 rounded-sm border border-strong bg-surface-1 py-2.5 text-11 whitespace-nowrap shadow-raised-200 focus:outline-none`}
+            className={`z-10 my-1 w-64 rounded-sm border border-strong bg-surface-1 py-2.5 text-11 whitespace-nowrap shadow-raised-200 focus:outline-none`}
             ref={setPopperElement}
             style={styles.popper}
             {...attributes.popper}
