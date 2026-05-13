@@ -81,8 +81,16 @@ class AnalyticsEndpoint(BaseAPIView):
         # Get the total issue count
         total_issues = queryset.count()
 
+        # When grouping by labels, filter out soft-deleted label assignments and labels
+        chart_queryset = queryset
+        if x_axis in ["labels__id"] or segment in ["labels__id"]:
+            chart_queryset = queryset.filter(
+                label_issue__deleted_at__isnull=True,
+                label_issue__label__deleted_at__isnull=True,
+            )
+
         # Build the graph payload
-        distribution = build_graph_plot(queryset=queryset, x_axis=x_axis, y_axis=y_axis, segment=segment)
+        distribution = build_graph_plot(queryset=chart_queryset, x_axis=x_axis, y_axis=y_axis, segment=segment)
 
         state_details = {}
         if x_axis in ["state_id"] or segment in ["state_id"]:
@@ -222,7 +230,13 @@ class SavedAnalyticEndpoint(BaseAPIView):
             )
 
         segment = request.GET.get("segment", False)
-        distribution = build_graph_plot(queryset=queryset, x_axis=x_axis, y_axis=y_axis, segment=segment)
+        chart_queryset = queryset
+        if x_axis in ["labels__id"] or segment in ["labels__id"]:
+            chart_queryset = queryset.filter(
+                label_issue__deleted_at__isnull=True,
+                label_issue__label__deleted_at__isnull=True,
+            )
+        distribution = build_graph_plot(queryset=chart_queryset, x_axis=x_axis, y_axis=y_axis, segment=segment)
         total_issues = queryset.count()
         return Response(
             {"total": total_issues, "distribution": distribution},
