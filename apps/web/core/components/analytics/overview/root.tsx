@@ -353,7 +353,7 @@ const Overview = observer(function Overview() {
   const { workspaceSlug } = useParams();
   const { workspaceProjectIds, getProjectById } = useProject();
   const { getProjectStates } = useProjectState();
-  const { getProjectLabels, fetchProjectLabels } = useLabel();
+  const { getProjectLabels, fetchProjectLabels, getWorkspaceLabels, fetchWorkspaceLabels } = useLabel();
   const memberRoot = useMember();
 
   // ── Estado GCS ───────────────────────────────────────────────────────────────
@@ -393,15 +393,25 @@ const Overview = observer(function Overview() {
       .finally(() => setLoadingIssues(false));
   }, [workspaceSlug, selectedProjectId]);
 
-  // ── Etiquetas del proyecto ───────────────────────────────────────────────────
+  // ── Etiquetas del proyecto y workspace ──────────────────────────────────────
   useEffect(() => {
     const ws = workspaceSlug?.toString();
-    if (!ws || !selectedProjectId) return;
-    fetchProjectLabels(ws, selectedProjectId).catch(() => {});
-  }, [workspaceSlug, selectedProjectId, fetchProjectLabels]);
+    if (!ws) return;
+    if (selectedProjectId) fetchProjectLabels(ws, selectedProjectId).catch(() => {});
+    fetchWorkspaceLabels(ws).catch(() => {});
+  }, [workspaceSlug, selectedProjectId, fetchProjectLabels, fetchWorkspaceLabels]);
 
   const projectLabels = useMemo(() => getProjectLabels(selectedProjectId) ?? [], [getProjectLabels, selectedProjectId]);
-  const labelNames = useMemo(() => projectLabels.map((l) => l.name), [projectLabels]);
+  const wsLabels = useMemo(
+    () => (workspaceSlug ? (getWorkspaceLabels(workspaceSlug.toString()) ?? []) : []),
+    [getWorkspaceLabels, workspaceSlug]
+  );
+  // Use project labels if available, fall back to workspace labels
+  const effectiveLabels = useMemo(
+    () => (projectLabels.length > 0 ? projectLabels : wsLabels),
+    [projectLabels, wsLabels]
+  );
+  const labelNames = useMemo(() => effectiveLabels.map((l) => l.name), [effectiveLabels]);
 
   // ── Estados del proyecto ─────────────────────────────────────────────────────
   const states = useMemo(
