@@ -72,6 +72,7 @@ function SlotButton({
   uploading,
   disabled,
   accept,
+  fileName,
   onFile,
 }: {
   label: string;
@@ -80,6 +81,7 @@ function SlotButton({
   uploading: boolean;
   disabled: boolean;
   accept: string;
+  fileName?: string;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +129,11 @@ function SlotButton({
         )}
         <span className="text-body-xs-medium">{uploading ? "Subiendo..." : label}</span>
       </Button>
+      {isDone && fileName && (
+        <p className="text-custom-text-400 mt-0.5 max-w-[160px] truncate text-[10px]" title={fileName}>
+          {fileName.replace(/^\[[^\]]+\]_\d+_/, "")}
+        </p>
+      )}
     </>
   );
 }
@@ -205,6 +212,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
             label={displayLabel}
             description={slot.description}
             isDone={isDone}
+            fileName={Object.entries(slotFiles).find(([k]) => k.startsWith(slot.prefix))?.[1]}
             uploading={Object.entries(slotUploading).some(([k, v]) => k.startsWith(slot.prefix) && v)}
             disabled={reachedMax}
             accept="image/*,.pdf"
