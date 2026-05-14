@@ -69,6 +69,7 @@ function SlotButton({
   label,
   description,
   isDone,
+  isRequired,
   uploading,
   disabled,
   accept,
@@ -78,6 +79,7 @@ function SlotButton({
   label: string;
   description: string;
   isDone: boolean;
+  isRequired?: boolean;
   uploading: boolean;
   disabled: boolean;
   accept: string;
@@ -119,7 +121,13 @@ function SlotButton({
           size="lg"
           disabled={uploading || disabled}
           onClick={() => setShowConfirm(true)}
-          className={isDone ? "border-green-500 text-green-600 dark:text-green-400" : ""}
+          className={
+            isDone
+              ? "border-green-500 text-green-600 dark:text-green-400"
+              : isRequired && !uploading
+                ? "border-amber-400 text-amber-600 dark:border-amber-500 dark:text-amber-400 animate-pulse"
+                : ""
+          }
         >
           {uploading ? (
             <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
@@ -210,6 +218,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
             label={displayLabel}
             description={slot.description}
             isDone={isDone}
+            isRequired={!isDone && (isCedula || (isRegistro && isArticulacion))}
             fileName={
               countable && slotCount > 1
                 ? `${slotCount} archivos adjuntos`

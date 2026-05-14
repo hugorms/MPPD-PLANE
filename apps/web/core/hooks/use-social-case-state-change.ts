@@ -56,9 +56,24 @@ type UseStateChangeParams = {
  *
  * Al resolver, auto-inyecta fechaCierre con la fecha de hoy.
  */
+const CI_BEN_PREFIX = "[CI_BEN]";
+const ENTREGA_PREFIX = "[ENTREGA]";
+
+function checkAttachments(
+  attachmentIds: string[],
+  getAttachmentById: (id: string) => { attributes?: { name?: string } } | null,
+  prefix: string
+): number {
+  return attachmentIds.filter((id) => {
+    const att = getAttachmentById(id);
+    return att?.attributes?.name?.startsWith(prefix);
+  }).length;
+}
+
 export function useSocialCaseStateChange({ workspaceSlug, projectId, issueId, issueOperations }: UseStateChangeParams) {
   const {
     issue: { getIssueById },
+    attachment: { getAttachmentsByIssueId, getAttachmentById },
   } = useIssueDetail();
   const { getStateById } = useProjectState();
 
@@ -121,6 +136,26 @@ export function useSocialCaseStateChange({ workspaceSlug, projectId, issueId, is
         message: `Completa estos campos para ${actionLabel}: ${missing.join(", ")}`,
       });
       return;
+    }
+
+    // Verificar adjuntos requeridos — aviso (no bloquea, el operador decide continuar)
+    const attachmentIds = getAttachmentsByIssueId(issueId) ?? [];
+    const cedulas = checkAttachments(attachmentIds, getAttachmentById, CI_BEN_PREFIX);
+    const entregas = checkAttachments(attachmentIds, getAttachmentById, ENTREGA_PREFIX);
+
+    if (stateName.includes("proceso") && cedulas === 0) {
+      setToast({
+        type: TOAST_TYPE.WARNING,
+        title: "Documento pendiente",
+        message:
+          "No se ha adjuntado la Cédula / Credencial del ciudadano. Se recomienda adjuntarla antes de continuar.",
+      });
+    } else if ((stateName.includes("articulaci") || stateGroup === "completed") && entregas === 0) {
+      setToast({
+        type: TOAST_TYPE.WARNING,
+        title: "Documento pendiente",
+        message: "No se ha adjuntado el Registro Fotográfico de entrega. Se recomienda adjuntarlo como evidencia.",
+      });
     }
 
     // Al resolver: inyectar fechaCierre automática
