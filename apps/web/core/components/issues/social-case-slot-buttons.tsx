@@ -113,27 +113,29 @@ function SlotButton({
           onClose={() => setShowConfirm(false)}
         />
       )}
-      <Button
-        variant="secondary"
-        size="lg"
-        disabled={uploading || disabled}
-        onClick={() => setShowConfirm(true)}
-        className={isDone ? "border-green-500 text-green-600 dark:text-green-400" : ""}
-      >
-        {uploading ? (
-          <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
-        ) : isDone ? (
-          <Check className="text-green-500 h-3.5 w-3.5 flex-shrink-0" />
-        ) : (
-          <Paperclip className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
+      <div className="flex flex-col items-start">
+        <Button
+          variant="secondary"
+          size="lg"
+          disabled={uploading || disabled}
+          onClick={() => setShowConfirm(true)}
+          className={isDone ? "border-green-500 text-green-600 dark:text-green-400" : ""}
+        >
+          {uploading ? (
+            <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+          ) : isDone ? (
+            <Check className="text-green-500 h-3.5 w-3.5 flex-shrink-0" />
+          ) : (
+            <Paperclip className="h-3.5 w-3.5 flex-shrink-0" strokeWidth={2} />
+          )}
+          <span className="text-body-xs-medium">{uploading ? "Subiendo..." : label}</span>
+        </Button>
+        {isDone && fileName && (
+          <p className="text-custom-text-400 mt-0.5 max-w-[160px] truncate text-[10px]" title={fileName}>
+            {fileName.replace(/^\[[^\]]+\]_\d+_/, "")}
+          </p>
         )}
-        <span className="text-body-xs-medium">{uploading ? "Subiendo..." : label}</span>
-      </Button>
-      {isDone && fileName && (
-        <p className="text-custom-text-400 mt-0.5 max-w-[160px] truncate text-[10px]" title={fileName}>
-          {fileName.replace(/^\[[^\]]+\]_\d+_/, "")}
-        </p>
-      )}
+      </div>
     </>
   );
 }
@@ -157,12 +159,8 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     const name = att.attributes?.name ?? "";
     const prefix = SLOT_PREFIXES_LIST.find((p) => name.startsWith(p));
     if (!prefix) return acc;
-    if (SLOT_PREFIXES_LIST.includes(prefix)) {
-      const count = Object.keys(acc).filter((k) => k.startsWith(prefix)).length;
-      acc[`${prefix}_${count + 1}`] = name;
-    } else {
-      acc[prefix] = name;
-    }
+    const count = Object.keys(acc).filter((k) => k.startsWith(prefix)).length;
+    acc[`${prefix}_${count + 1}`] = name;
     return acc;
   }, {});
 
@@ -212,7 +210,11 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
             label={displayLabel}
             description={slot.description}
             isDone={isDone}
-            fileName={Object.entries(slotFiles).find(([k]) => k.startsWith(slot.prefix))?.[1]}
+            fileName={
+              countable && slotCount > 1
+                ? `${slotCount} archivos adjuntos`
+                : Object.entries(slotFiles).find(([k]) => k.startsWith(slot.prefix))?.[1]
+            }
             uploading={Object.entries(slotUploading).some(([k, v]) => k.startsWith(slot.prefix) && v)}
             disabled={reachedMax}
             accept="image/*,.pdf"

@@ -795,6 +795,7 @@ export const SocialCaseForm = ({
   // Keys of fields that are required for the current state but still empty
   const missingKeys: Set<string> = new Set([
     ...(isRecibido ? effectiveRecibidoRequired.filter(({ key }) => !data[key]?.trim()).map(({ key }) => key) : []),
+    ...(isEnProceso && !isArticulacion ? PROCESO_REQUIRED.filter((k) => !data[k]?.trim()) : []),
     ...(isArticulacion ? effectiveArticulacionRequired.filter((k) => !data[k]?.trim()) : []),
   ]);
 
@@ -877,23 +878,25 @@ export const SocialCaseForm = ({
         </div>
       )}
       {/* Badge: estado actual + días */}
-      {mode === "view" && stateName && daysInState !== null && (
+      {mode === "view" && stateName && (
         <div className="mb-3 flex items-center gap-2">
           <span className="bg-custom-background-80 text-custom-text-300 rounded-full px-2.5 py-0.5 text-[11px] font-medium">
             {stateName}
           </span>
-          <span
-            className={cn(
-              "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
-              daysInState >= 14
-                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                : daysInState >= 7
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                  : "bg-custom-background-80 text-custom-text-400"
-            )}
-          >
-            {daysInState === 0 ? "Hoy" : daysInState === 1 ? "1 día" : `${daysInState} días`}
-          </span>
+          {daysInState !== null && (
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                daysInState >= 14
+                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                  : daysInState >= 7
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                    : "bg-custom-background-80 text-custom-text-400"
+              )}
+            >
+              {daysInState === 0 ? "Hoy" : daysInState === 1 ? "1 día" : `${daysInState} días`}
+            </span>
+          )}
         </div>
       )}
       {/* Foto de perfil — solo en modo view (en create la muestra ProfilePhotoUpload del modal) */}
@@ -1479,7 +1482,12 @@ export const SocialCaseForm = ({
                         </div>
                       )}
                       {onSinResolucion && (
-                        <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
+                        <Button
+                          type="button"
+                          variant="error-outline"
+                          size="sm"
+                          onClick={() => setConfirmSinResolucion(true)}
+                        >
                           Sin resolución
                         </Button>
                       )}

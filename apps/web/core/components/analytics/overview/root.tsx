@@ -507,7 +507,7 @@ const Overview = observer(function Overview() {
 
       // Filtro por etiquetas (label_ids nativos de Plane)
       if (labelFilter.length > 0) {
-        const issueLabelNames = getIssueLabelNames(issue, projectLabels);
+        const issueLabelNames = getIssueLabelNames(issue, effectiveLabels);
         if (!labelFilter.some((labelName) => issueLabelNames.includes(labelName))) continue;
       }
 
@@ -555,7 +555,7 @@ const Overview = observer(function Overview() {
       if (entidad) parsedByEntidad[entidad] = (parsedByEntidad[entidad] ?? 0) + 1;
 
       // Etiquetas nativas de Plane
-      for (const labelName of getIssueLabelNames(issue, projectLabels)) {
+      for (const labelName of getIssueLabelNames(issue, effectiveLabels)) {
         parsedByLabel[labelName] = (parsedByLabel[labelName] ?? 0) + 1;
       }
 
@@ -609,17 +609,18 @@ const Overview = observer(function Overview() {
     componenteFilter,
     condicionFilter,
     labelFilter,
-    projectLabels,
+    effectiveLabels,
   ]);
 
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
-  const cantEnProceso = Object.entries(byState)
-    .filter(([name]) => name.toLowerCase().includes("proceso"))
-    .reduce((sum, [, c]) => sum + c, 0);
-  const cantEnArticulacion = Object.entries(byState)
-    .filter(([name]) => name.toLowerCase().includes("articulaci"))
-    .reduce((sum, [, c]) => sum + c, 0);
+  // Count by state group/name using the same logic as main-content.tsx
+  const cantEnProceso = (states ?? [])
+    .filter((s) => s.name?.toLowerCase().includes("proceso"))
+    .reduce((sum, s) => sum + (byState[s.name] ?? 0), 0);
+  const cantEnArticulacion = (states ?? [])
+    .filter((s) => s.name?.toLowerCase().includes("articulaci"))
+    .reduce((sum, s) => sum + (byState[s.name] ?? 0), 0);
   const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
 
   // Solo los 5 FANB canónicos con count > 0, ordenados por cantidad
