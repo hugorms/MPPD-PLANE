@@ -209,15 +209,11 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         onAdvance={
           isRecibido && procesoStateId
             ? async () => {
-                await issueOperations.update(workspaceSlug, issue.project_id ?? "", issueId, {
-                  state_id: procesoStateId,
-                });
+                await handleStateChange(procesoStateId);
               }
             : isEnProceso && articulacionStateId
               ? async () => {
-                  await issueOperations.update(workspaceSlug, issue.project_id ?? "", issueId, {
-                    state_id: articulacionStateId,
-                  });
+                  await handleStateChange(articulacionStateId);
                 }
               : undefined
         }
