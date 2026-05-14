@@ -791,7 +791,18 @@ export const SocialCaseForm = ({
     }
   };
 
-  const fc = (editable: boolean) => cn(fieldBase, editable ? fieldEditable : fieldReadonly);
+  // Keys of fields that are required for the current state but still empty
+  const missingKeys: Set<string> = new Set([
+    ...(isRecibido ? effectiveRecibidoRequired.filter(({ key }) => !data[key]?.trim()).map(({ key }) => key) : []),
+    ...(isArticulacion ? effectiveArticulacionRequired.filter((k) => !data[k]?.trim()) : []),
+  ]);
+
+  const fc = (editable: boolean, fieldKey?: keyof SocialCaseData) =>
+    cn(
+      fieldBase,
+      editable ? fieldEditable : fieldReadonly,
+      fieldKey && missingKeys.has(fieldKey) && editable ? "!border-amber-400 dark:!border-amber-600" : ""
+    );
 
   // Foto de perfil actual extraída del HTML.
   // Fallback: si description_html aún no tiene la foto (store no cargado todavía),
@@ -932,7 +943,7 @@ export const SocialCaseForm = ({
                 <input
                   id="sc-cedula"
                   disabled={!isEditable || cedulaLooking}
-                  className={cn(fc(isEditable), "min-w-0 flex-1")}
+                  className={cn(fc(isEditable, "cedula"), "min-w-0 flex-1")}
                   placeholder="V-00.000.000"
                   value={data.cedula}
                   onChange={(e) => {
@@ -965,7 +976,7 @@ export const SocialCaseForm = ({
                   id="sc-nombre"
                   disabled={!isEditable}
                   autoCapitalize="words"
-                  className={fc(isEditable)}
+                  className={fc(isEditable, "nombre")}
                   placeholder="Nombre y apellido"
                   value={data.nombre}
                   onChange={(e) => update("nombre", e.target.value)}
@@ -1071,7 +1082,7 @@ export const SocialCaseForm = ({
                 id="sc-unidad"
                 disabled={!isEditable}
                 autoCapitalize="sentences"
-                className={fc(isEditable)}
+                className={fc(isEditable, "unidadDependencia")}
                 placeholder="Nombre de la unidad o dependencia"
                 value={data.unidadDependencia}
                 onChange={(e) => update("unidadDependencia", e.target.value)}
@@ -1087,7 +1098,7 @@ export const SocialCaseForm = ({
                 <input
                   id="sc-telefono"
                   disabled={!isEditable}
-                  className={fc(isEditable)}
+                  className={fc(isEditable, "telefono")}
                   placeholder="0424-000.00.00"
                   value={data.telefono}
                   onChange={(e) => update("telefono", e.target.value)}
@@ -1117,7 +1128,7 @@ export const SocialCaseForm = ({
                 id="sc-direccion"
                 disabled={!isEditable}
                 autoCapitalize="sentences"
-                className={fc(isEditable)}
+                className={fc(isEditable, "direccion")}
                 placeholder="Barrio, sector, calle..."
                 value={data.direccion}
                 onChange={(e) => update("direccion", e.target.value)}
@@ -1185,7 +1196,7 @@ export const SocialCaseForm = ({
                 disabled={!isEditable}
                 autoCapitalize="sentences"
                 rows={3}
-                className={cn(fc(isEditable), "min-h-[64px] resize-none overflow-hidden leading-relaxed")}
+                className={cn(fc(isEditable, "referencia"), "min-h-[64px] resize-none overflow-hidden leading-relaxed")}
                 placeholder="Describe por qué llegó el caso y qué solicitó el ciudadano..."
                 value={data.referencia}
                 onInput={(e) => {
@@ -1212,7 +1223,10 @@ export const SocialCaseForm = ({
                 disabled={!isEditable}
                 autoCapitalize="sentences"
                 rows={3}
-                className={cn(fc(isEditable), "min-h-[64px] resize-none overflow-hidden leading-relaxed")}
+                className={cn(
+                  fc(isEditable, "descripcionCaso"),
+                  "min-h-[64px] resize-none overflow-hidden leading-relaxed"
+                )}
                 placeholder="Describe el contexto y los detalles principales del caso..."
                 value={data.descripcionCaso}
                 onInput={(e) => {
@@ -1251,7 +1265,7 @@ export const SocialCaseForm = ({
                   id="sc-accion"
                   disabled={!isEditable}
                   autoCapitalize="sentences"
-                  className={cn(fc(isEditable), "min-h-[64px] resize-y leading-relaxed")}
+                  className={cn(fc(isEditable, "accionTomada"), "min-h-[64px] resize-y leading-relaxed")}
                   placeholder="Describe qué se hizo para atender el caso..."
                   value={data.accionTomada}
                   onChange={(e) => update("accionTomada", e.target.value)}
@@ -1265,7 +1279,7 @@ export const SocialCaseForm = ({
                   id="sc-resultado"
                   disabled={!isEditable}
                   autoCapitalize="sentences"
-                  className={cn(fc(isEditable), "min-h-[52px] resize-y leading-relaxed")}
+                  className={cn(fc(isEditable, "resultado"), "min-h-[52px] resize-y leading-relaxed")}
                   placeholder="Qué se otorgó o por qué no se pudo resolver..."
                   value={data.resultado}
                   onChange={(e) => update("resultado", e.target.value)}
