@@ -68,6 +68,10 @@ type Props = {
   onPhotoFound?: (url: string) => void;
   /** Sincroniza el estado de guardado con el indicador global del issue ("submitting" | "submitted" | "saved") */
   onSavingChange?: (status: "submitting" | "submitted" | "saved") => void;
+  /** Fecha de última actualización del issue para mostrar días en estado */
+  updatedAt?: string;
+  /** Nombre del estado actual */
+  stateName?: string;
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -250,6 +254,12 @@ export const injectSocialCaseIntoHtml = (html: string, data: SocialCaseData): st
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const toUpper = (v: string) => v.toUpperCase();
+
+const getDaysInState = (updatedAt?: string): number | null => {
+  if (!updatedAt) return null;
+  const diff = Date.now() - new Date(updatedAt).getTime();
+  return Math.floor(diff / (1000 * 60 * 60 * 24));
+};
 
 const capitalizeFirstLetter = (value: string) =>
   value.replace(/^(\s*)(\p{L})/u, (_, spaces, letter) => `${spaces}${letter.toUpperCase()}`);
@@ -460,6 +470,8 @@ export const SocialCaseForm = ({
   onSavingChange,
   onPhotoUpload,
   onPhotoFound,
+  updatedAt,
+  stateName,
 }: Props) => {
   const [data, setData] = useState<SocialCaseData>(EMPTY);
   const [saved, setSaved] = useState(false);
@@ -811,8 +823,30 @@ export const SocialCaseForm = ({
   }, [mode, descriptionHtml]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  const daysInState = getDaysInState(updatedAt);
+
   return (
     <div className="w-full font-body">
+      {/* Badge: estado actual + días */}
+      {mode === "view" && stateName && daysInState !== null && (
+        <div className="mb-3 flex items-center gap-2">
+          <span className="bg-custom-background-80 text-custom-text-300 rounded-full px-2.5 py-0.5 text-[11px] font-medium">
+            {stateName}
+          </span>
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+              daysInState >= 14
+                ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                : daysInState >= 7
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  : "bg-custom-background-80 text-custom-text-400"
+            )}
+          >
+            {daysInState === 0 ? "Hoy" : daysInState === 1 ? "1 día" : `${daysInState} días`}
+          </span>
+        </div>
+      )}
       {/* Foto de perfil — solo en modo view (en create la muestra ProfilePhotoUpload del modal) */}
       {mode === "view" && (
         <div className="flex justify-center py-2">

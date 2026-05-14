@@ -252,6 +252,8 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
             return response.asset_url ?? "";
           }}
           onSavingChange={(status) => setIsSubmitting(status)}
+          updatedAt={issue.updated_at ?? undefined}
+          stateName={currentState?.name}
         />
 
         {isSocialCase && (
