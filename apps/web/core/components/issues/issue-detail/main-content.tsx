@@ -209,11 +209,11 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           onAdvance={
             isRecibido && procesoStateId
               ? async () => {
-                  await issueOperations.update(workspaceSlug, projectId, issueId, { state_id: procesoStateId });
+                  await handleStateChange(procesoStateId);
                 }
               : isEnProceso && articulacionStateId
                 ? async () => {
-                    await issueOperations.update(workspaceSlug, projectId, issueId, { state_id: articulacionStateId });
+                    await handleStateChange(articulacionStateId);
                   }
                 : undefined
           }

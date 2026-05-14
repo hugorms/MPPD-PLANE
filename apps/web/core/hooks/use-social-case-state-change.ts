@@ -1,5 +1,5 @@
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { TIssue } from "@plane/types";
+import type { TIssue, TIssueAttachment } from "@plane/types";
 import { renderFormattedPayloadDate } from "@plane/utils";
 import { extractFromHtml, injectSocialCaseIntoHtml } from "@/components/issues/social-case-form";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -61,7 +61,7 @@ const ENTREGA_PREFIX = "[ENTREGA]";
 
 function checkAttachments(
   attachmentIds: string[],
-  getAttachmentById: (id: string) => { attributes?: { name?: string } } | null,
+  getAttachmentById: (id: string) => TIssueAttachment | undefined,
   prefix: string
 ): number {
   return attachmentIds.filter((id) => {

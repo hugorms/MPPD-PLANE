@@ -184,6 +184,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
     ? (projectStates?.find((s) => s.id === issue.state_id)?.name?.toLowerCase() ?? "")
     : "";
   const isArticulacion = currentStateName.includes("articulaci");
+  const isInActiveState = currentStateName.includes("proceso") || currentStateName.includes("articulaci");
 
   const data = extractFromHtml(issue?.description_html ?? "");
 
@@ -218,7 +219,7 @@ export function SocialCaseSlotButtons({ workspaceSlug: _workspaceSlug, projectId
             label={displayLabel}
             description={slot.description}
             isDone={isDone}
-            isRequired={!isDone && (isCedula || (isRegistro && isArticulacion))}
+            isRequired={!isDone && ((isCedula && isInActiveState) || (isRegistro && isArticulacion))}
             fileName={
               countable && slotCount > 1
                 ? `${slotCount} archivos adjuntos`
