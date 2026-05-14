@@ -476,6 +476,7 @@ export const SocialCaseForm = ({
   const [data, setData] = useState<SocialCaseData>(EMPTY);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmSinResolucion, setConfirmSinResolucion] = useState(false);
   const [open, setOpen] = useState(true);
   const [editing, setEditing] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -836,8 +837,45 @@ export const SocialCaseForm = ({
   // ── Render ─────────────────────────────────────────────────────────────────
   const daysInState = getDaysInState(updatedAt);
 
+  const handleSinResolucionConfirmed = async () => {
+    setConfirmSinResolucion(false);
+    await onSinResolucion?.();
+  };
+
   return (
     <div className="w-full font-body">
+      {/* Confirmación "Sin resolución" */}
+      {confirmSinResolucion && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex min-h-full items-center justify-center p-4 sm:p-0"
+          onKeyDown={(e) => e.key === "Escape" && setConfirmSinResolucion(false)}
+        >
+          <div
+            role="presentation"
+            className="fixed inset-0 bg-backdrop transition-opacity"
+            onClick={() => setConfirmSinResolucion(false)}
+            onKeyDown={() => setConfirmSinResolucion(false)}
+          />
+          <div className="animate-in fade-in zoom-in-95 relative w-full max-w-sm transform rounded-lg bg-surface-1 text-left shadow-raised-200 transition-all duration-200">
+            <div className="p-5">
+              <h3 className="text-15 text-custom-text-100 font-semibold">¿Marcar como Sin resolución?</h3>
+              <p className="mt-2 text-13 text-secondary">
+                Esta acción indica que el caso no pudo ser atendido. El caso pasará al estado cancelado. ¿Estás seguro?
+              </p>
+            </div>
+            <div className="flex flex-row justify-end gap-2 border-t-[0.5px] border-subtle px-5 py-4">
+              <Button variant="secondary" size="sm" onClick={() => setConfirmSinResolucion(false)}>
+                Cancelar
+              </Button>
+              <Button variant="error-fill" size="sm" onClick={handleSinResolucionConfirmed}>
+                Sí, sin resolución
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Badge: estado actual + días */}
       {mode === "view" && stateName && daysInState !== null && (
         <div className="mb-3 flex items-center gap-2">
@@ -1400,7 +1438,12 @@ export const SocialCaseForm = ({
                         </div>
                       )}
                       {onSinResolucion && (
-                        <Button type="button" variant="error-outline" size="sm" onClick={() => onSinResolucion()}>
+                        <Button
+                          type="button"
+                          variant="error-outline"
+                          size="sm"
+                          onClick={() => setConfirmSinResolucion(true)}
+                        >
                           Sin resolución
                         </Button>
                       )}
