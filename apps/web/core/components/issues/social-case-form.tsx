@@ -795,7 +795,12 @@ export const SocialCaseForm = ({
   // Keys of fields that are required for the current state but still empty
   const missingKeys: Set<string> = new Set([
     ...(isRecibido ? effectiveRecibidoRequired.filter(({ key }) => !data[key]?.trim()).map(({ key }) => key) : []),
-    ...(isEnProceso && !isArticulacion ? PROCESO_REQUIRED.filter((k) => !data[k]?.trim()) : []),
+    ...(isEnProceso && !isArticulacion
+      ? [
+          ...effectiveRecibidoRequired.filter(({ key }) => !data[key]?.trim()).map(({ key }) => key),
+          ...PROCESO_REQUIRED.filter((k) => !data[k]?.trim()),
+        ]
+      : []),
     ...(isArticulacion ? effectiveArticulacionRequired.filter((k) => !data[k]?.trim()) : []),
   ]);
 
