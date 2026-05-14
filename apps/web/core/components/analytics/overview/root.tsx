@@ -612,6 +612,12 @@ const Overview = observer(function Overview() {
 
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
+  const cantEnProceso = Object.entries(byState)
+    .filter(([name]) => name.toLowerCase().includes("proceso"))
+    .reduce((sum, [, c]) => sum + c, 0);
+  const cantEnArticulacion = Object.entries(byState)
+    .filter(([name]) => name.toLowerCase().includes("articulaci"))
+    .reduce((sum, [, c]) => sum + c, 0);
   const maxMonth = byMonth.length > 0 ? Math.max(1, ...byMonth.map(([, c]) => c)) : 1;
 
   // Solo los 5 FANB canónicos con count > 0, ordenados por cantidad
@@ -1337,14 +1343,14 @@ const Overview = observer(function Overview() {
 
               {/* ── KPIs ── */}
               {loadingIssues ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {(["kpi-0", "kpi-1", "kpi-2", "kpi-3"] as const).map((k) => (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                  {(["kpi-0", "kpi-1", "kpi-2", "kpi-3", "kpi-4", "kpi-5"] as const).map((k) => (
                     <div key={k} className="h-24 animate-pulse rounded-lg border border-subtle bg-surface-2" />
                   ))}
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                     {/* Total */}
                     <div className="rounded-lg border border-subtle bg-surface-2 p-4">
                       <p className="text-26 font-bold text-secondary">{rows.length}</p>
@@ -1362,6 +1368,34 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Resueltos</p>
+                    </div>
+                    {/* En Proceso */}
+                    <div
+                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                      style={{ borderLeftColor: "#eab308" }}
+                    >
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-26 font-bold text-secondary">{cantEnProceso}</p>
+                        {rows.length > 0 && (
+                          <p className="text-12 text-tertiary">{Math.round((cantEnProceso / rows.length) * 100)}%</p>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-11 text-tertiary">En Proceso</p>
+                    </div>
+                    {/* En Articulación */}
+                    <div
+                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                      style={{ borderLeftColor: "#f97316" }}
+                    >
+                      <div className="flex items-baseline gap-1.5">
+                        <p className="text-26 font-bold text-secondary">{cantEnArticulacion}</p>
+                        {rows.length > 0 && (
+                          <p className="text-12 text-tertiary">
+                            {Math.round((cantEnArticulacion / rows.length) * 100)}%
+                          </p>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-11 text-tertiary">Articulación</p>
                     </div>
                     {/* Civiles */}
                     <div
