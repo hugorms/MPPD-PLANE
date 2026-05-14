@@ -357,7 +357,9 @@ const Overview = observer(function Overview() {
   const memberRoot = useMember();
 
   // ── Estado GCS ───────────────────────────────────────────────────────────────
-  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState(() =>
+    typeof window !== "undefined" ? (localStorage.getItem("gcs-analytics-project") ?? "") : ""
+  );
   const [preset, setPreset] = useState<Preset>("month");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -1215,7 +1217,9 @@ const Overview = observer(function Overview() {
                 id="gcs-project-select"
                 value={selectedProjectId}
                 onChange={(e) => {
-                  setSelectedProjectId(e.target.value);
+                  const pid = e.target.value;
+                  setSelectedProjectId(pid);
+                  localStorage.setItem("gcs-analytics-project", pid);
                   setComponenteFilter([]);
                   setCondicionFilter([]);
                   setEstadosFilter([]);
