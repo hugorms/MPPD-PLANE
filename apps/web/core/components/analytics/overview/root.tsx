@@ -91,27 +91,16 @@ const getIssueLabelIds = (issue: any): string[] => {
     .filter((labelId): labelId is string => Boolean(labelId));
 };
 
+// Only resolves label names via ID lookup against currently-active labels.
+// Direct name fields (label_names, labels[].name) are intentionally ignored
+// because they may contain stale names from soft-deleted labels.
 const getIssueLabelNames = (issue: any, projectLabels: ProjectLabelLike[]): string[] => {
-  const names = new Set<string>();
-
-  if (Array.isArray(issue?.label_names)) {
-    for (const labelName of issue.label_names) {
-      if (typeof labelName === "string" && labelName.trim()) names.add(labelName.trim());
-    }
-  }
-
-  if (Array.isArray(issue?.labels)) {
-    for (const label of issue.labels as IssueLabelValue[]) {
-      if (typeof label !== "string" && label?.name?.trim()) names.add(label.name.trim());
-    }
-  }
-
   const labelById = new Map(projectLabels.map((label) => [label.id, label.name]));
+  const names = new Set<string>();
   for (const labelId of getIssueLabelIds(issue)) {
     const labelName = labelById.get(labelId);
     if (labelName) names.add(labelName);
   }
-
   return Array.from(names);
 };
 
@@ -554,9 +543,14 @@ const Overview = observer(function Overview() {
       parsedByComponente[componente] = (parsedByComponente[componente] ?? 0) + 1;
       if (entidad) parsedByEntidad[entidad] = (parsedByEntidad[entidad] ?? 0) + 1;
 
-      // Etiquetas nativas de Plane
-      for (const labelName of getIssueLabelNames(issue, effectiveLabels)) {
-        parsedByLabel[labelName] = (parsedByLabel[labelName] ?? 0) + 1;
+      // Solo etiquetas activas — las eliminadas no se resuelven por diseño
+      const activeLabels = getIssueLabelNames(issue, effectiveLabels);
+      if (activeLabels.length > 0) {
+        for (const labelName of activeLabels) {
+          parsedByLabel[labelName] = (parsedByLabel[labelName] ?? 0) + 1;
+        }
+      } else {
+        parsedByLabel["Sin clasificar"] = (parsedByLabel["Sin clasificar"] ?? 0) + 1;
       }
 
       if (issue.created_at) {
@@ -585,8 +579,12 @@ const Overview = observer(function Overview() {
     monthEntries.sort(([a], [b]) => a.localeCompare(b));
     const recentMonthEntries = monthEntries.slice(-12);
 
+    // Etiquetas activas ordenadas por cantidad; "Sin clasificar" siempre al final
     // oxlint-disable-next-line unicorn/no-array-sort
-    const topLabel = Object.entries(parsedByLabel).sort(([, a], [, b]) => b - a);
+    const topLabel = Object.entries(parsedByLabel)
+      .filter(([name]) => name !== "Sin clasificar")
+      .toSorted(([, a], [, b]) => b - a)
+      .concat(parsedByLabel["Sin clasificar"] ? [["Sin clasificar", parsedByLabel["Sin clasificar"]]] : []);
 
     return {
       rows: parsedRows,
