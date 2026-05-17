@@ -872,7 +872,7 @@ const Overview = observer(function Overview() {
       const CRED_IMG_H = 113;
       const RESENA_IMG_W = 94;
       const RESENA_IMG_H = 113;
-      const RESENA_COL_IDX = 13;
+      const RESENA_COL_IDX = 12;
       const RESENA_COL_W = 40;
       const RESENA_COL_W_PX = RESENA_COL_W * 7 + 5;
       const RESENA_GAP = 4;
@@ -906,18 +906,15 @@ const Overview = observer(function Overview() {
         { key: "componente" },
         { key: "unidad_dependencia" },
         { key: "referencia" },
-        { key: "descripcion_caso" },
         { key: "foto", width: PHOTO_COL_W },
         { key: "resena", width: RESENA_COL_W },
         { key: "organismo" },
         { key: "observacion" },
-        { key: "parroquia" },
-        { key: "municipio" },
         { key: "accion_tomada" },
         { key: "resultado" },
         { key: "fecha_cierre" },
       ];
-      const colMaxLen = [2, 38, 20, 14, 26, 28, 20, 18, 24, 28, 28, 28, 0, 0, 28, 26, 16, 16, 30, 30, 14];
+      const colMaxLen = [2, 38, 20, 14, 26, 28, 20, 18, 24, 28, 28, 0, 0, 28, 26, 30, 30, 14];
 
       let logoId: number | null = null;
       try {
@@ -939,7 +936,7 @@ const Overview = observer(function Overview() {
       sheet.getRow(2).height = 40;
       sheet.getRow(3).height = 28;
 
-      sheet.mergeCells("A1:U1");
+      sheet.mergeCells("A1:R1");
       sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
       if (logoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -949,7 +946,7 @@ const Overview = observer(function Overview() {
       // Map para lookup O(1) en lugar de find() O(n) dentro del loop
       const issueMap = new Map(allIssues.map((is) => [is.id, is]));
 
-      sheet.mergeCells("A2:U2");
+      sheet.mergeCells("A2:R2");
       const componenteUnique =
         rows.length > 0 && rows[0].componente !== "-" && rows.every((r) => r.componente === rows[0].componente)
           ? rows[0].componente.toUpperCase()
@@ -958,7 +955,7 @@ const Overview = observer(function Overview() {
       sheet.getCell("A2").font = { bold: true, size: 18, name: "Arial", color: { argb: "FF000000" } };
       sheet.getCell("A2").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
 
-      sheet.mergeCells("A3:U3");
+      sheet.mergeCells("A3:R3");
       const firstCaseStartDate = rows
         .map((r) => issueMap.get(r.id)?.start_date ?? issueMap.get(r.id)?.created_at?.slice(0, 10))
         .filter(Boolean)
@@ -986,13 +983,10 @@ const Overview = observer(function Overview() {
         "COMPONENTE FANB",
         "UNIDAD / DEPENDENCIA",
         "SOLICITUD",
-        "DESCRIPCIÓN DEL CASO",
         "CÉDULA / CREDENCIAL",
         "REGISTRO FOTOGRÁFICO",
         "ÓRGANO / INSTITUCIÓN CONTACTADA",
         "OBSERVACIÓN DE CIERRE",
-        "PARROQUIA",
-        "MUNICIPIO",
         "ACCIÓN TOMADA",
         "RESULTADO / BENEFICIO OTORGADO",
         "FECHA DE CIERRE",
@@ -1033,19 +1027,16 @@ const Overview = observer(function Overview() {
           toUpperOrDash(row.componente),
           toUpperOrDash(row.unidadDependencia),
           toUpperOrDash(row.referencia),
-          toUpperOrDash(row.descripcionCaso),
           "",
           "",
           toUpperOrDash(row.institucionContactada),
           toUpperOrDash(row.observacionCierre),
-          toUpperOrDash(row.parroquia),
-          toUpperOrDash(row.municipio),
           toUpperOrDash(row.accionTomada),
           toUpperOrDash(row.resultado),
           toUpperOrDash(row.fechaCierre),
         ];
         cellValues.forEach((val, idx) => {
-          if (idx !== 12 && idx !== 13) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
+          if (idx !== 11 && idx !== 12) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
         });
         const dataRow = sheet.addRow(cellValues);
         if (includeMedia) {
@@ -1053,13 +1044,13 @@ const Overview = observer(function Overview() {
           const CHARS_EST = 18;
           let maxLines = 1;
           cellValues.forEach((val, idx) => {
-            if (idx === 12 || idx === 13) return;
+            if (idx === 11 || idx === 12) return;
             maxLines = Math.max(maxLines, Math.ceil(val.length / CHARS_EST));
           });
           dataRow.height = Math.max(PHOTO_ROW_H_PT, maxLines * PT_PER_LINE);
         }
         dataRow.eachCell((cell, colNum) => {
-          if (colNum !== 13 && colNum !== 14) {
+          if (colNum !== 12 && colNum !== 13) {
             cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ROW_BG } };
           }
           cell.font = { size: 12, name: "Arial" };
@@ -1076,12 +1067,19 @@ const Overview = observer(function Overview() {
             const cedulaFiles = (attList ?? []).filter((a) => a.attributes?.name?.startsWith("[CI_BEN]"));
             const cedulaImgs = cedulaFiles.filter((a) => IMAGE_EXTS_XLS.has(getAttachmentExt(a))).slice(0, 2);
             const cedulaDocs = cedulaFiles.filter((a) => !IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
+            // Ajustar altura de fila para imágenes apiladas verticalmente
+            if (cedulaImgs.length > 1) {
+              const stackedHPx = cedulaImgs.length * CRED_IMG_H + (cedulaImgs.length + 1) * RESENA_GAP;
+              const stackedHPt = Math.ceil(stackedHPx * 0.75);
+              dataRow.height = Math.max(dataRow.height ?? PHOTO_ROW_H_PT, stackedHPt);
+            }
             if (cedulaDocs.length > 0) {
-              dataRow.getCell(13).value = cedulaDocs
+              dataRow.getCell(12).value = cedulaDocs
                 .map((a) => cleanAttachmentName(a.attributes?.name ?? "archivo adjunto"))
                 .join("\n");
-              dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+              dataRow.getCell(12).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
             }
+            // Imágenes apiladas verticalmente para evitar superposición
             for (let imgIdx = 0; imgIdx < cedulaImgs.length; imgIdx++) {
               const cedulaAtt = cedulaImgs[imgIdx];
               try {
@@ -1092,17 +1090,17 @@ const Overview = observer(function Overview() {
                 const mimeM = base64Full.match(/^data:image\/(\w+);base64,/);
                 const ext = (mimeM?.[1] ?? "jpeg") as "png" | "jpeg" | "gif";
                 const imgId = workbook.addImage({ base64: base64Full.split(",")[1], extension: ext });
-                const xPx = RESENA_GAP + imgIdx * (CRED_IMG_W + RESENA_GAP);
                 const rowHPx = (dataRow.height ?? PHOTO_ROW_H_PT) * (96 / 72);
+                const yPx = RESENA_GAP + imgIdx * (CRED_IMG_H + RESENA_GAP);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 sheet.addImage(imgId, {
-                  tl: { col: 12 + xPx / PHOTO_COL_W_PX, row: rowZero + RESENA_GAP / rowHPx } as any,
+                  tl: { col: 11 + RESENA_GAP / PHOTO_COL_W_PX, row: rowZero + yPx / rowHPx } as any,
                   ext: { width: CRED_IMG_W, height: CRED_IMG_H },
                 });
               } catch {
-                if (!dataRow.getCell(13).value) {
-                  dataRow.getCell(13).value = cleanAttachmentName(cedulaAtt.attributes?.name ?? "archivo adjunto");
-                  dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+                if (!dataRow.getCell(12).value) {
+                  dataRow.getCell(12).value = cleanAttachmentName(cedulaAtt.attributes?.name ?? "archivo adjunto");
+                  dataRow.getCell(12).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
                 }
               }
             }
@@ -1115,10 +1113,10 @@ const Overview = observer(function Overview() {
             const nativeImgs = nativeFiles.filter((a) => IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
             const nativeDocs = nativeFiles.filter((a) => !IMAGE_EXTS_XLS.has(getAttachmentExt(a)));
             if (nativeDocs.length > 0) {
-              dataRow.getCell(14).value = nativeDocs
+              dataRow.getCell(13).value = nativeDocs
                 .map((a) => cleanAttachmentName(a.attributes?.name ?? "archivo adjunto"))
                 .join("\n");
-              dataRow.getCell(14).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+              dataRow.getCell(13).alignment = { vertical: "middle", horizontal: "center", wrapText: true };
             }
             if (nativeImgs.length > 0) {
               const gridRows = Math.ceil(nativeImgs.length / 2);
