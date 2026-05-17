@@ -279,6 +279,8 @@ export type ParsedIssueRow = {
   nombre: string;
   cedula: string;
   telefono: string;
+  direccion: string;
+  parroquia: string;
   municipio: string;
   entidad: string;
   componente: string;

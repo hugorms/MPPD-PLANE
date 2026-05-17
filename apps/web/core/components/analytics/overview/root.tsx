@@ -522,6 +522,8 @@ const Overview = observer(function Overview() {
         nombre: d?.nombre || "-",
         cedula: d?.cedula || "-",
         telefono: [d?.telefono, d?.telefono2].filter(Boolean).join(" / ") || "-",
+        direccion: d?.direccion || "-",
+        parroquia: d?.parroquia || "-",
         municipio: d?.municipio || "-",
         entidad,
         componente,
@@ -898,19 +900,24 @@ const Overview = observer(function Overview() {
         { key: "cedula" },
         { key: "telefono" },
         { key: "direccion" },
-        { key: "tipo" },
+        { key: "titulo" },
         { key: "condicion_militar" },
         { key: "grado_militar" },
         { key: "componente" },
         { key: "unidad_dependencia" },
-        { key: "descripcion" },
+        { key: "referencia" },
         { key: "descripcion_caso" },
         { key: "foto", width: PHOTO_COL_W },
         { key: "resena", width: RESENA_COL_W },
         { key: "organismo" },
         { key: "observacion" },
+        { key: "parroquia" },
+        { key: "municipio" },
+        { key: "accion_tomada" },
+        { key: "resultado" },
+        { key: "fecha_cierre" },
       ];
-      const colMaxLen = [2, 38, 20, 14, 26, 14, 20, 18, 24, 28, 28, 28, 0, 0, 22, 24];
+      const colMaxLen = [2, 38, 20, 14, 26, 28, 20, 18, 24, 28, 28, 28, 0, 0, 28, 26, 16, 16, 30, 30, 14];
 
       let logoId: number | null = null;
       try {
@@ -932,7 +939,7 @@ const Overview = observer(function Overview() {
       sheet.getRow(2).height = 40;
       sheet.getRow(3).height = 28;
 
-      sheet.mergeCells("A1:P1");
+      sheet.mergeCells("A1:U1");
       sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
       if (logoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -942,7 +949,7 @@ const Overview = observer(function Overview() {
       // Map para lookup O(1) en lugar de find() O(n) dentro del loop
       const issueMap = new Map(allIssues.map((is) => [is.id, is]));
 
-      sheet.mergeCells("A2:P2");
+      sheet.mergeCells("A2:U2");
       const componenteUnique =
         rows.length > 0 && rows[0].componente !== "-" && rows.every((r) => r.componente === rows[0].componente)
           ? rows[0].componente.toUpperCase()
@@ -951,7 +958,7 @@ const Overview = observer(function Overview() {
       sheet.getCell("A2").font = { bold: true, size: 18, name: "Arial", color: { argb: "FF000000" } };
       sheet.getCell("A2").alignment = { vertical: "middle", horizontal: "center", wrapText: true };
 
-      sheet.mergeCells("A3:P3");
+      sheet.mergeCells("A3:U3");
       const firstCaseStartDate = rows
         .map((r) => issueMap.get(r.id)?.start_date ?? issueMap.get(r.id)?.created_at?.slice(0, 10))
         .filter(Boolean)
@@ -973,17 +980,22 @@ const Overview = observer(function Overview() {
         "CÉDULA DE IDENTIDAD",
         "TELÉFONO",
         "DIRECCIÓN DE HABITACIÓN",
-        "TIPO DE CASO",
+        "TÍTULO DEL CASO",
         "CONDICIÓN MILITAR",
         "GRADO MILITAR",
-        "COMPONENTE",
+        "COMPONENTE FANB",
         "UNIDAD / DEPENDENCIA",
-        "DESCRIPCIÓN DE LA SOLICITUD",
+        "SOLICITUD",
         "DESCRIPCIÓN DEL CASO",
         "CÉDULA / CREDENCIAL",
-        "RESEÑA FOTOGRÁFICA",
-        "ORGANISMO COMPETENTE",
-        "OBSERVACIÓN",
+        "REGISTRO FOTOGRÁFICO",
+        "ÓRGANO / INSTITUCIÓN CONTACTADA",
+        "OBSERVACIÓN DE CIERRE",
+        "PARROQUIA",
+        "MUNICIPIO",
+        "ACCIÓN TOMADA",
+        "RESULTADO / BENEFICIO OTORGADO",
+        "FECHA DE CIERRE",
       ]);
       tableHeaderRow.height = 44;
       tableHeaderRow.eachCell((cell) => {
@@ -1014,7 +1026,7 @@ const Overview = observer(function Overview() {
           toUpperOrDash(row.nombre),
           toUpperOrDash(row.cedula),
           toUpperOrDash(telefonoCombinado),
-          toUpperOrDash(d?.direccion),
+          toUpperOrDash(row.direccion),
           toUpperOrDash(issue?.name),
           toUpperOrDash(row.condicionMilitar),
           toUpperOrDash(row.gradoMilitar),
@@ -1024,8 +1036,13 @@ const Overview = observer(function Overview() {
           toUpperOrDash(row.descripcionCaso),
           "",
           "",
-          toUpperOrDash(d?.institucionContactada),
-          toUpperOrDash(d?.observacionCierre),
+          toUpperOrDash(row.institucionContactada),
+          toUpperOrDash(row.observacionCierre),
+          toUpperOrDash(row.parroquia),
+          toUpperOrDash(row.municipio),
+          toUpperOrDash(row.accionTomada),
+          toUpperOrDash(row.resultado),
+          toUpperOrDash(row.fechaCierre),
         ];
         cellValues.forEach((val, idx) => {
           if (idx !== 12 && idx !== 13) colMaxLen[idx] = Math.max(colMaxLen[idx], val.length);
