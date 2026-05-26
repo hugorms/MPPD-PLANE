@@ -72,6 +72,8 @@ type Props = {
   updatedAt?: string;
   /** Nombre del estado actual */
   stateName?: string;
+  /** Devuelve datos del caso existente si ya hay un issue con esa cédula en el proyecto, o null si no hay duplicado */
+  onCheckDuplicate?: (cedulaDigits: string) => { id: string; sequenceId: number; name: string } | null;
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -472,6 +474,7 @@ export const SocialCaseForm = ({
   onPhotoFound,
   updatedAt,
   stateName,
+  onCheckDuplicate,
 }: Props) => {
   const [data, setData] = useState<SocialCaseData>(EMPTY);
   const [saved, setSaved] = useState(false);
@@ -482,6 +485,7 @@ export const SocialCaseForm = ({
   const [photoUploading, setPhotoUploading] = useState(false);
   const [cedulaLooking, setCedulaLooking] = useState(false);
   const [cedulaNotFound, setCedulaNotFound] = useState(false);
+  const [duplicateCase, setDuplicateCase] = useState<{ id: string; sequenceId: number; name: string } | null>(null);
   // URL de foto obtenida de Onfalo en la sesión actual (válida en cualquier modo)
   const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null);
   const lastCedulaQueried = useRef("");
@@ -695,6 +699,7 @@ export const SocialCaseForm = ({
     if (!force && num === lastCedulaQueried.current) return;
     setCedulaLooking(true);
     setCedulaNotFound(false);
+    setDuplicateCase(onCheckDuplicate ? (onCheckDuplicate(num) ?? null) : null);
     try {
       const result = await onfaloService.lookupCedula(data.cedula);
       // Solo bloqueamos el ref si obtuvimos respuesta válida — si falla la red, blur puede reintentar
@@ -995,6 +1000,7 @@ export const SocialCaseForm = ({
                   onChange={(e) => {
                     update("cedula", e.target.value);
                     if (cedulaNotFound) setCedulaNotFound(false);
+                    if (duplicateCase) setDuplicateCase(null);
                   }}
                   onBlur={() => handleCedulaSearch()}
                 />
@@ -1003,7 +1009,7 @@ export const SocialCaseForm = ({
                     type="button"
                     disabled={cedulaLooking}
                     onClick={() => handleCedulaSearch(true)}
-                    title="Buscar en SENIAT"
+                    title="Buscar en Onfalo"
                     className="text-custom-text-300 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-[0.5px] border-subtle bg-surface-2 transition-colors hover:border-strong hover:text-primary disabled:opacity-50"
                   >
                     <Search className="h-3.5 w-3.5" />
@@ -1011,6 +1017,21 @@ export const SocialCaseForm = ({
                 )}
               </div>
             </div>
+
+            {/* Alerta: cédula duplicada en el proyecto */}
+            {duplicateCase && (
+              <div className="border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20 flex items-start gap-2 rounded-md border px-3 py-2">
+                <AlertTriangle className="text-amber-600 dark:text-amber-400 mt-0.5 h-4 w-4 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-amber-800 dark:text-amber-300 text-[12px] font-medium">
+                    Esta cédula ya tiene un caso registrado
+                  </p>
+                  <p className="text-amber-700 dark:text-amber-400 truncate text-[11px]">
+                    #{duplicateCase.sequenceId} — {duplicateCase.name}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Fila 2: Nombre | Tipo de caso */}
             <div className="grid grid-cols-2 gap-x-6">

@@ -17,6 +17,7 @@ import { DescriptionVersionsRoot } from "@/components/core/description-versions"
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useIssues } from "@/hooks/store/use-issues";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -73,6 +74,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
   const { getProjectById } = useProject();
   const { getStateById, getProjectStates } = useProjectState();
   const { getUserDetails } = useMember();
+  const { issueMap } = useIssues();
   // reload confirmation
   const { setShowAlert } = useReloadConfirmations(isSubmitting === "submitting");
 
@@ -263,6 +265,15 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         onSavingChange={(status) => setIsSubmitting(status)}
         updatedAt={issue.updated_at ?? undefined}
         stateName={currentState?.name}
+        onCheckDuplicate={(cedulaDigits) => {
+          const match = Object.values(issueMap).find(
+            (i) =>
+              i.id !== issueId &&
+              i.project_id === issue.project_id &&
+              i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
+          );
+          return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+        }}
       />
 
       {!isSocialCase && (
