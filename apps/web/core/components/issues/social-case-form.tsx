@@ -73,7 +73,23 @@ type Props = {
   /** Nombre del estado actual */
   stateName?: string;
   /** Devuelve datos del caso existente si ya hay un issue con esa cédula en el proyecto, o null si no hay duplicado */
-  onCheckDuplicate?: (cedulaDigits: string) => { id: string; sequenceId: number; name: string } | null;
+  onCheckDuplicate?: (cedulaDigits: string) => Promise<{ id: string; sequenceId: number; name: string } | null>;
+};
+
+// Mapping from SocialCaseData key to the element id used in the form
+const FIELD_ID_MAP: Partial<Record<keyof SocialCaseData, string>> = {
+  cedula: "sc-cedula",
+  nombre: "sc-nombre",
+  telefono: "sc-telefono",
+  direccion: "sc-direccion",
+  referencia: "sc-referencia",
+  descripcionCaso: "sc-descripcion-caso",
+  condicionMilitar: "sc-condicion-militar",
+  gradoMilitar: "sc-grado",
+  jornada: "sc-jornada",
+  unidadDependencia: "sc-unidad",
+  accionTomada: "sc-accion",
+  resultado: "sc-resultado",
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -480,6 +496,7 @@ export const SocialCaseForm = ({
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmSinResolucion, setConfirmSinResolucion] = useState(false);
+  const [flashMissing, setFlashMissing] = useState(false);
   const [open, setOpen] = useState(true);
   const [editing, setEditing] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -699,7 +716,11 @@ export const SocialCaseForm = ({
     if (!force && num === lastCedulaQueried.current) return;
     setCedulaLooking(true);
     setCedulaNotFound(false);
-    setDuplicateCase(onCheckDuplicate ? (onCheckDuplicate(num) ?? null) : null);
+    if (onCheckDuplicate) {
+      onCheckDuplicate(num)
+        .then((found) => setDuplicateCase(found ?? null))
+        .catch(() => {});
+    }
     try {
       const result = await onfaloService.lookupCedula(data.cedula);
       // Solo bloqueamos el ref si obtuvimos respuesta válida — si falla la red, blur puede reintentar
@@ -797,6 +818,33 @@ export const SocialCaseForm = ({
     }
   };
 
+  const scrollToFirstMissing = (orderedKeys: (keyof SocialCaseData)[]) => {
+    for (const key of orderedKeys) {
+      const id = FIELD_ID_MAP[key];
+      if (!id) continue;
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => el.focus(), 300);
+        break;
+      }
+    }
+  };
+
+  const handleAdvanceWithValidation = (
+    isComplete: boolean,
+    orderedKeys: (keyof SocialCaseData)[],
+    advanceFn: () => Promise<void>
+  ) => {
+    if (!isComplete) {
+      setFlashMissing(true);
+      setTimeout(() => setFlashMissing(false), 1500);
+      scrollToFirstMissing(orderedKeys);
+      return;
+    }
+    advanceFn();
+  };
+
   // Keys of fields that are required for the current state but still empty
   const missingKeys: Set<string> = new Set([
     ...(isRecibido ? effectiveRecibidoRequired.filter(({ key }) => !data[key]?.trim()).map(({ key }) => key) : []),
@@ -813,7 +861,11 @@ export const SocialCaseForm = ({
     cn(
       fieldBase,
       editable ? fieldEditable : fieldReadonly,
-      fieldKey && missingKeys.has(fieldKey) && editable ? "!border-amber-400 dark:!border-amber-600" : ""
+      fieldKey && missingKeys.has(fieldKey) && editable
+        ? flashMissing
+          ? "!border-red-500 dark:!border-red-500 ring-red-200 dark:ring-red-900/50 ring-2"
+          : "!border-amber-400 dark:!border-amber-600"
+        : ""
     );
 
   // Foto de perfil actual extraída del HTML.
@@ -1482,8 +1534,13 @@ export const SocialCaseForm = ({
                           variant="primary"
                           size="sm"
                           loading={saving}
-                          disabled={!recibidoComplete}
-                          onClick={() => saveAndAdvance(onAdvance)}
+                          onClick={() =>
+                            handleAdvanceWithValidation(
+                              recibidoComplete,
+                              effectiveRecibidoRequired.map(({ key }) => key),
+                              () => saveAndAdvance(onAdvance)
+                            )
+                          }
                         >
                           Iniciar proceso →
                         </Button>
@@ -1526,8 +1583,11 @@ export const SocialCaseForm = ({
                           variant="primary"
                           size="sm"
                           loading={saving}
-                          disabled={!procesoComplete}
-                          onClick={() => saveAndAdvance(onAdvance)}
+                          onClick={() =>
+                            handleAdvanceWithValidation(procesoComplete, PROCESO_REQUIRED, () =>
+                              saveAndAdvance(onAdvance)
+                            )
+                          }
                         >
                           Articulación →
                         </Button>
@@ -1558,8 +1618,13 @@ export const SocialCaseForm = ({
                         variant="primary"
                         size="sm"
                         loading={saving}
-                        disabled={!articulacionComplete}
-                        onClick={saveAndComplete}
+                        onClick={() =>
+                          handleAdvanceWithValidation(
+                            articulacionComplete,
+                            effectiveArticulacionRequired,
+                            saveAndComplete
+                          )
+                        }
                       >
                         Resolver caso
                       </Button>
