@@ -280,16 +280,14 @@ class CedulaLookupView(BaseAPIView):
 
 def _minio_client():
     """Retorna un cliente boto3 apuntando al MinIO de Onfalo."""
-    url = os.environ.get("ONFALO_MINIO_URL")
-    user = os.environ.get("ONFALO_MINIO_USER")
-    token = os.environ.get("ONFALO_MINIO_TOKEN")
-    if not all([url, user, token]):
-        raise ValueError("ONFALO_MINIO_URL, ONFALO_MINIO_USER y ONFALO_MINIO_TOKEN deben estar configurados")
     return boto3.client(
         "s3",
-        endpoint_url=url,
-        aws_access_key_id=user,
-        aws_secret_access_key=token,
+        endpoint_url=os.environ.get("ONFALO_MINIO_URL", "http://10.51.12.85:9000"),
+        aws_access_key_id=os.environ.get("ONFALO_MINIO_USER", "MPPD_GCS"),
+        aws_secret_access_key=os.environ.get(
+            "ONFALO_MINIO_TOKEN",
+            "797099740b424dc188bc12e71f1ea63118d3e84508583232372f74c763cfabbb",
+        ),
         config=BotocoreConfig(
             signature_version="s3v4",
             connect_timeout=5,
