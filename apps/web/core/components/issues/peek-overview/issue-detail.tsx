@@ -17,7 +17,6 @@ import { DescriptionVersionsRoot } from "@/components/core/description-versions"
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-import { useIssues } from "@/hooks/store/use-issues";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -46,8 +45,10 @@ import {
 } from "@/components/issues/social-case-form";
 import { useSocialCaseStateChange } from "@/hooks/use-social-case-state-change";
 import { FileService } from "@/services/file.service";
+import { WorkspaceService } from "@/services/workspace.service";
 
 const fileService = new FileService();
+const workspaceService = new WorkspaceService();
 // services init
 const workItemVersionService = new WorkItemVersionService();
 
@@ -74,7 +75,6 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
   const { getProjectById } = useProject();
   const { getStateById, getProjectStates } = useProjectState();
   const { getUserDetails } = useMember();
-  const { issueMap } = useIssues();
   // reload confirmation
   const { setShowAlert } = useReloadConfirmations(isSubmitting === "submitting");
 
@@ -265,14 +265,20 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
         onSavingChange={(status) => setIsSubmitting(status)}
         updatedAt={issue.updated_at ?? undefined}
         stateName={currentState?.name}
-        onCheckDuplicate={(cedulaDigits) => {
-          const match = Object.values(issueMap).find(
-            (i) =>
-              i.id !== issueId &&
-              i.project_id === issue.project_id &&
-              i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
-          );
-          return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+        onCheckDuplicate={async (cedulaDigits) => {
+          try {
+            const res = await workspaceService.searchWorkspace(workspaceSlug, {
+              project_id: issue.project_id ?? "",
+              search: cedulaDigits,
+              workspace_search: false,
+            });
+            const match = (res?.results?.issue ?? []).find(
+              (i: any) => i.id !== issueId && i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
+            );
+            return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+          } catch {
+            return null;
+          }
         }}
       />
 

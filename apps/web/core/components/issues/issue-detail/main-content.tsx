@@ -18,7 +18,6 @@ import { DescriptionVersionsRoot } from "@/components/core/description-versions"
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-import { useIssues } from "@/hooks/store/use-issues";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
@@ -43,9 +42,11 @@ import { invalidateSocialCaseActividades } from "@/hooks/use-social-case-activid
 import { SocialCaseSlotButtons } from "@/components/issues/social-case-slot-buttons";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
 import { FileService } from "@/services/file.service";
+import { WorkspaceService } from "@/services/workspace.service";
 
 const attachmentService = new IssueAttachmentService();
 const fileService = new FileService();
+const workspaceService = new WorkspaceService();
 import { IssueActivity } from "./issue-activity";
 import { IssueParentDetail } from "./parent";
 import { IssueReaction } from "./reactions";
@@ -76,7 +77,6 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
     issue: { getIssueById },
     peekIssue,
   } = useIssueDetail();
-  const { issueMap } = useIssues();
   const { getProjectById } = useProject();
   const { getStateById, getProjectStates } = useProjectState();
   const { setShowAlert } = useReloadConfirmations(isSubmitting === "submitting");
@@ -256,14 +256,20 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
           onSavingChange={(status) => setIsSubmitting(status)}
           updatedAt={issue.updated_at ?? undefined}
           stateName={currentState?.name}
-          onCheckDuplicate={(cedulaDigits) => {
-            const match = Object.values(issueMap).find(
-              (i) =>
-                i.id !== issueId &&
-                i.project_id === projectId &&
-                i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
-            );
-            return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+          onCheckDuplicate={async (cedulaDigits) => {
+            try {
+              const res = await workspaceService.searchWorkspace(workspaceSlug, {
+                project_id: projectId,
+                search: cedulaDigits,
+                workspace_search: false,
+              });
+              const match = (res?.results?.issue ?? []).find(
+                (i: any) => i.id !== issueId && i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
+              );
+              return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+            } catch {
+              return null;
+            }
           }}
         />
 
