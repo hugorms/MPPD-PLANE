@@ -1136,61 +1136,64 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Fila 3: Condición | Grado | Componente — solo si es Militar */}
-            {data.esMilitar === "true" && (
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                <div>
-                  <label htmlFor="sc-condicion-militar" className={labelClass}>
-                    Condición militar
-                  </label>
-                  <select
-                    id="sc-condicion-militar"
-                    disabled={!isEditable}
-                    className={fc(isEditable)}
-                    value={data.condicionMilitar}
-                    onChange={(e) => update("condicionMilitar", e.target.value)}
-                  >
-                    <option value="">-- Seleccionar condición --</option>
-                    <option value="Militar Activo">Militar Activo</option>
-                    <option value="Militar Retirado">Militar Retirado</option>
-                    <option value="Familiar Militar">Familiar Militar</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="sc-grado" className={labelClass}>
-                    Grado militar
-                  </label>
-                  <input
-                    id="sc-grado"
-                    disabled={!isEditable}
-                    autoCapitalize="words"
-                    className={fc(isEditable)}
-                    placeholder="Ej: Teniente, Sargento..."
-                    value={data.gradoMilitar}
-                    onChange={(e) => update("gradoMilitar", e.target.value)}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label htmlFor="sc-jornada" className={labelClass}>
-                    Componente
-                  </label>
-                  <select
-                    id="sc-jornada"
-                    disabled={!isEditable}
-                    className={fc(isEditable)}
-                    value={data.jornada}
-                    onChange={(e) => update("jornada", e.target.value)}
-                  >
-                    <option value="">-- Seleccionar componente --</option>
-                    <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
-                    <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
-                    <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
-                    <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
-                    <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
-                  </select>
-                </div>
+            {/* Fila 3: Condición | Grado | Componente — solo si es Militar, con animación */}
+            <div
+              className={cn(
+                "grid grid-cols-2 gap-x-6 gap-y-3 overflow-hidden transition-all duration-200",
+                data.esMilitar === "true" ? "max-h-60 opacity-100" : "pointer-events-none max-h-0 opacity-0"
+              )}
+            >
+              <div>
+                <label htmlFor="sc-condicion-militar" className={labelClass}>
+                  Condición militar
+                </label>
+                <select
+                  id="sc-condicion-militar"
+                  disabled={!isEditable}
+                  className={fc(isEditable, "condicionMilitar")}
+                  value={data.condicionMilitar}
+                  onChange={(e) => update("condicionMilitar", e.target.value)}
+                >
+                  <option value="">-- Seleccionar condición --</option>
+                  <option value="Militar Activo">Militar Activo</option>
+                  <option value="Militar Retirado">Militar Retirado</option>
+                  <option value="Familiar Militar">Familiar Militar</option>
+                </select>
               </div>
-            )}
+              <div>
+                <label htmlFor="sc-grado" className={labelClass}>
+                  Grado militar
+                </label>
+                <input
+                  id="sc-grado"
+                  disabled={!isEditable}
+                  autoCapitalize="words"
+                  className={fc(isEditable, "gradoMilitar")}
+                  placeholder="Ej: Teniente, Sargento..."
+                  value={data.gradoMilitar}
+                  onChange={(e) => update("gradoMilitar", e.target.value)}
+                />
+              </div>
+              <div className="col-span-2">
+                <label htmlFor="sc-jornada" className={labelClass}>
+                  Componente
+                </label>
+                <select
+                  id="sc-jornada"
+                  disabled={!isEditable}
+                  className={fc(isEditable, "jornada")}
+                  value={data.jornada}
+                  onChange={(e) => update("jornada", e.target.value)}
+                >
+                  <option value="">-- Seleccionar componente --</option>
+                  <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
+                  <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
+                  <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
+                  <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
+                  <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
+                </select>
+              </div>
+            </div>
 
             {/* Unidad / Dependencia */}
             <div>
