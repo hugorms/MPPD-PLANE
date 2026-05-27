@@ -1704,21 +1704,40 @@ const Overview = observer(function Overview() {
                     {byMonth.length === 0 ? (
                       <p className="text-12 text-tertiary">Sin datos en el período</p>
                     ) : (
-                      <div className="flex h-32 items-end gap-1.5">
-                        {byMonth.map(([month, count], idx) => (
-                          <div key={month} className="flex min-w-0 flex-1 flex-col items-center gap-1">
-                            <span className="text-10 font-medium text-secondary">{count}</span>
-                            <div
-                              className="w-full rounded-t transition-all duration-300"
-                              style={{
-                                height: `${Math.max(4, Math.round((count / maxMonth) * 96))}px`,
-                                backgroundColor: "var(--color-accent-primary)",
-                                opacity: 0.4 + (idx / Math.max(byMonth.length - 1, 1)) * 0.6,
-                              }}
-                            />
-                            <span className="truncate text-10 text-tertiary">{formatMonthLabel(month)}</span>
-                          </div>
-                        ))}
+                      <div className="space-y-2">
+                        {/* Área de barras */}
+                        <div className="flex h-48 items-end gap-1.5 border-b border-subtle">
+                          {byMonth.map(([month, count], idx) => {
+                            const isLast = idx === byMonth.length - 1;
+                            return (
+                              <div key={month} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
+                                <span
+                                  className={cn(
+                                    "text-10 leading-none font-medium",
+                                    isLast ? "text-accent-primary" : "text-tertiary"
+                                  )}
+                                >
+                                  {count}
+                                </span>
+                                <div
+                                  className={cn(
+                                    "w-full rounded-t-sm transition-all duration-500",
+                                    isLast ? "bg-accent-primary" : "bg-accent-primary/40"
+                                  )}
+                                  style={{ height: `${Math.max(4, Math.round((count / maxMonth) * 168))}px` }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Etiquetas de mes */}
+                        <div className="flex gap-1.5">
+                          {byMonth.map(([month]) => (
+                            <div key={month} className="min-w-0 flex-1 text-center">
+                              <span className="block truncate text-10 text-tertiary">{formatMonthLabel(month)}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
