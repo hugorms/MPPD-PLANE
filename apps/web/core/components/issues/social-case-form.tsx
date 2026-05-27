@@ -514,15 +514,17 @@ export const SocialCaseForm = ({
   });
   // Timer para auto-guardado con debounce (solo en modo view)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Referencia mutable a los datos actuales para usarla dentro del timer sin capturar closure viejo
   const latestData = useRef<SocialCaseData>(EMPTY);
   useEffect(() => {
     latestData.current = data;
   });
-  // Cancelar timer al desmontar
+  // Cancelar timers al desmontar
   useEffect(
     () => () => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
     },
     []
   );
@@ -838,7 +840,8 @@ export const SocialCaseForm = ({
   ) => {
     if (!isComplete) {
       setFlashMissing(true);
-      setTimeout(() => setFlashMissing(false), 1500);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlashMissing(false), 1500);
       scrollToFirstMissing(orderedKeys);
       return;
     }

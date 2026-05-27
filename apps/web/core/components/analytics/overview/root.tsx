@@ -1390,16 +1390,23 @@ const Overview = observer(function Overview() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                    {/* Total — limpia filtros de flujo */}
+                    {/* Total — limpia todos los filtros */}
                     <button
                       type="button"
                       onClick={() => {
                         setWorkflowStateFilter(null);
                         setCondicionFilter([]);
+                        setComponenteFilter([]);
+                        setEstadosFilter([]);
+                        setLabelFilter([]);
                       }}
                       className={cn(
                         "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
-                        !workflowStateFilter && condicionFilter.length === 0
+                        !workflowStateFilter &&
+                          condicionFilter.length === 0 &&
+                          componenteFilter.length === 0 &&
+                          estadosFilter.length === 0 &&
+                          labelFilter.length === 0
                           ? "border-accent-primary ring-accent-primary/30 ring-1"
                           : "border-subtle"
                       )}
