@@ -1723,11 +1723,13 @@ const Overview = observer(function Overview() {
                                   {count}
                                 </span>
                                 <div
-                                  className={cn(
-                                    "w-full rounded-t-sm transition-all duration-500",
-                                    isLast ? "bg-accent-primary" : "bg-accent-primary/40"
-                                  )}
-                                  style={{ height: `${Math.max(4, Math.round((count / maxMonth) * 168))}px` }}
+                                  className="w-full rounded-t-sm transition-all duration-500"
+                                  style={{
+                                    height: `${Math.max(4, Math.round((count / maxMonth) * 168))}px`,
+                                    backgroundColor: isLast
+                                      ? "var(--background-color-accent-primary)"
+                                      : "var(--border-color-subtle)",
+                                  }}
                                 />
                               </div>
                             );
