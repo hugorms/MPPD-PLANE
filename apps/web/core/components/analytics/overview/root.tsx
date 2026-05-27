@@ -1727,7 +1727,7 @@ const Overview = observer(function Overview() {
                                   style={{
                                     height: `${Math.max(4, Math.round((count / maxMonth) * 168))}px`,
                                     backgroundColor: isLast
-                                      ? "var(--background-color-accent-primary)"
+                                      ? "var(--text-color-tertiary)"
                                       : "var(--border-color-subtle)",
                                   }}
                                 />
