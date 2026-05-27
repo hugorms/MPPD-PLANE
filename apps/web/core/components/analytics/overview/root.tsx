@@ -659,6 +659,8 @@ const Overview = observer(function Overview() {
   }, [byComponente]);
 
   // ── Tendencia semanal (esta semana vs la anterior, independiente del filtro de fecha) ──
+  // Respeta los filtros de dimensión (componente, condición, estado, etiqueta) pero ignora
+  // el rango de fechas del preset y el filtro de workflow del KPI.
   const weekTrends = useMemo(() => {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
@@ -677,13 +679,33 @@ const Overview = observer(function Overview() {
       pwMilitares = 0;
     for (const issue of allIssues) {
       if (!issue?.created_at) continue;
+      // Verificar ventana temporal antes de parsear HTML (optimización)
       const created = new Date(issue.created_at);
       const isThis = created >= weekAgo;
       const isPrev = created >= twoWeeksAgo && created < weekAgo;
       if (!isThis && !isPrev) continue;
+      // Aplicar los mismos filtros de dimensión que el useMemo principal
+      const d2 = extractFromHtml(issue.description_html ?? "");
+      if (estadosFilter.length > 0) {
+        const entidad = d2?.entidad?.trim().toLowerCase() ?? "";
+        if (!estadosFilter.some((e) => e.toLowerCase() === entidad)) continue;
+      }
+      if (componenteFilter.length > 0) {
+        const jornada = d2?.jornada?.trim() ?? "";
+        if (!componenteFilter.includes(jornada)) continue;
+      }
+      if (condicionFilter.length > 0) {
+        const isMil2 = isMilitarySocialCaseData(d2);
+        const matchesMilitar = condicionFilter.includes("Militar") && isMil2;
+        const matchesCivil = condicionFilter.includes("Civil") && !isMil2;
+        if (!matchesMilitar && !matchesCivil) continue;
+      }
+      if (labelFilter.length > 0) {
+        const issueLabelNames = getIssueLabelNames(issue, effectiveLabels);
+        if (!labelFilter.some((labelName) => issueLabelNames.includes(labelName))) continue;
+      }
       const sName = stateNames[issue.state_id ?? ""] ?? "";
       const sGroup = stateGroups[issue.state_id ?? ""];
-      const d2 = extractFromHtml(issue.description_html ?? "");
       const isMil = isMilitarySocialCaseData(d2);
       if (isThis) {
         twTotal++;
@@ -709,7 +731,16 @@ const Overview = observer(function Overview() {
       civiles: { current: twCiviles, previous: pwCiviles },
       militares: { current: twMilitares, previous: pwMilitares },
     };
-  }, [allIssues, stateNames, stateGroups]);
+  }, [
+    allIssues,
+    stateNames,
+    stateGroups,
+    estadosFilter,
+    componenteFilter,
+    condicionFilter,
+    labelFilter,
+    effectiveLabels,
+  ]);
 
   const dateRangeLabel = useMemo(() => {
     if (!fromDate && !toDate) return "Todos los registros";
@@ -1486,7 +1517,6 @@ const Overview = observer(function Overview() {
                     <button
                       type="button"
                       onClick={() => {
-                        setWorkflowStateFilter(null);
                         setCondicionFilter(
                           condicionFilter.length === 1 && condicionFilter[0] === "Civil" ? [] : ["Civil"]
                         );
@@ -1512,7 +1542,6 @@ const Overview = observer(function Overview() {
                     <button
                       type="button"
                       onClick={() => {
-                        setWorkflowStateFilter(null);
                         setCondicionFilter(
                           condicionFilter.length === 1 && condicionFilter[0] === "Militar" ? [] : ["Militar"]
                         );
