@@ -1438,11 +1438,11 @@ const Overview = observer(function Overview() {
                           componenteFilter.length === 0 &&
                           estadosFilter.length === 0 &&
                           labelFilter.length === 0
-                          ? "border-accent-primary ring-accent-primary/30 ring-1"
+                          ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
                       )}
                     >
-                      <p className="text-26 font-bold text-secondary">{rows.length}</p>
+                      <p className="text-26 font-bold text-primary">{rows.length}</p>
                       <p className="mt-0.5 text-11 text-tertiary">Total de fichas</p>
                       <TrendBadge current={weekTrends.total.current} previous={weekTrends.total.previous} />
                     </button>
@@ -1451,20 +1451,22 @@ const Overview = observer(function Overview() {
                       type="button"
                       onClick={() => setWorkflowStateFilter(workflowStateFilter === "resuelto" ? null : "resuelto")}
                       className={cn(
-                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
                         workflowStateFilter === "resuelto"
-                          ? "border-[#16a34a] ring-1 ring-[#16a34a]/30"
+                          ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
                       )}
-                      style={{ borderLeftColor: "#16a34a" }}
                     >
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-26 font-bold text-secondary">{conResultado}</p>
+                        <p className="text-26 font-bold text-primary">{conResultado}</p>
                         {rows.length > 0 && (
                           <p className="text-12 text-tertiary">{Math.round((conResultado / rows.length) * 100)}%</p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-11 text-tertiary">Resueltos</p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="bg-green-500 h-2 w-2 shrink-0 rounded-full" />
+                        <p className="text-11 text-tertiary">Resueltos</p>
+                      </div>
                       <TrendBadge current={weekTrends.resueltos.current} previous={weekTrends.resueltos.previous} />
                     </button>
                     {/* En Proceso */}
@@ -1472,20 +1474,22 @@ const Overview = observer(function Overview() {
                       type="button"
                       onClick={() => setWorkflowStateFilter(workflowStateFilter === "proceso" ? null : "proceso")}
                       className={cn(
-                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
                         workflowStateFilter === "proceso"
-                          ? "border-[#eab308] ring-1 ring-[#eab308]/30"
+                          ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
                       )}
-                      style={{ borderLeftColor: "#eab308" }}
                     >
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-26 font-bold text-secondary">{cantEnProceso}</p>
+                        <p className="text-26 font-bold text-primary">{cantEnProceso}</p>
                         {rows.length > 0 && (
                           <p className="text-12 text-tertiary">{Math.round((cantEnProceso / rows.length) * 100)}%</p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-11 text-tertiary">En Proceso</p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="bg-amber-400 h-2 w-2 shrink-0 rounded-full" />
+                        <p className="text-11 text-tertiary">En Proceso</p>
+                      </div>
                       <TrendBadge current={weekTrends.proceso.current} previous={weekTrends.proceso.previous} />
                     </button>
                     {/* En Articulación */}
@@ -1495,22 +1499,24 @@ const Overview = observer(function Overview() {
                         setWorkflowStateFilter(workflowStateFilter === "articulacion" ? null : "articulacion")
                       }
                       className={cn(
-                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
                         workflowStateFilter === "articulacion"
-                          ? "border-[#f97316] ring-1 ring-[#f97316]/30"
+                          ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
                       )}
-                      style={{ borderLeftColor: "#f97316" }}
                     >
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-26 font-bold text-secondary">{cantEnArticulacion}</p>
+                        <p className="text-26 font-bold text-primary">{cantEnArticulacion}</p>
                         {rows.length > 0 && (
                           <p className="text-12 text-tertiary">
                             {Math.round((cantEnArticulacion / rows.length) * 100)}%
                           </p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-11 text-tertiary">Articulación</p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="bg-orange-500 h-2 w-2 shrink-0 rounded-full" />
+                        <p className="text-11 text-tertiary">Articulación</p>
+                      </div>
                       <TrendBadge current={weekTrends.artic.current} previous={weekTrends.artic.previous} />
                     </button>
                     {/* Civiles */}
@@ -1522,20 +1528,22 @@ const Overview = observer(function Overview() {
                         );
                       }}
                       className={cn(
-                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
                         condicionFilter.length === 1 && condicionFilter[0] === "Civil"
-                          ? "border-[#6b7280] ring-1 ring-[#6b7280]/30"
+                          ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
                       )}
-                      style={{ borderLeftColor: "#6b7280" }}
                     >
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-26 font-bold text-secondary">{cantCiviles}</p>
+                        <p className="text-26 font-bold text-primary">{cantCiviles}</p>
                         {rows.length > 0 && (
                           <p className="text-12 text-tertiary">{Math.round((cantCiviles / rows.length) * 100)}%</p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-11 text-tertiary">Civiles</p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="bg-slate-400 h-2 w-2 shrink-0 rounded-full" />
+                        <p className="text-11 text-tertiary">Civiles</p>
+                      </div>
                       <TrendBadge current={weekTrends.civiles.current} previous={weekTrends.civiles.previous} />
                     </button>
                     {/* Militares */}
@@ -1547,20 +1555,22 @@ const Overview = observer(function Overview() {
                         );
                       }}
                       className={cn(
-                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
                         condicionFilter.length === 1 && condicionFilter[0] === "Militar"
-                          ? "border-[#1d4ed8] ring-1 ring-[#1d4ed8]/30"
+                          ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
                       )}
-                      style={{ borderLeftColor: "#1d4ed8" }}
                     >
                       <div className="flex items-baseline gap-1.5">
-                        <p className="text-26 font-bold text-secondary">{cantMilitares}</p>
+                        <p className="text-26 font-bold text-primary">{cantMilitares}</p>
                         {rows.length > 0 && (
                           <p className="text-12 text-tertiary">{Math.round((cantMilitares / rows.length) * 100)}%</p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-11 text-tertiary">Militares</p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="bg-blue-500 h-2 w-2 shrink-0 rounded-full" />
+                        <p className="text-11 text-tertiary">Militares</p>
+                      </div>
                       <TrendBadge current={weekTrends.militares.current} previous={weekTrends.militares.previous} />
                     </button>
                   </div>
