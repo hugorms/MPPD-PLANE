@@ -450,14 +450,14 @@ function GraphicPage({
           borderBottom: `2px solid ${C.navy}`,
         }}
       >
-        {logoUrl && <Image src={logoUrl} style={{ width: 96, height: 32, objectFit: "contain", marginRight: 10 }} />}
         <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 18, fontFamily: "Helvetica-Bold", color: C.navy }}>{projectName}</Text>
           <Text style={{ fontSize: 7.5, color: C.gray500, marginTop: 2 }}>
             Análisis de Casos Sociales · Todos los registros
           </Text>
         </View>
-        <Text style={{ fontSize: 7.5, color: C.gray500 }}>{dateRange}</Text>
+        <Text style={{ fontSize: 7.5, color: C.gray500, marginRight: 10 }}>{dateRange}</Text>
+        {logoUrl && <Image src={logoUrl} style={{ width: 48, height: 48, objectFit: "contain" }} />}
       </View>
 
       {/* KPIs */}
@@ -617,12 +617,15 @@ export const SocialCaseReportPDF = ({
 
       {/* ══ TABLA DE CASOS ═══════════════════════════════════════════════════ */}
       <Page size="A4" orientation="landscape" style={S.page}>
-        <Text fixed style={S.tableTitle}>
-          {projectName} — Listado de Casos Sociales
-        </Text>
-        <Text fixed style={S.tableSub}>
-          {dateRange} · {total} registros
-        </Text>
+        <View fixed style={{ flexDirection: "row", alignItems: "flex-start", marginBottom: 2 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={S.tableTitle}>{projectName} — Listado de Casos Sociales</Text>
+            <Text style={S.tableSub}>
+              {dateRange} · {total} registros
+            </Text>
+          </View>
+          {logoUrl && <Image src={logoUrl} style={{ width: 40, height: 40, objectFit: "contain" }} />}
+        </View>
 
         {/* Cabecera */}
         <View fixed style={S.tableHeader}>

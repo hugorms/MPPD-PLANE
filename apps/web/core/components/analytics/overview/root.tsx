@@ -859,6 +859,17 @@ const Overview = observer(function Overview() {
       const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
 
+      // Cargar logo una sola vez para usarlo en ambas hojas
+      let logoId: number | null = null;
+      try {
+        const logoFull = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
+        const mimeMatch = logoFull.match(/^data:image\/(\w+);base64,/);
+        const ext = (mimeMatch?.[1] ?? "png") as "png" | "jpeg" | "gif";
+        logoId = workbook.addImage({ base64: logoFull.split(",")[1], extension: ext });
+      } catch {
+        logoId = null;
+      }
+
       // ── Hoja de resumen gráfico ──────────────────────────────────────────────
       if (includeCover) {
         const summary = workbook.addWorksheet("Resumen");
@@ -968,6 +979,12 @@ const Overview = observer(function Overview() {
         }
 
         summary.columns = [{ width: 36 }, { width: 14 }, { width: 2 }, { width: 36 }, { width: 14 }];
+
+        // Logo en esquina superior derecha de la hoja Resumen
+        if (logoId !== null) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          summary.addImage(logoId, { tl: { col: 4, row: 0 } as any, br: { col: 5, row: 2 } as any });
+        }
       }
 
       const sheet = workbook.addWorksheet("Reporte");
@@ -1018,16 +1035,6 @@ const Overview = observer(function Overview() {
         { key: "fecha_cierre" },
       ];
       const colMaxLen = [2, 38, 20, 14, 26, 28, 20, 18, 24, 28, 28, 0, 28, 26, 30, 30, 14];
-
-      let logoId: number | null = null;
-      try {
-        const logoFull = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
-        const mimeMatch = logoFull.match(/^data:image\/(\w+);base64,/);
-        const ext = (mimeMatch?.[1] ?? "png") as "png" | "jpeg" | "gif";
-        logoId = workbook.addImage({ base64: logoFull.split(",")[1], extension: ext });
-      } catch {
-        logoId = null;
-      }
 
       const HEADER_BG = "FF1e3a5f";
       const WHITE = "FFFFFFFF";

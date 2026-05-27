@@ -400,6 +400,7 @@ export type SocialCaseFichaProps = {
   photoUrl: string | null;
   attachments?: FichaAttachment[];
   generatedAtLabel: string;
+  logoUrl?: string | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -423,6 +424,7 @@ export function SocialCaseFichaPDF({
   photoUrl,
   attachments = [],
   generatedAtLabel,
+  logoUrl,
 }: SocialCaseFichaProps) {
   const attachmentSections = groupSocialCaseAttachmentsBySection(attachments);
 
@@ -442,6 +444,7 @@ export function SocialCaseFichaPDF({
         <View style={S.detailPageHeader} fixed>
           <Text style={S.detailPageProject}>{projectName}</Text>
           <Text style={S.detailPageTag}>Ficha Técnica Individual</Text>
+          {logoUrl && <Image src={logoUrl} style={{ width: 40, height: 40, objectFit: "contain" }} />}
         </View>
 
         <View style={S.detailHeader}>
