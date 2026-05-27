@@ -293,6 +293,20 @@ function FilterDropdown({ label, options, selected, onChange, onClear, disabled 
   );
 }
 
+// ── Tendencia semanal ─────────────────────────────────────────────────────────
+
+function TrendBadge({ current, previous }: { current: number; previous: number }) {
+  if (current === 0 && previous === 0) return null;
+  const delta = current - previous;
+  if (delta === 0) return <span className="text-10 text-tertiary">= vs sem. ant.</span>;
+  return (
+    <span className={cn("text-10 font-medium", delta > 0 ? "text-green-600" : "text-red-500")}>
+      {delta > 0 ? "↑" : "↓"}
+      {Math.abs(delta)} vs sem. ant.
+    </span>
+  );
+}
+
 // ── Barra horizontal CSS ──────────────────────────────────────────────────────
 
 function HBar({
@@ -643,6 +657,59 @@ const Overview = observer(function Overview() {
     entries.sort(([, a], [, b]) => b - a);
     return entries;
   }, [byComponente]);
+
+  // ── Tendencia semanal (esta semana vs la anterior, independiente del filtro de fecha) ──
+  const weekTrends = useMemo(() => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 3600 * 1000);
+    let twTotal = 0,
+      pwTotal = 0;
+    let twResueltos = 0,
+      pwResueltos = 0;
+    let twProceso = 0,
+      pwProceso = 0;
+    let twArtic = 0,
+      pwArtic = 0;
+    let twCiviles = 0,
+      pwCiviles = 0;
+    let twMilitares = 0,
+      pwMilitares = 0;
+    for (const issue of allIssues) {
+      if (!issue?.created_at) continue;
+      const created = new Date(issue.created_at);
+      const isThis = created >= weekAgo;
+      const isPrev = created >= twoWeeksAgo && created < weekAgo;
+      if (!isThis && !isPrev) continue;
+      const sName = stateNames[issue.state_id ?? ""] ?? "";
+      const sGroup = stateGroups[issue.state_id ?? ""];
+      const d2 = extractFromHtml(issue.description_html ?? "");
+      const isMil = isMilitarySocialCaseData(d2);
+      if (isThis) {
+        twTotal++;
+        if (sGroup === "completed") twResueltos++;
+        if (sName.toLowerCase().includes("proceso")) twProceso++;
+        if (sName.toLowerCase().includes("articulaci")) twArtic++;
+        if (isMil) twMilitares++;
+        else twCiviles++;
+      } else {
+        pwTotal++;
+        if (sGroup === "completed") pwResueltos++;
+        if (sName.toLowerCase().includes("proceso")) pwProceso++;
+        if (sName.toLowerCase().includes("articulaci")) pwArtic++;
+        if (isMil) pwMilitares++;
+        else pwCiviles++;
+      }
+    }
+    return {
+      total: { current: twTotal, previous: pwTotal },
+      resueltos: { current: twResueltos, previous: pwResueltos },
+      proceso: { current: twProceso, previous: pwProceso },
+      artic: { current: twArtic, previous: pwArtic },
+      civiles: { current: twCiviles, previous: pwCiviles },
+      militares: { current: twMilitares, previous: pwMilitares },
+    };
+  }, [allIssues, stateNames, stateGroups]);
 
   const dateRangeLabel = useMemo(() => {
     if (!fromDate && !toDate) return "Todos los registros";
@@ -1339,6 +1406,7 @@ const Overview = observer(function Overview() {
                     >
                       <p className="text-26 font-bold text-secondary">{rows.length}</p>
                       <p className="mt-0.5 text-11 text-tertiary">Total de fichas</p>
+                      <TrendBadge current={weekTrends.total.current} previous={weekTrends.total.previous} />
                     </button>
                     {/* Resueltos */}
                     <button
@@ -1359,6 +1427,7 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Resueltos</p>
+                      <TrendBadge current={weekTrends.resueltos.current} previous={weekTrends.resueltos.previous} />
                     </button>
                     {/* En Proceso */}
                     <button
@@ -1379,6 +1448,7 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">En Proceso</p>
+                      <TrendBadge current={weekTrends.proceso.current} previous={weekTrends.proceso.previous} />
                     </button>
                     {/* En Articulación */}
                     <button
@@ -1403,6 +1473,7 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Articulación</p>
+                      <TrendBadge current={weekTrends.artic.current} previous={weekTrends.artic.previous} />
                     </button>
                     {/* Civiles */}
                     <button
@@ -1428,6 +1499,7 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Civiles</p>
+                      <TrendBadge current={weekTrends.civiles.current} previous={weekTrends.civiles.previous} />
                     </button>
                     {/* Militares */}
                     <button
@@ -1453,6 +1525,7 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Militares</p>
+                      <TrendBadge current={weekTrends.militares.current} previous={weekTrends.militares.previous} />
                     </button>
                   </div>
                 </>
