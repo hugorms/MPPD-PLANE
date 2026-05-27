@@ -44,6 +44,7 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
 
       if (/\.(jpg|jpeg|png|webp|gif)$/i.test(currentFile.name)) {
         const reader = new FileReader();
+        // oxlint-disable-next-line unicorn/prefer-add-event-listener
         reader.onload = () => setCropData({ src: reader.result as string, file: currentFile });
         reader.readAsDataURL(currentFile);
       } else {
@@ -61,7 +62,7 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
   });
 
   const fileError =
-    fileRejections.length > 0 ? `Invalid file type or size (max ${maxFileSize / 1024 / 1024} MB)` : null;
+    fileRejections.length > 0 ? `Archivo inválido o demasiado grande (máx. ${maxFileSize / 1024 / 1024} MB)` : null;
 
   return (
     <>
@@ -85,13 +86,13 @@ export const IssueAttachmentUpload = observer(function IssueAttachmentUpload(pro
         <input {...getInputProps()} />
         <span className="flex items-center gap-2">
           {isDragActive ? (
-            <p>Drop here...</p>
+            <p>Suelta aquí...</p>
           ) : fileError ? (
             <p className="text-center text-danger-primary">{fileError}</p>
           ) : isLoading ? (
-            <p className="text-center">Uploading...</p>
+            <p className="text-center">Subiendo...</p>
           ) : (
-            <p className="text-center">Click or drag a file here</p>
+            <p className="text-center">Haz click o arrastra un archivo aquí</p>
           )}
         </span>
       </div>
