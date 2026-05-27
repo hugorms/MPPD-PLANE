@@ -361,48 +361,6 @@ const S = StyleSheet.create({
     color: C.gray500,
   },
 
-  // ── TIMELINE ──
-  timelineSection: {
-    marginTop: 8,
-    border: `1px solid ${C.border}`,
-    borderRadius: 4,
-    backgroundColor: C.white,
-  },
-  timelineHeader: {
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
-    color: C.white,
-    backgroundColor: C.navy,
-    paddingVertical: 5,
-    paddingHorizontal: 9,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-  },
-  timelineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderBottom: `1px solid ${C.border}`,
-    gap: 6,
-  },
-  timelineRowLast: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    gap: 6,
-  },
-  timelineDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: C.navy,
-  },
-  timelineDate: { fontSize: 7.5, color: C.gray500, width: 72 },
-  timelineState: { fontSize: 8, color: C.gray900, flex: 1 },
-  timelineActor: { fontSize: 7, color: C.gray500, width: 90, textAlign: "right" },
-
   // ── FOOTER ──
   footer: {
     position: "absolute",
@@ -432,13 +390,6 @@ export type FichaAttachment = {
   isPdfPage?: boolean;
 };
 
-export type StateTimelineEntry = {
-  date: string;
-  from: string | null;
-  to: string;
-  actor: string;
-};
-
 export type SocialCaseFichaProps = {
   data: SocialCaseData;
   projectName: string;
@@ -449,7 +400,6 @@ export type SocialCaseFichaProps = {
   photoUrl: string | null;
   attachments?: FichaAttachment[];
   generatedAtLabel: string;
-  stateTimeline?: StateTimelineEntry[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -473,7 +423,6 @@ export function SocialCaseFichaPDF({
   photoUrl,
   attachments = [],
   generatedAtLabel,
-  stateTimeline = [],
 }: SocialCaseFichaProps) {
   const attachmentSections = groupSocialCaseAttachmentsBySection(attachments);
 
@@ -617,24 +566,6 @@ export function SocialCaseFichaPDF({
             <Text style={S.detailText}>{data.observacionCierre}</Text>
           </View>
         ) : null}
-
-        {/* ── HISTORIAL DE ESTADOS ── */}
-        {stateTimeline.length > 0 && (
-          <View style={S.timelineSection}>
-            <Text style={S.timelineHeader}>HISTORIAL DE ESTADOS</Text>
-            {stateTimeline.map((entry, i) => (
-              <View
-                key={`${entry.date}-${entry.to}`}
-                style={i === stateTimeline.length - 1 ? S.timelineRowLast : S.timelineRow}
-              >
-                <View style={S.timelineDot} />
-                <Text style={S.timelineDate}>{entry.date}</Text>
-                <Text style={S.timelineState}>{entry.from ? `${entry.from} → ${entry.to}` : entry.to}</Text>
-                <Text style={S.timelineActor}>{entry.actor}</Text>
-              </View>
-            ))}
-          </View>
-        )}
 
         {/* ── FOOTER ── */}
         <View style={S.footer} fixed>

@@ -8,12 +8,10 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useMember } from "@/hooks/store/use-member";
 import { IssueAttachmentService } from "@/services/issue/issue_attachment.service";
-import { IssueActivityService } from "@/services/issue/issue_activity.service";
-import { SocialCaseFichaPDF, type FichaAttachment, type StateTimelineEntry } from "@/components/issues/social-case-ficha-pdf";
+import { SocialCaseFichaPDF, type FichaAttachment } from "@/components/issues/social-case-ficha-pdf";
 import { fetchBase64WithAuth, resolveSocialCaseExportAttachment } from "@/utils/social-case-attachment-export";
 
 const attachmentService = new IssueAttachmentService();
-const activityService = new IssueActivityService();
 
 type Params = {
   workspaceSlug: string;
@@ -73,32 +71,6 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
         fichaAttachments = [];
       }
 
-      // Historial de cambios de estado
-      let stateTimeline: StateTimelineEntry[] = [];
-      try {
-        const activities = await activityService.getIssueActivities(workspaceSlug, projectId, issueId);
-        stateTimeline = (activities ?? [])
-          .filter((a) => a.field === "state")
-          .toSorted((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-          .map((a) => ({
-            date: new Date(a.created_at).toLocaleString("es-VE", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            from: a.old_value ?? null,
-            to: a.new_value ?? "",
-            actor:
-              (a.actor_detail as any)?.display_name ||
-              (a.actor_detail as any)?.first_name ||
-              "Sistema",
-          }));
-      } catch {
-        stateTimeline = [];
-      }
-
       const emptyData: SocialCaseData = {
         numeroCaso: "",
         cedula: "",
@@ -134,7 +106,6 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
           photoUrl={resolvedPhotoUrl}
           attachments={fichaAttachments}
           generatedAtLabel={generatedAtLabel}
-          stateTimeline={stateTimeline}
         />
       ).toBlob();
 
