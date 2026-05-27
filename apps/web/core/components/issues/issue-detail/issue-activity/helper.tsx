@@ -55,6 +55,7 @@ export const useWorkItemCommentOperations = (
             sequenceId: issueDetails.sequence_id,
           });
           const commentLink = `${workItemLink}#comment-${id}`;
+          // oxlint-disable-next-line promise/always-return
           copyUrlToClipboard(commentLink).then(() => {
             setToast({
               title: t("common.success"),
@@ -139,7 +140,7 @@ export const useWorkItemCommentOperations = (
           return res;
         } catch (error) {
           console.log("Error in uploading comment asset:", error);
-          throw new Error(t("issue.comments.upload.error"));
+          throw new Error(t("issue.comments.upload.error"), { cause: error });
         }
       },
       duplicateCommentAsset: async (assetId, commentId) => {
@@ -154,7 +155,7 @@ export const useWorkItemCommentOperations = (
           });
           return res;
         } catch {
-          throw new Error("Asset duplication failed. Please try again later.");
+          throw new Error("Error al duplicar el archivo. Inténtelo de nuevo.");
         }
       },
       addCommentReaction: async (commentId, reaction) => {
@@ -162,15 +163,15 @@ export const useWorkItemCommentOperations = (
           if (!workspaceSlug || !projectId || !commentId) throw new Error("Missing fields");
           await createCommentReaction(workspaceSlug, projectId, commentId, reaction);
           setToast({
-            title: "Success!",
+            title: "¡Listo!",
             type: TOAST_TYPE.SUCCESS,
-            message: "Reaction created successfully",
+            message: "Reacción agregada",
           });
         } catch {
           setToast({
-            title: "Error!",
+            title: "¡Error!",
             type: TOAST_TYPE.ERROR,
-            message: "Reaction creation failed",
+            message: "Error al agregar la reacción",
           });
         }
       },
@@ -179,15 +180,15 @@ export const useWorkItemCommentOperations = (
           if (!workspaceSlug || !projectId || !commentId || !currentUser?.id) throw new Error("Missing fields");
           removeCommentReaction(workspaceSlug, projectId, commentId, reaction, currentUser.id);
           setToast({
-            title: "Success!",
+            title: "¡Listo!",
             type: TOAST_TYPE.SUCCESS,
-            message: "Reaction removed successfully",
+            message: "Reacción eliminada",
           });
         } catch {
           setToast({
-            title: "Error!",
+            title: "¡Error!",
             type: TOAST_TYPE.ERROR,
-            message: "Reaction remove failed",
+            message: "Error al eliminar la reacción",
           });
         }
       },
@@ -210,6 +211,7 @@ export const useWorkItemCommentOperations = (
       },
     };
     return ops;
+  // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceSlug, projectId, issueId, createComment, updateComment, uploadEditorAsset, removeComment]);
 
   return operations;

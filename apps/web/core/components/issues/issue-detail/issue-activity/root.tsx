@@ -11,8 +11,6 @@ import { observer } from "mobx-react";
 import type { TActivityFilters } from "@plane/constants";
 import { E_SORT_ORDER, defaultActivityFilters, EUserPermissions } from "@plane/constants";
 import { useLocalStorage } from "@plane/hooks";
-// i18n
-import { useTranslation } from "@plane/i18n";
 //types
 import type { TFileSignedURLResponse, TIssueComment } from "@plane/types";
 // components
@@ -45,8 +43,6 @@ export type TActivityOperations = {
 
 export const IssueActivity = observer(function IssueActivity(props: TIssueActivity) {
   const { workspaceSlug, projectId, issueId, disabled = false, isIntakeIssue = false } = props;
-  // i18n
-  const { t } = useTranslation();
   // hooks
   const { setValue: setFilterValue, storedValue: selectedFilters } = useLocalStorage(
     "issue_activity_filters",
@@ -108,7 +104,7 @@ export const IssueActivity = observer(function IssueActivity(props: TIssueActivi
     <div className="space-y-4">
       {/* header */}
       <div className="flex items-center justify-between">
-        <div className="text-h5-medium text-primary">{t("common.activity")}</div>
+        <div className="text-h5-medium text-primary">Actividad</div>
         <div className="flex items-center gap-2">
           {isWorklogButtonEnabled && (
             <IssueActivityWorklogCreateButton
