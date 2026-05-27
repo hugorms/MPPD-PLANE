@@ -356,6 +356,7 @@ const Overview = observer(function Overview() {
   const [condicionFilter, setCondicionFilter] = useState<string[]>([]);
   const [estadosFilter, setEstadosFilter] = useState<string[]>([]);
   const [labelFilter, setLabelFilter] = useState<string[]>([]);
+  const [workflowStateFilter, setWorkflowStateFilter] = useState<"resuelto" | "proceso" | "articulacion" | null>(null);
 
   const [allIssues, setAllIssues] = useState<any[]>([]);
   const [loadingIssues, setLoadingIssues] = useState(false);
@@ -500,6 +501,15 @@ const Overview = observer(function Overview() {
         if (!labelFilter.some((labelName) => issueLabelNames.includes(labelName))) continue;
       }
 
+      // Filtro por estado del flujo (KPI click)
+      if (workflowStateFilter) {
+        const wStateName = stateNames[issue.state_id ?? ""] ?? "";
+        const wGroup = stateGroups[issue.state_id ?? ""];
+        if (workflowStateFilter === "resuelto" && wGroup !== "completed") continue;
+        if (workflowStateFilter === "proceso" && !wStateName.toLowerCase().includes("proceso")) continue;
+        if (workflowStateFilter === "articulacion" && !wStateName.toLowerCase().includes("articulaci")) continue;
+      }
+
       const photoUrl = extractProfilePhotoFromHtml(issue.description_html ?? "");
       const stateName = stateNames[issue.state_id ?? ""] ?? "Sin estado";
       const isResolved =
@@ -609,6 +619,7 @@ const Overview = observer(function Overview() {
     componenteFilter,
     condicionFilter,
     labelFilter,
+    workflowStateFilter,
     effectiveLabels,
   ]);
 
@@ -1312,14 +1323,33 @@ const Overview = observer(function Overview() {
               ) : (
                 <>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                    {/* Total */}
-                    <div className="rounded-lg border border-subtle bg-surface-2 p-4">
+                    {/* Total — limpia filtros de flujo */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWorkflowStateFilter(null);
+                        setCondicionFilter([]);
+                      }}
+                      className={cn(
+                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        !workflowStateFilter && condicionFilter.length === 0
+                          ? "border-accent-primary ring-accent-primary/30 ring-1"
+                          : "border-subtle"
+                      )}
+                    >
                       <p className="text-26 font-bold text-secondary">{rows.length}</p>
                       <p className="mt-0.5 text-11 text-tertiary">Total de fichas</p>
-                    </div>
+                    </button>
                     {/* Resueltos */}
-                    <div
-                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                    <button
+                      type="button"
+                      onClick={() => setWorkflowStateFilter(workflowStateFilter === "resuelto" ? null : "resuelto")}
+                      className={cn(
+                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        workflowStateFilter === "resuelto"
+                          ? "border-[#16a34a] ring-1 ring-[#16a34a]/30"
+                          : "border-subtle"
+                      )}
                       style={{ borderLeftColor: "#16a34a" }}
                     >
                       <div className="flex items-baseline gap-1.5">
@@ -1329,10 +1359,17 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Resueltos</p>
-                    </div>
+                    </button>
                     {/* En Proceso */}
-                    <div
-                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                    <button
+                      type="button"
+                      onClick={() => setWorkflowStateFilter(workflowStateFilter === "proceso" ? null : "proceso")}
+                      className={cn(
+                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        workflowStateFilter === "proceso"
+                          ? "border-[#eab308] ring-1 ring-[#eab308]/30"
+                          : "border-subtle"
+                      )}
                       style={{ borderLeftColor: "#eab308" }}
                     >
                       <div className="flex items-baseline gap-1.5">
@@ -1342,10 +1379,19 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">En Proceso</p>
-                    </div>
+                    </button>
                     {/* En Articulación */}
-                    <div
-                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setWorkflowStateFilter(workflowStateFilter === "articulacion" ? null : "articulacion")
+                      }
+                      className={cn(
+                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        workflowStateFilter === "articulacion"
+                          ? "border-[#f97316] ring-1 ring-[#f97316]/30"
+                          : "border-subtle"
+                      )}
                       style={{ borderLeftColor: "#f97316" }}
                     >
                       <div className="flex items-baseline gap-1.5">
@@ -1357,10 +1403,22 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Articulación</p>
-                    </div>
+                    </button>
                     {/* Civiles */}
-                    <div
-                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWorkflowStateFilter(null);
+                        setCondicionFilter(
+                          condicionFilter.length === 1 && condicionFilter[0] === "Civil" ? [] : ["Civil"]
+                        );
+                      }}
+                      className={cn(
+                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        condicionFilter.length === 1 && condicionFilter[0] === "Civil"
+                          ? "border-[#6b7280] ring-1 ring-[#6b7280]/30"
+                          : "border-subtle"
+                      )}
                       style={{ borderLeftColor: "#6b7280" }}
                     >
                       <div className="flex items-baseline gap-1.5">
@@ -1370,10 +1428,22 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Civiles</p>
-                    </div>
+                    </button>
                     {/* Militares */}
-                    <div
-                      className="rounded-lg border border-l-2 border-subtle bg-surface-2 p-4"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWorkflowStateFilter(null);
+                        setCondicionFilter(
+                          condicionFilter.length === 1 && condicionFilter[0] === "Militar" ? [] : ["Militar"]
+                        );
+                      }}
+                      className={cn(
+                        "rounded-lg border border-l-2 bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        condicionFilter.length === 1 && condicionFilter[0] === "Militar"
+                          ? "border-[#1d4ed8] ring-1 ring-[#1d4ed8]/30"
+                          : "border-subtle"
+                      )}
                       style={{ borderLeftColor: "#1d4ed8" }}
                     >
                       <div className="flex items-baseline gap-1.5">
@@ -1383,7 +1453,7 @@ const Overview = observer(function Overview() {
                         )}
                       </div>
                       <p className="mt-0.5 text-11 text-tertiary">Militares</p>
-                    </div>
+                    </button>
                   </div>
                 </>
               )}
