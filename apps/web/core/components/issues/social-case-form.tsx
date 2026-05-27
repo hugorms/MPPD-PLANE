@@ -76,7 +76,7 @@ type Props = {
   onCheckDuplicate?: (cedulaDigits: string) => Promise<{ id: string; sequenceId: number; name: string } | null>;
 };
 
-// Mapping from SocialCaseData key to the element id used in the form
+// Mapa de clave SocialCaseData al id del elemento en el formulario
 const FIELD_ID_MAP: Partial<Record<keyof SocialCaseData, string>> = {
   cedula: "sc-cedula",
   nombre: "sc-nombre",

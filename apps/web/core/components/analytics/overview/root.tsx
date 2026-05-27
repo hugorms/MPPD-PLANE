@@ -91,9 +91,9 @@ const getIssueLabelIds = (issue: any): string[] => {
     .filter((labelId): labelId is string => Boolean(labelId));
 };
 
-// Only resolves label names via ID lookup against currently-active labels.
-// Direct name fields (label_names, labels[].name) are intentionally ignored
-// because they may contain stale names from soft-deleted labels.
+// Resuelve nombres de etiqueta solo por ID contra las etiquetas activas.
+// Los campos de nombre directo (label_names, labels[].name) se ignoran
+// porque pueden contener nombres obsoletos de etiquetas eliminadas.
 const getIssueLabelNames = (issue: any, projectLabels: ProjectLabelLike[]): string[] => {
   const labelById = new Map(projectLabels.map((label) => [label.id, label.name]));
   const names = new Set<string>();
@@ -412,7 +412,7 @@ const Overview = observer(function Overview() {
     () => (workspaceSlug ? (getWorkspaceLabels(workspaceSlug.toString()) ?? []) : []),
     [getWorkspaceLabels, workspaceSlug]
   );
-  // Use project labels if available, fall back to workspace labels
+  // Usa etiquetas del proyecto si existen; si no, las del workspace
   const effectiveLabels = useMemo(
     () => (projectLabels.length > 0 ? projectLabels : wsLabels),
     [projectLabels, wsLabels]
@@ -639,7 +639,7 @@ const Overview = observer(function Overview() {
 
   const cantCiviles = byCondicion["Civil"] ?? 0;
   const cantMilitares = byCondicion["Militar"] ?? 0;
-  // Count by state group/name using the same logic as main-content.tsx
+  // Conteo por grupo/nombre de estado, misma lógica que main-content.tsx
   const cantEnProceso = (states ?? [])
     .filter((s) => s.name?.toLowerCase().includes("proceso"))
     .reduce((sum, s) => sum + (byState[s.name] ?? 0), 0);

@@ -42,7 +42,7 @@ export const useWorkItemCommentOperations = (
   const { t } = useTranslation();
 
   const operations: TCommentsOperations = useMemo(() => {
-    // Define operations object with all methods
+    // Define el objeto de operaciones con todos los métodos
     const ops: TCommentsOperations = {
       copyCommentLink: (id) => {
         if (!workspaceSlug || !issueDetails) return;
@@ -211,7 +211,7 @@ export const useWorkItemCommentOperations = (
       },
     };
     return ops;
-  // oxlint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [workspaceSlug, projectId, issueId, createComment, updateComment, uploadEditorAsset, removeComment]);
 
   return operations;
