@@ -1705,12 +1705,15 @@ const Overview = observer(function Overview() {
                       <p className="text-12 text-tertiary">Sin datos en el período</p>
                     ) : (
                       <div className="space-y-2">
-                        {/* Área de barras */}
-                        <div className="flex h-48 items-end gap-1.5 border-b border-subtle">
+                        {/* Área de barras — max-w-16 evita que pocas barras se ensanchen demasiado */}
+                        <div className="flex h-48 items-end justify-start gap-1.5 border-b border-subtle">
                           {byMonth.map(([month, count], idx) => {
                             const isLast = idx === byMonth.length - 1;
                             return (
-                              <div key={month} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
+                              <div
+                                key={month}
+                                className="flex max-w-16 min-w-6 flex-1 flex-col items-center justify-end gap-1"
+                              >
                                 <span
                                   className={cn(
                                     "text-10 leading-none font-medium",
@@ -1730,10 +1733,10 @@ const Overview = observer(function Overview() {
                             );
                           })}
                         </div>
-                        {/* Etiquetas de mes */}
-                        <div className="flex gap-1.5">
+                        {/* Etiquetas de mes — mismas proporciones que las barras */}
+                        <div className="flex justify-start gap-1.5">
                           {byMonth.map(([month]) => (
-                            <div key={month} className="min-w-0 flex-1 text-center">
+                            <div key={month} className="max-w-16 min-w-6 flex-1 text-center">
                               <span className="block truncate text-10 text-tertiary">{formatMonthLabel(month)}</span>
                             </div>
                           ))}
