@@ -110,18 +110,6 @@ const getAttachmentExt = (attachment: XlsAttachment) => {
   return nameExt || urlExt;
 };
 
-async function urlToBase64Authed(url: string): Promise<string> {
-  const res = await fetch(url, { credentials: "include" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const blob = await res.blob();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("loadend", () => resolve(reader.result as string));
-    reader.addEventListener("error", () => reject(new Error("FileReader error")));
-    reader.readAsDataURL(blob);
-  });
-}
-
 function presetRange(preset: Preset): { from: Date | null; to: Date | null } {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -763,16 +751,8 @@ const Overview = observer(function Overview() {
       const ws = workspaceSlug?.toString() ?? "";
       const pid = selectedProjectId;
 
-      let logoUrl: string | null = null;
-      try {
-        logoUrl = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
-      } catch {
-        try {
-          logoUrl = await urlToBase64Authed(`${window.location.origin}/logo-mppd.png`);
-        } catch {
-          logoUrl = null;
-        }
-      }
+      // URL directa — react-pdf puede cargar assets del mismo origen sin base64
+      const logoUrl = `${window.location.origin}/venezuela-logo.png`;
 
       let done = 0;
       const resolvedRows: ParsedIssueRow[] = [];
@@ -859,13 +839,22 @@ const Overview = observer(function Overview() {
       const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
 
-      // Cargar logo una sola vez para usarlo en ambas hojas
+      // Cargar logo para ambas hojas (ExcelJS requiere base64)
       let logoId: number | null = null;
       try {
-        const logoFull = await urlToBase64Authed(`${window.location.origin}/venezuela-logo.png`);
-        const mimeMatch = logoFull.match(/^data:image\/(\w+);base64,/);
-        const ext = (mimeMatch?.[1] ?? "png") as "png" | "jpeg" | "gif";
-        logoId = workbook.addImage({ base64: logoFull.split(",")[1], extension: ext });
+        const logoRes = await fetch(`${window.location.origin}/venezuela-logo.png`);
+        if (logoRes.ok) {
+          const logoBlob = await logoRes.blob();
+          const logoFull = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.addEventListener("loadend", () => resolve(reader.result as string));
+            reader.addEventListener("error", () => reject(new Error("reader error")));
+            reader.readAsDataURL(logoBlob);
+          });
+          const mimeMatch = logoFull.match(/^data:image\/(\w+);base64,/);
+          const ext = (mimeMatch?.[1] ?? "png") as "png" | "jpeg" | "gif";
+          logoId = workbook.addImage({ base64: logoFull.split(",")[1], extension: ext });
+        }
       } catch {
         logoId = null;
       }

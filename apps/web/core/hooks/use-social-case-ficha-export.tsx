@@ -50,22 +50,8 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
       const d = extractFromHtml(issue.description_html ?? "");
       const photoUrlRaw = extractProfilePhotoFromHtml(issue.description_html ?? "");
 
-      // Cargar logo del ministerio
-      let logoUrl: string | null = null;
-      try {
-        const res = await fetch(`${window.location.origin}/venezuela-logo.png`, { credentials: "include" });
-        if (res.ok) {
-          const blob = await res.blob();
-          logoUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.addEventListener("loadend", () => resolve(reader.result as string));
-            reader.addEventListener("error", () => reject(new Error("FileReader error")));
-            reader.readAsDataURL(blob);
-          });
-        }
-      } catch {
-        logoUrl = null;
-      }
+      // URL directa — react-pdf puede cargar assets del mismo origen sin base64
+      const logoUrl = `${window.location.origin}/venezuela-logo.png`;
 
       // Resolver foto de perfil a base64
       let resolvedPhotoUrl: string | null = null;
