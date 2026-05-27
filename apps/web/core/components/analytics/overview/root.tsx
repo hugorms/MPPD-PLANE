@@ -1432,7 +1432,7 @@ const Overview = observer(function Overview() {
                         setLabelFilter([]);
                       }}
                       className={cn(
-                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "shadow-sm rounded-lg border bg-surface-1 p-4 text-left transition-colors hover:bg-layer-1",
                         !workflowStateFilter &&
                           condicionFilter.length === 0 &&
                           componenteFilter.length === 0 &&
@@ -1451,7 +1451,7 @@ const Overview = observer(function Overview() {
                       type="button"
                       onClick={() => setWorkflowStateFilter(workflowStateFilter === "resuelto" ? null : "resuelto")}
                       className={cn(
-                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "shadow-sm rounded-lg border bg-surface-1 p-4 text-left transition-colors hover:bg-layer-1",
                         workflowStateFilter === "resuelto"
                           ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
@@ -1474,7 +1474,7 @@ const Overview = observer(function Overview() {
                       type="button"
                       onClick={() => setWorkflowStateFilter(workflowStateFilter === "proceso" ? null : "proceso")}
                       className={cn(
-                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "shadow-sm rounded-lg border bg-surface-1 p-4 text-left transition-colors hover:bg-layer-1",
                         workflowStateFilter === "proceso"
                           ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
@@ -1499,7 +1499,7 @@ const Overview = observer(function Overview() {
                         setWorkflowStateFilter(workflowStateFilter === "articulacion" ? null : "articulacion")
                       }
                       className={cn(
-                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "shadow-sm rounded-lg border bg-surface-1 p-4 text-left transition-colors hover:bg-layer-1",
                         workflowStateFilter === "articulacion"
                           ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
@@ -1528,7 +1528,7 @@ const Overview = observer(function Overview() {
                         );
                       }}
                       className={cn(
-                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "shadow-sm rounded-lg border bg-surface-1 p-4 text-left transition-colors hover:bg-layer-1",
                         condicionFilter.length === 1 && condicionFilter[0] === "Civil"
                           ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
@@ -1555,7 +1555,7 @@ const Overview = observer(function Overview() {
                         );
                       }}
                       className={cn(
-                        "rounded-lg border bg-surface-2 p-4 text-left transition-colors hover:bg-surface-1",
+                        "shadow-sm rounded-lg border bg-surface-1 p-4 text-left transition-colors hover:bg-layer-1",
                         condicionFilter.length === 1 && condicionFilter[0] === "Militar"
                           ? "border-accent-primary ring-accent-primary/20 bg-accent-primary/5 ring-1"
                           : "border-subtle"
@@ -1588,7 +1588,7 @@ const Overview = observer(function Overview() {
               {!loadingIssues && rows.length > 0 && (
                 <div className="space-y-4">
                   {/* 1 — Componentes FANB (solo los 5 canónicos) */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                  <div className="shadow-sm rounded-lg border border-subtle bg-surface-1 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>
                         <p className="text-13 font-medium text-secondary">Componentes FANB</p>
@@ -1610,7 +1610,7 @@ const Overview = observer(function Overview() {
                   </div>
 
                   {/* 2 — Estado del caso */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                  <div className="shadow-sm rounded-lg border border-subtle bg-surface-1 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>
                         <p className="text-13 font-medium text-secondary">Estado del caso</p>
@@ -1637,7 +1637,7 @@ const Overview = observer(function Overview() {
                   </div>
 
                   {/* 4 — Etiquetas */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                  <div className="shadow-sm rounded-lg border border-subtle bg-surface-1 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>
                         <p className="text-13 font-medium text-secondary">Etiquetas</p>
@@ -1657,7 +1657,7 @@ const Overview = observer(function Overview() {
                             label={name}
                             count={count}
                             total={rows.length}
-                            color="bg-accent-primary/70"
+                            hexColor="var(--text-color-tertiary)"
                           />
                         ))}
                       </div>
@@ -1665,7 +1665,7 @@ const Overview = observer(function Overview() {
                   </div>
 
                   {/* 5 — Estado de Venezuela */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                  <div className="shadow-sm rounded-lg border border-subtle bg-surface-1 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>
                         <p className="text-13 font-medium text-secondary">Estado de Venezuela</p>
@@ -1674,13 +1674,19 @@ const Overview = observer(function Overview() {
                     </div>
                     <div className="space-y-3">
                       {byEntidad.map(([name, count]) => (
-                        <HBar key={name} label={name} count={count} total={rows.length} color="bg-accent-primary/50" />
+                        <HBar
+                          key={name}
+                          label={name}
+                          count={count}
+                          total={rows.length}
+                          hexColor="var(--text-color-tertiary)"
+                        />
                       ))}
                     </div>
                   </div>
 
                   {/* 6 — Evolución mensual */}
-                  <div className="rounded-lg border border-subtle bg-surface-2 p-5">
+                  <div className="shadow-sm rounded-lg border border-subtle bg-surface-1 p-5">
                     <div className="mb-4 flex items-center justify-between">
                       <div>
                         <p className="text-13 font-medium text-secondary">Evolución mensual</p>
@@ -1717,7 +1723,7 @@ const Overview = observer(function Overview() {
                                 <span
                                   className={cn(
                                     "text-10 leading-none font-medium",
-                                    isLast ? "text-accent-primary" : "text-tertiary"
+                                    isLast ? "text-secondary" : "text-tertiary"
                                   )}
                                 >
                                   {count}
@@ -1751,7 +1757,7 @@ const Overview = observer(function Overview() {
 
               {/* ── Opciones de exportación ── */}
               {!loadingIssues && (
-                <div className="space-y-4 rounded-lg border border-subtle bg-surface-2 p-5">
+                <div className="shadow-sm space-y-4 rounded-lg border border-subtle bg-surface-1 p-5">
                   <p className="text-13 font-semibold text-secondary">Exportación · {dateRangeLabel}</p>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
