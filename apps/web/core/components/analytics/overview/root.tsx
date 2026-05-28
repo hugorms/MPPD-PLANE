@@ -1048,10 +1048,10 @@ const Overview = observer(function Overview() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sheet.addImage(escudoId, { tl: { col: 0, row: 0 } as any, br: { col: 6.5, row: 1 } as any });
       }
-      // Logo MPPD al lado derecho (1 columna, 2 filas)
+      // Logo MPPD al lado derecho con tamaño fijo en píxeles
       if (mppdLogoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sheet.addImage(mppdLogoId, { tl: { col: 16, row: 0 } as any, br: { col: 17, row: 2 } as any });
+        sheet.addImage(mppdLogoId, { tl: { col: 15.5, row: 0.1 } as any, ext: { width: 70, height: 70 } });
       }
 
       // Map para lookup O(1) en lugar de find() O(n) dentro del loop
