@@ -1048,10 +1048,10 @@ const Overview = observer(function Overview() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         sheet.addImage(escudoId, { tl: { col: 0, row: 0 } as any, br: { col: 6.5, row: 1 } as any });
       }
-      // Logo MPPD al lado derecho
+      // Logo MPPD al lado derecho (1 columna, 2 filas)
       if (mppdLogoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sheet.addImage(mppdLogoId, { tl: { col: 14, row: 0 } as any, br: { col: 17, row: 1 } as any });
+        sheet.addImage(mppdLogoId, { tl: { col: 16, row: 0 } as any, br: { col: 17, row: 2 } as any });
       }
 
       // Map para lookup O(1) en lugar de find() O(n) dentro del loop
