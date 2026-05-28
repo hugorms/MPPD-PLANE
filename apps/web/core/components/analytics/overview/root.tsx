@@ -839,25 +839,31 @@ const Overview = observer(function Overview() {
       const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
 
-      // Cargar logo para ambas hojas (ExcelJS requiere base64)
-      let logoId: number | null = null;
-      try {
-        const logoRes = await fetch(`${window.location.origin}/logo-mppd.png`);
-        if (logoRes.ok) {
-          const logoBlob = await logoRes.blob();
-          const logoFull = await new Promise<string>((resolve, reject) => {
+      // Cargar imágenes para Excel (ExcelJS requiere base64)
+      const loadImageId = async (url: string): Promise<number | null> => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return null;
+          const blob = await res.blob();
+          const full = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.addEventListener("loadend", () => resolve(reader.result as string));
             reader.addEventListener("error", () => reject(new Error("reader error")));
-            reader.readAsDataURL(logoBlob);
+            reader.readAsDataURL(blob);
           });
-          const mimeMatch = logoFull.match(/^data:image\/(\w+);base64,/);
+          const mimeMatch = full.match(/^data:image\/(\w+);base64,/);
           const ext = (mimeMatch?.[1] ?? "png") as "png" | "jpeg" | "gif";
-          logoId = workbook.addImage({ base64: logoFull.split(",")[1], extension: ext });
+          return workbook.addImage({ base64: full.split(",")[1], extension: ext });
+        } catch {
+          return null;
         }
-      } catch {
-        logoId = null;
-      }
+      };
+      // escudoId: imagen original del escudo (hoja Reporte, lado izquierdo)
+      // mppdLogoId: logo MPPD (hoja Resumen + hoja Reporte lado derecho)
+      const [escudoId, mppdLogoId] = await Promise.all([
+        loadImageId(`${window.location.origin}/venezuela-logo.png`),
+        loadImageId(`${window.location.origin}/logo-mppd.png`),
+      ]);
 
       // ── Hoja de resumen gráfico ──────────────────────────────────────────────
       if (includeCover) {
@@ -967,12 +973,12 @@ const Overview = observer(function Overview() {
           addBreakdown("Etiquetas", byLabel, 1);
         }
 
-        summary.columns = [{ width: 36 }, { width: 14 }, { width: 2 }, { width: 36 }, { width: 14 }];
+        summary.columns = [{ width: 36 }, { width: 14 }, { width: 6 }, { width: 36 }, { width: 14 }];
 
-        // Logo en esquina superior derecha de la hoja Resumen
-        if (logoId !== null) {
+        // Logo MPPD en esquina superior derecha de la hoja Resumen (ocupa 3 filas)
+        if (mppdLogoId !== null) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          summary.addImage(logoId, { tl: { col: 4, row: 0 } as any, br: { col: 5, row: 2 } as any });
+          summary.addImage(mppdLogoId, { tl: { col: 4, row: 0 } as any, br: { col: 5, row: 3 } as any });
         }
       }
 
@@ -1037,9 +1043,15 @@ const Overview = observer(function Overview() {
 
       sheet.mergeCells("A1:Q1");
       sheet.getCell("A1").alignment = { vertical: "middle", horizontal: "center" };
-      if (logoId !== null) {
+      // Escudo de Venezuela al lado izquierdo (posición original)
+      if (escudoId !== null) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        sheet.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 6.5, row: 1 } as any });
+        sheet.addImage(escudoId, { tl: { col: 0, row: 0 } as any, br: { col: 6.5, row: 1 } as any });
+      }
+      // Logo MPPD al lado derecho
+      if (mppdLogoId !== null) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        sheet.addImage(mppdLogoId, { tl: { col: 14, row: 0 } as any, br: { col: 17, row: 1 } as any });
       }
 
       // Map para lookup O(1) en lugar de find() O(n) dentro del loop
