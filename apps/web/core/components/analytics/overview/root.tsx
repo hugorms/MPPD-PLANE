@@ -752,7 +752,7 @@ const Overview = observer(function Overview() {
       const pid = selectedProjectId;
 
       // URL directa — react-pdf puede cargar assets del mismo origen sin base64
-      const logoUrl = `${window.location.origin}/venezuela-logo.png`;
+      const logoUrl = `${window.location.origin}/logo-mppd.png`;
 
       let done = 0;
       const resolvedRows: ParsedIssueRow[] = [];
@@ -842,7 +842,7 @@ const Overview = observer(function Overview() {
       // Cargar logo para ambas hojas (ExcelJS requiere base64)
       let logoId: number | null = null;
       try {
-        const logoRes = await fetch(`${window.location.origin}/venezuela-logo.png`);
+        const logoRes = await fetch(`${window.location.origin}/logo-mppd.png`);
         if (logoRes.ok) {
           const logoBlob = await logoRes.blob();
           const logoFull = await new Promise<string>((resolve, reject) => {

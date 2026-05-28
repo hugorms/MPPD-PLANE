@@ -51,7 +51,7 @@ export function useSocialCaseFichaExport({ workspaceSlug, projectId, issueId }: 
       const photoUrlRaw = extractProfilePhotoFromHtml(issue.description_html ?? "");
 
       // URL directa — react-pdf puede cargar assets del mismo origen sin base64
-      const logoUrl = `${window.location.origin}/venezuela-logo.png`;
+      const logoUrl = `${window.location.origin}/logo-mppd.png`;
 
       // Resolver foto de perfil a base64
       let resolvedPhotoUrl: string | null = null;
