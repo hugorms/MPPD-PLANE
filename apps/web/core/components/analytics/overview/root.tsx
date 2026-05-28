@@ -987,7 +987,7 @@ const Overview = observer(function Overview() {
       const pid = selectedProjectId;
 
       const PHOTO_H_PX = 113;
-      const PHOTO_COL_W = 38;
+      const PHOTO_COL_W = 16;
       const PHOTO_COL_W_PX = PHOTO_COL_W * 7 + 5;
       const CRED_IMG_W = 90;
       const CRED_IMG_H = 113;
@@ -1223,7 +1223,10 @@ const Overview = observer(function Overview() {
       }
 
       sheet.columns.forEach((col, idx) => {
-        if (idx === 12) return;
+        if (idx === 12) {
+          col.width = 22;
+          return;
+        }
         if (idx === 3) {
           col.width = 18;
           return;
