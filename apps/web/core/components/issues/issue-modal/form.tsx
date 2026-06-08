@@ -20,6 +20,7 @@ import type { TIssue, TWorkspaceDraftIssue } from "@plane/types";
 import { ToggleSwitch } from "@plane/ui";
 import {
   convertWorkItemDataToSearchResponse,
+  generateWorkItemLink,
   getUpdateFormDataForReset,
   cn,
   getTextContent,
@@ -59,9 +60,11 @@ import {
 } from "@/components/issues/social-case-form";
 import { ProfilePhotoUpload } from "@/components/issues/profile-photo-upload";
 import { FileService } from "@/services/file.service";
+import { WorkspaceService } from "@/services/workspace.service";
 import { EFileAssetType } from "@plane/types";
 
 const _fileService = new FileService();
+const workspaceService = new WorkspaceService();
 
 export interface IssueFormProps {
   data?: Partial<TIssue>;
@@ -623,6 +626,39 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                       socialCaseDataRef.current = d;
                     }}
                     onPhotoFound={(url) => setProfilePhotoUrl(url)}
+                    onCheckDuplicate={
+                      workspaceSlug && projectId
+                        ? async (cedulaDigits) => {
+                            try {
+                              const res = await workspaceService.searchWorkspace(workspaceSlug.toString(), {
+                                project_id: projectId,
+                                search: cedulaDigits,
+                                workspace_search: false,
+                              });
+                              const match = (res?.results?.issue ?? []).find(
+                                (i: any) => i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
+                              );
+                              if (!match) return null;
+                              return {
+                                id: match.id,
+                                sequenceId: match.sequence_id,
+                                name: match.name,
+                                stateGroup: match.state__group ?? "started",
+                                stateName: match.state__name ?? "",
+                                path: generateWorkItemLink({
+                                  workspaceSlug: match.workspace__slug,
+                                  projectId: match.project_id,
+                                  issueId: match.id,
+                                  projectIdentifier: match.project__identifier,
+                                  sequenceId: match.sequence_id,
+                                }),
+                              };
+                            } catch {
+                              return null;
+                            }
+                          }
+                        : undefined
+                    }
                   />
                 )}
               </div>
