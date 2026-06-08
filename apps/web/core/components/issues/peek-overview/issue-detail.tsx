@@ -11,7 +11,7 @@ import type { EditorRefApi } from "@plane/editor";
 import { EFileAssetType } from "@plane/types";
 import type { TNameDescriptionLoader } from "@plane/types";
 // components
-import { getTextContent } from "@plane/utils";
+import { generateWorkItemLink, getTextContent } from "@plane/utils";
 // components
 import { DescriptionVersionsRoot } from "@/components/core/description-versions";
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
@@ -252,6 +252,15 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
               }
             : undefined
         }
+        onReabrirDuplicate={
+          procesoStateId
+            ? async (duplicateId) => {
+                await issueOperations.update(workspaceSlug, issue.project_id ?? "", duplicateId, {
+                  state_id: procesoStateId,
+                });
+              }
+            : undefined
+        }
         onPhotoUpload={async (file) => {
           if (!issue.project_id) return "";
           const response = await fileService.uploadProjectAsset(
@@ -275,7 +284,21 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
             const match = (res?.results?.issue ?? []).find(
               (i: any) => i.id !== issueId && i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
             );
-            return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+            if (!match) return null;
+            return {
+              id: match.id,
+              sequenceId: match.sequence_id,
+              name: match.name,
+              stateGroup: match.state__group ?? "started",
+              stateName: match.state__name ?? "",
+              path: generateWorkItemLink({
+                workspaceSlug: match.workspace__slug,
+                projectId: match.project_id,
+                issueId: match.id,
+                projectIdentifier: match.project__identifier,
+                sequenceId: match.sequence_id,
+              }),
+            };
           } catch {
             return null;
           }

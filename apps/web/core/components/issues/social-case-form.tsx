@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { AlertTriangle, Search } from "lucide-react";
+import { AlertTriangle, ExternalLink, Plus, RotateCcw, Search } from "lucide-react";
 import { Button } from "@plane/propel/button";
 import { cn, getFileURL } from "@plane/utils";
 import { VENEZUELA_ESTADOS } from "./social-case-estados";
@@ -73,7 +73,16 @@ type Props = {
   /** Nombre del estado actual */
   stateName?: string;
   /** Devuelve datos del caso existente si ya hay un issue con esa cédula en el proyecto, o null si no hay duplicado */
-  onCheckDuplicate?: (cedulaDigits: string) => Promise<{ id: string; sequenceId: number; name: string } | null>;
+  onCheckDuplicate?: (cedulaDigits: string) => Promise<{
+    id: string;
+    sequenceId: number;
+    name: string;
+    stateGroup: string;
+    stateName: string;
+    path: string;
+  } | null>;
+  /** Reabre el caso duplicado encontrado (cambia su estado a En Proceso) */
+  onReabrirDuplicate?: (duplicateId: string) => Promise<void>;
 };
 
 // Mapa de clave SocialCaseData al id del elemento en el formulario
@@ -485,6 +494,7 @@ export const SocialCaseForm = ({
   onRetreat,
   onSinResolucion,
   onReabrir,
+  onReabrirDuplicate,
   onSavingChange,
   onPhotoUpload,
   onPhotoFound,
@@ -502,10 +512,19 @@ export const SocialCaseForm = ({
   const [photoUploading, setPhotoUploading] = useState(false);
   const [cedulaLooking, setCedulaLooking] = useState(false);
   const [cedulaNotFound, setCedulaNotFound] = useState(false);
-  const [duplicateCase, setDuplicateCase] = useState<{ id: string; sequenceId: number; name: string } | null>(null);
+  const [duplicateCase, setDuplicateCase] = useState<{
+    id: string;
+    sequenceId: number;
+    name: string;
+    stateGroup: string;
+    stateName: string;
+    path: string;
+  } | null>(null);
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
   // URL de foto obtenida de Onfalo en la sesión actual (válida en cualquier modo)
   const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null);
   const lastCedulaQueried = useRef("");
+  const lastDuplicateChecked = useRef("");
   const savedData = useRef<SocialCaseData>(EMPTY);
   // Siempre apunta al descriptionHtml más reciente para evitar cierres obsoletos en save()
   const latestDescHtml = useRef(descriptionHtml);
@@ -719,9 +738,18 @@ export const SocialCaseForm = ({
     setCedulaLooking(true);
     setCedulaNotFound(false);
     if (onCheckDuplicate) {
-      onCheckDuplicate(num)
-        .then((found) => setDuplicateCase(found ?? null))
-        .catch(() => {});
+      void (async () => {
+        try {
+          const found = await onCheckDuplicate(num);
+          setDuplicateCase(found ?? null);
+          // Solo resetear la confirmación si la cédula cambió desde el último check.
+          // Así un retry de Onfalo no borra la decisión del usuario.
+          if (found && num !== lastDuplicateChecked.current) setDuplicateConfirmed(false);
+          lastDuplicateChecked.current = num;
+        } catch {
+          // ignorar errores del check de duplicado
+        }
+      })();
     }
     try {
       const result = await onfaloService.lookupCedula(data.cedula);
@@ -1056,6 +1084,8 @@ export const SocialCaseForm = ({
                     update("cedula", e.target.value);
                     if (cedulaNotFound) setCedulaNotFound(false);
                     if (duplicateCase) setDuplicateCase(null);
+                    if (duplicateConfirmed) setDuplicateConfirmed(false);
+                    lastDuplicateChecked.current = "";
                   }}
                   onBlur={() => handleCedulaSearch()}
                 />
@@ -1073,17 +1103,62 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Alerta: cédula duplicada en el proyecto */}
-            {duplicateCase && (
-              <div className="border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20 flex items-start gap-2 rounded-md border px-3 py-2">
-                <AlertTriangle className="text-amber-600 dark:text-amber-400 mt-0.5 h-4 w-4 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-amber-800 dark:text-amber-300 text-[12px] font-medium">
-                    Esta cédula ya tiene un caso registrado
-                  </p>
-                  <p className="text-amber-700 dark:text-amber-400 truncate text-[11px]">
-                    #{duplicateCase.sequenceId} — {duplicateCase.name}
-                  </p>
+            {/* Panel de decisión: cédula duplicada */}
+            {duplicateCase && !duplicateConfirmed && (
+              <div className="border-orange-200 bg-orange-50 dark:border-orange-800/60 dark:bg-orange-950/20 overflow-hidden rounded-lg border">
+                {/* Encabezado */}
+                <div className="flex items-start gap-3 px-3 py-2.5">
+                  <div className="bg-orange-100 dark:bg-orange-900/40 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                    <AlertTriangle className="text-orange-600 dark:text-orange-400 h-3.5 w-3.5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-orange-900 dark:text-orange-200 text-[12px] font-semibold">
+                      Cédula ya registrada
+                    </p>
+                    <p className="text-orange-700 dark:text-orange-400 mt-0.5 truncate text-[11px]">
+                      #{duplicateCase.sequenceId} — {duplicateCase.name}
+                    </p>
+                    {duplicateCase.stateName && (
+                      <p className="text-orange-500 dark:text-orange-500 mt-0.5 text-[11px]">
+                        Estado: {duplicateCase.stateName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {/* Barra de acciones */}
+                <div className="border-orange-200 bg-orange-100/60 dark:border-orange-800/40 dark:bg-orange-900/10 flex flex-wrap items-center gap-1.5 border-t px-3 py-2">
+                  <span className="text-orange-700 dark:text-orange-400 mr-0.5 text-[11px] font-medium">
+                    ¿Qué deseas hacer?
+                  </span>
+                  <a
+                    href={duplicateCase.path}
+                    className="border-orange-300 text-orange-800 hover:bg-orange-50 dark:border-orange-700 dark:bg-custom-background-90 dark:text-orange-300 dark:hover:bg-orange-900/20 inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[11px] font-medium transition-colors"
+                  >
+                    <ExternalLink className="h-2.5 w-2.5" />
+                    Ver caso
+                  </a>
+                  {onReabrirDuplicate &&
+                    (duplicateCase.stateGroup === "completed" || duplicateCase.stateGroup === "cancelled") && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await onReabrirDuplicate(duplicateCase.id);
+                          window.location.assign(duplicateCase.path);
+                        }}
+                        className="border-orange-300 text-orange-800 hover:bg-orange-50 dark:border-orange-700 dark:bg-custom-background-90 dark:text-orange-300 dark:hover:bg-orange-900/20 inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[11px] font-medium transition-colors"
+                      >
+                        <RotateCcw className="h-2.5 w-2.5" />
+                        Reabrir caso
+                      </button>
+                    )}
+                  <button
+                    type="button"
+                    onClick={() => setDuplicateConfirmed(true)}
+                    className="bg-orange-600 hover:bg-orange-700 inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-white transition-colors"
+                  >
+                    <Plus className="h-2.5 w-2.5" />
+                    Nuevo caso
+                  </button>
                 </div>
               </div>
             )}
@@ -1540,6 +1615,12 @@ export const SocialCaseForm = ({
                           variant="primary"
                           size="sm"
                           loading={saving}
+                          disabled={!!(duplicateCase && !duplicateConfirmed)}
+                          title={
+                            duplicateCase && !duplicateConfirmed
+                              ? "Resuelve el caso duplicado antes de continuar"
+                              : undefined
+                          }
                           onClick={() =>
                             handleAdvanceWithValidation(
                               recibidoComplete,
@@ -1589,6 +1670,12 @@ export const SocialCaseForm = ({
                           variant="primary"
                           size="sm"
                           loading={saving}
+                          disabled={!!(duplicateCase && !duplicateConfirmed)}
+                          title={
+                            duplicateCase && !duplicateConfirmed
+                              ? "Resuelve el caso duplicado antes de continuar"
+                              : undefined
+                          }
                           onClick={() =>
                             handleAdvanceWithValidation(procesoComplete, PROCESO_REQUIRED, () =>
                               saveAndAdvance(onAdvance)

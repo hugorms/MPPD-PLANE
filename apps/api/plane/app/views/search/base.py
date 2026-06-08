@@ -191,6 +191,8 @@ class GlobalSearchEndpoint(BaseAPIView):
             "social_case_nombre",
             "workspace__slug",
             "type_id",
+            "state__group",
+            "state__name",
         )[:100]
 
         if should_log_cedula_search:

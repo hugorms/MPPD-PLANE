@@ -90,13 +90,40 @@ export function PowerKModalSearchMenu(props: Props) {
         .searchWorkspace(workspaceSlug.toString(), params)
         .then((searchResults) => {
           const apiIssueIds = new Set(searchResults.results.issue.map((issue) => issue.id));
+          const flatIssues: TWorkspaceIssueSearchResultWithSocial[] = [
+            ...searchResults.results.issue,
+            ...localCedulaMatches.filter((issue) => !apiIssueIds.has(issue.id)),
+          ];
+
+          // Deduplicar por cédula: agrupar casos de la misma persona,
+          // mostrar solo el más reciente (mayor sequence_id) con un contador de extras.
+          const cedulaGroups = new Map<string, TWorkspaceIssueSearchResultWithSocial[]>();
+          const nonSocial: TWorkspaceIssueSearchResultWithSocial[] = [];
+          for (const issue of flatIssues) {
+            const digits = getDigits(issue.social_case_cedula);
+            if (digits.length >= 6) {
+              const group = cedulaGroups.get(digits) ?? [];
+              group.push(issue);
+              cedulaGroups.set(digits, group);
+            } else {
+              nonSocial.push(issue);
+            }
+          }
+          type IssueWithLinked = TWorkspaceIssueSearchResultWithSocial & { _linkedCount?: number };
+          const deduplicatedIssues: IssueWithLinked[] = [
+            ...nonSocial,
+            ...Array.from(cedulaGroups.values()).map((group) => {
+              const sorted = [...group].sort((a, b) => b.sequence_id - a.sequence_id);
+              const primary = sorted[0] as IssueWithLinked;
+              if (sorted.length > 1) primary._linkedCount = sorted.length - 1;
+              return primary;
+            }),
+          ];
+
           const mergedResults: IWorkspaceSearchResults = {
             results: {
               ...searchResults.results,
-              issue: [
-                ...searchResults.results.issue,
-                ...localCedulaMatches.filter((issue) => !apiIssueIds.has(issue.id)),
-              ],
+              issue: deduplicatedIssues as typeof searchResults.results.issue,
             },
           };
           setResults(mergedResults);

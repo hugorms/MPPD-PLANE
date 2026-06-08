@@ -12,7 +12,7 @@ import { Button } from "@plane/propel/button";
 import type { EditorRefApi } from "@plane/editor";
 import type { TNameDescriptionLoader } from "@plane/types";
 import { EFileAssetType, EIssueServiceType } from "@plane/types";
-import { getTextContent } from "@plane/utils";
+import { generateWorkItemLink, getTextContent } from "@plane/utils";
 // components
 import { DescriptionVersionsRoot } from "@/components/core/description-versions";
 import { DescriptionInput } from "@/components/editor/rich-text/description-input";
@@ -244,6 +244,13 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
                 }
               : undefined
           }
+          onReabrirDuplicate={
+            procesoStateId
+              ? async (duplicateId) => {
+                  await issueOperations.update(workspaceSlug, projectId, duplicateId, { state_id: procesoStateId });
+                }
+              : undefined
+          }
           onPhotoUpload={async (file) => {
             const response = await fileService.uploadProjectAsset(
               workspaceSlug,
@@ -266,7 +273,21 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
               const match = (res?.results?.issue ?? []).find(
                 (i: any) => i.id !== issueId && i.social_case_cedula?.replace(/\D/g, "") === cedulaDigits
               );
-              return match ? { id: match.id, sequenceId: match.sequence_id, name: match.name } : null;
+              if (!match) return null;
+              return {
+                id: match.id,
+                sequenceId: match.sequence_id,
+                name: match.name,
+                stateGroup: match.state__group ?? "started",
+                stateName: match.state__name ?? "",
+                path: generateWorkItemLink({
+                  workspaceSlug: match.workspace__slug,
+                  projectId: match.project_id,
+                  issueId: match.id,
+                  projectIdentifier: match.project__identifier,
+                  sequenceId: match.sequence_id,
+                }),
+              };
             } catch {
               return null;
             }

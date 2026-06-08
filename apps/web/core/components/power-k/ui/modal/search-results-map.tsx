@@ -41,7 +41,7 @@ export const POWER_K_SEARCH_RESULTS_GROUPS_MAP: Record<TPowerKSearchResultsKeys,
     title: "Cycles",
   },
   issue: {
-    itemName: (workItem: IWorkspaceIssueSearchResult) => (
+    itemName: (workItem: IWorkspaceIssueSearchResult & { _linkedCount?: number }) => (
       <div className="flex min-w-0 items-center gap-2">
         <IssueIdentifier
           projectId={workItem.project_id}
@@ -57,6 +57,11 @@ export const POWER_K_SEARCH_RESULTS_GROUPS_MAP: Record<TPowerKSearchResultsKeys,
             <span className="text-custom-text-400 shrink-0 text-[11px] font-medium">
               C.I. V-{workItem.social_case_cedula.replace(/^(C\.?I\.?\s*)?V-?\s*/i, "").trim()}
             </span>
+            {workItem._linkedCount && workItem._linkedCount > 0 ? (
+              <span className="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
+                +{workItem._linkedCount}
+              </span>
+            ) : null}
           </>
         )}
       </div>
