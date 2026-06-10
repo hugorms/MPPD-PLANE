@@ -135,6 +135,8 @@ export interface IWorkspaceIssueSearchResult {
   sequence_id: number;
   social_case_cedula?: string | null;
   social_case_nombre?: string | null;
+  state__group?: string | null;
+  state__name?: string | null;
   workspace__slug: string;
   type_id: string;
 }

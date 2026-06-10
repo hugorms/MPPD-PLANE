@@ -14,6 +14,7 @@ import { cn } from "@plane/utils";
 import { useIssues } from "@/hooks/store/use-issues";
 import { usePowerK } from "@/hooks/store/use-power-k";
 import { useProject } from "@/hooks/store/use-project";
+import { useProjectState } from "@/hooks/store/use-project-state";
 import useDebounce from "@/hooks/use-debounce";
 // plane web imports
 import { PowerKModalNoSearchResultsCommand } from "@/plane-web/components/command-palette/power-k/search/no-results-command";
@@ -26,10 +27,7 @@ const workspaceService = new WorkspaceService();
 
 const getDigits = (value?: string | null) => value?.replace(/\D/g, "") ?? "";
 
-type TWorkspaceIssueSearchResultWithSocial = IWorkspaceIssueSearchResult & {
-  social_case_cedula?: string | null;
-  social_case_nombre?: string | null;
-};
+type TWorkspaceIssueSearchResultWithSocial = IWorkspaceIssueSearchResult;
 
 type Props = {
   activePage: TPowerKPageType | null;
@@ -53,6 +51,7 @@ export function PowerKModalSearchMenu(props: Props) {
   const { togglePowerKModal } = usePowerK();
   const { issueMap } = useIssues();
   const { getProjectIdentifierById } = useProject();
+  const { getStateById } = useProjectState();
 
   useEffect(() => {
     if (activePage || !workspaceSlug) return;
@@ -74,17 +73,22 @@ export function PowerKModalSearchMenu(props: Props) {
               if (projectId && !isWorkspaceLevel && issue.project_id !== projectId.toString()) return false;
               return true;
             })
-            .map((issue) => ({
-              id: issue.id,
-              name: issue.name,
-              project__identifier: getProjectIdentifierById(issue.project_id) ?? "",
-              project_id: issue.project_id ?? "",
-              sequence_id: issue.sequence_id,
-              social_case_cedula: issue.social_case_cedula,
-              social_case_nombre: issue.social_case_nombre,
-              workspace__slug: workspaceSlug.toString(),
-              type_id: issue.type_id ?? "",
-            }))
+            .map((issue) => {
+              const state = getStateById(issue.state_id ?? "");
+              return {
+                id: issue.id,
+                name: issue.name,
+                project__identifier: getProjectIdentifierById(issue.project_id) ?? "",
+                project_id: issue.project_id ?? "",
+                sequence_id: issue.sequence_id,
+                social_case_cedula: issue.social_case_cedula,
+                social_case_nombre: issue.social_case_nombre,
+                state__group: state?.group ?? null,
+                state__name: state?.name ?? null,
+                workspace__slug: workspaceSlug.toString(),
+                type_id: issue.type_id ?? "",
+              };
+            })
         : [];
       workspaceService
         .searchWorkspace(workspaceSlug.toString(), params)
@@ -144,7 +148,16 @@ export function PowerKModalSearchMenu(props: Props) {
       setResults(WORKSPACE_DEFAULT_SEARCH_RESULT);
       setIsSearching(false);
     }
-  }, [activePage, debouncedSearchTerm, getProjectIdentifierById, isWorkspaceLevel, issueMap, projectId, workspaceSlug]);
+  }, [
+    activePage,
+    debouncedSearchTerm,
+    getProjectIdentifierById,
+    getStateById,
+    isWorkspaceLevel,
+    issueMap,
+    projectId,
+    workspaceSlug,
+  ]);
 
   if (activePage) return null;
 
