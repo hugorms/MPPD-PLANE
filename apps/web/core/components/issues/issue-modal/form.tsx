@@ -135,6 +135,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     }
   });
   const [profilePhotoUploading, setProfilePhotoUploading] = useState(false);
+  const [hasUnresolvedDuplicate, setHasUnresolvedDuplicate] = useState(false);
 
   // ref para capturar datos del SocialCaseForm en tiempo real (evita depender de localStorage)
   const socialCaseDataRef = useRef<SocialCaseData | null>(null);
@@ -198,7 +199,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   // derived values
   // eslint-disable-next-line no-shadow
   const projectDetails = projectId ? getProjectById(projectId) : undefined;
-  const isDisabled = isSubmitting || isApplyingTemplate;
+  const isDisabled = isSubmitting || isApplyingTemplate || hasUnresolvedDuplicate;
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 
@@ -626,6 +627,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                       socialCaseDataRef.current = d;
                     }}
                     onPhotoFound={(url) => setProfilePhotoUrl(url)}
+                    onDuplicateStatusChange={(hasUnresolved) => setHasUnresolvedDuplicate(hasUnresolved)}
                     onCheckDuplicate={
                       workspaceSlug && projectId
                         ? async (cedulaDigits) => {
@@ -736,6 +738,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                         ref={submitBtnRef}
                         loading={isSubmitting}
                         disabled={isDisabled}
+                        title={hasUnresolvedDuplicate ? "Resuelve el caso duplicado antes de guardar" : undefined}
                       >
                         {isSubmitting ? primaryButtonText.loading : primaryButtonText.default}
                       </Button>

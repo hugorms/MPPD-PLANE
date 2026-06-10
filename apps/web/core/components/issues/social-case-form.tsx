@@ -83,6 +83,8 @@ type Props = {
   } | null>;
   /** Reabre el caso duplicado encontrado (cambia su estado a En Proceso) */
   onReabrirDuplicate?: (duplicateId: string) => Promise<void>;
+  /** Notifica al padre si hay un duplicado sin resolver (true) o no (false) */
+  onDuplicateStatusChange?: (hasUnresolved: boolean) => void;
 };
 
 // Mapa de clave SocialCaseData al id del elemento en el formulario
@@ -495,6 +497,7 @@ export const SocialCaseForm = ({
   onSinResolucion,
   onReabrir,
   onReabrirDuplicate,
+  onDuplicateStatusChange,
   onSavingChange,
   onPhotoUpload,
   onPhotoFound,
@@ -521,6 +524,11 @@ export const SocialCaseForm = ({
     path: string;
   } | null>(null);
   const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
+  // Notificar al padre cuando cambia el estado de duplicado sin resolver
+  useEffect(() => {
+    onDuplicateStatusChange?.(Boolean(duplicateCase && !duplicateConfirmed));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplicateCase, duplicateConfirmed]);
   // URL de foto obtenida de Onfalo en la sesión actual (válida en cualquier modo)
   const [localPhotoUrl, setLocalPhotoUrl] = useState<string | null>(null);
   const lastCedulaQueried = useRef("");
