@@ -1707,6 +1707,12 @@ export const SocialCaseForm = ({
                         variant="primary"
                         size="sm"
                         loading={saving}
+                        disabled={!!(duplicateCase && !duplicateConfirmed)}
+                        title={
+                          duplicateCase && !duplicateConfirmed
+                            ? "Resuelve el caso duplicado antes de continuar"
+                            : undefined
+                        }
                         onClick={() =>
                           handleAdvanceWithValidation(
                             articulacionComplete,
