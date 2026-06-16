@@ -1158,7 +1158,7 @@ export const SocialCaseForm = ({
                   <button
                     type="button"
                     onClick={() => setDuplicateConfirmed(true)}
-                    className="border-amber-700 bg-amber-600 hover:bg-amber-700 inline-flex items-center gap-1 rounded border-[0.5px] px-2 py-1 text-[11px] font-medium text-white transition-colors"
+                    className="text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border-[0.5px] border-subtle bg-transparent px-2 py-1 text-[11px] font-medium transition-colors"
                   >
                     <Plus className="h-2.5 w-2.5" />
                     Nuevo caso
