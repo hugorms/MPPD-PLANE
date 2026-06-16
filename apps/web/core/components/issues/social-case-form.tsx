@@ -639,6 +639,11 @@ export const SocialCaseForm = ({
       ) {
         extracted.esMilitar = "true";
       }
+      // Retrocompat: normalizar gradoMilitar texto libre al valor del select
+      if (extracted.gradoMilitar && extracted.jornada) {
+        const matched = matchGrado(extracted.gradoMilitar, extracted.jornada);
+        if (matched) extracted.gradoMilitar = matched;
+      }
       setData(extracted);
       return;
     }
@@ -1282,7 +1287,7 @@ export const SocialCaseForm = ({
             <div
               className={cn(
                 "grid grid-cols-2 gap-x-6 gap-y-3 overflow-hidden transition-all duration-200",
-                data.esMilitar === "true" ? "max-h-60 opacity-100" : "pointer-events-none max-h-0 opacity-0"
+                data.esMilitar === "true" ? "max-h-96 opacity-100" : "pointer-events-none max-h-0 opacity-0"
               )}
             >
               <div className="col-span-2">
@@ -1302,9 +1307,12 @@ export const SocialCaseForm = ({
                         try {
                           localStorage.setItem(PENDING_KEY, JSON.stringify(next));
                         } catch (_) {}
+                        onDataChange?.(next);
                       }
                       return next;
                     });
+                    setSaved(false);
+                    scheduleAutoSave();
                   }}
                 >
                   <option value="">-- Seleccionar componente --</option>
