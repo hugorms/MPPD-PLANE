@@ -1113,34 +1113,30 @@ export const SocialCaseForm = ({
 
             {/* Panel de decisión: cédula duplicada */}
             {duplicateCase && !duplicateConfirmed && (
-              <div className="border-amber-300/70 bg-amber-50/40 dark:border-amber-900/50 overflow-hidden rounded-lg border dark:bg-surface-2">
+              <div className="border-custom-border-200 bg-custom-background-100 overflow-hidden rounded-lg border">
                 {/* Franja de acento */}
                 <div className="bg-amber-500 h-0.5 w-full" />
                 {/* Encabezado */}
                 <div className="flex items-start gap-2.5 px-3 pt-2.5 pb-2">
-                  <AlertTriangle className="text-amber-600 dark:text-amber-500 mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  <AlertTriangle className="text-amber-500 mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-amber-900 dark:text-custom-text-100 text-[12px] font-semibold">
-                      Cédula ya registrada
-                    </p>
+                    <p className="text-custom-text-100 text-[12px] font-semibold">Cédula ya registrada</p>
                     <p className="text-custom-text-200 mt-0.5 truncate text-[11px]">
                       #{duplicateCase.sequenceId} — {duplicateCase.name}
                     </p>
                     {duplicateCase.stateName && (
-                      <span className="bg-amber-100 text-amber-800 dark:bg-custom-background-80 dark:text-custom-text-300 mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium">
+                      <span className="bg-custom-background-80 text-custom-text-300 mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium">
                         {duplicateCase.stateName}
                       </span>
                     )}
                   </div>
                 </div>
                 {/* Barra de acciones */}
-                <div className="border-amber-200/60 bg-amber-50/60 flex flex-wrap items-center gap-1.5 border-t px-3 py-2 dark:border-subtle dark:bg-surface-1">
-                  <span className="text-amber-800 dark:text-custom-text-300 mr-0.5 text-[11px]">
-                    ¿Qué deseas hacer?
-                  </span>
+                <div className="border-custom-border-200 bg-custom-background-90 flex flex-wrap items-center gap-1.5 border-t px-3 py-2">
+                  <span className="text-custom-text-300 mr-0.5 text-[11px]">¿Qué deseas hacer?</span>
                   <a
                     href={duplicateCase.path}
-                    className="border-amber-300 text-amber-800 hover:bg-amber-50 hover:text-amber-900 dark:border-custom-border-200 dark:bg-custom-background-80 dark:text-custom-text-200 dark:hover:bg-custom-background-90 dark:hover:text-custom-text-100 inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[11px] font-medium transition-colors"
+                    className="border-custom-border-200 bg-custom-background-100 text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] font-medium transition-colors"
                   >
                     <ExternalLink className="h-2.5 w-2.5" />
                     Ver caso
@@ -1153,7 +1149,7 @@ export const SocialCaseForm = ({
                           await onReabrirDuplicate(duplicateCase.id);
                           window.location.assign(duplicateCase.path);
                         }}
-                        className="border-amber-300 text-amber-800 hover:bg-amber-50 hover:text-amber-900 dark:border-custom-border-200 dark:bg-custom-background-80 dark:text-custom-text-200 dark:hover:bg-custom-background-90 dark:hover:text-custom-text-100 inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[11px] font-medium transition-colors"
+                        className="border-custom-border-200 bg-custom-background-100 text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] font-medium transition-colors"
                       >
                         <RotateCcw className="h-2.5 w-2.5" />
                         Reabrir caso
