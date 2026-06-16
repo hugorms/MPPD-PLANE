@@ -41,6 +41,47 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web imports
 import { CommonProjectBreadcrumbs } from "@/plane-web/components/breadcrumbs/common";
 
+const FANB_COMPONENTES = [
+  "Ejército Nacional Bolivariano",
+  "Armada Bolivariana de Venezuela",
+  "Aviación Militar Bolivariana",
+  "Guardia Nacional Bolivariana",
+  "Milicia Nacional Bolivariana",
+];
+
+const FANB_GRADOS_OFICIALES = [
+  "General en Jefe",
+  "Almirante en Jefe",
+  "Mayor General",
+  "Almirante",
+  "General de División",
+  "Vicealmirante",
+  "General de Brigada",
+  "Contralmirante",
+  "Coronel",
+  "Capitán de Navío",
+  "Teniente Coronel",
+  "Capitán de Fragata",
+  "Mayor",
+  "Capitán de Corbeta",
+  "Capitán",
+  "Teniente de Navío",
+  "Primer Teniente",
+  "Teniente de Fragata",
+  "Teniente",
+  "Teniente de Corbeta",
+];
+
+const FANB_GRADOS_SUBOFICIALES = [
+  "Sargento Supervisor",
+  "Sargento Ayudante",
+  "Sargento Mayor de Primera",
+  "Sargento Mayor de Segunda",
+  "Sargento Mayor de Tercera",
+  "Sargento Primero",
+  "Sargento Segundo",
+];
+
 export const IssuesHeader = observer(function IssuesHeader() {
   // router
   const router = useAppRouter();
@@ -80,47 +121,6 @@ export const IssuesHeader = observer(function IssuesHeader() {
 
   // Componente y Grado solo son relevantes cuando hay casos militares
   const showMilitaryFilters = condicionFilter.length !== 1 || condicionFilter[0] !== "Civil";
-
-  const FANB_COMPONENTES = [
-    "Ejército Nacional Bolivariano",
-    "Armada Bolivariana de Venezuela",
-    "Aviación Militar Bolivariana",
-    "Guardia Nacional Bolivariana",
-    "Milicia Nacional Bolivariana",
-  ];
-
-  const FANB_GRADOS_OFICIALES = [
-    "General en Jefe",
-    "Almirante en Jefe",
-    "Mayor General",
-    "Almirante",
-    "General de División",
-    "Vicealmirante",
-    "General de Brigada",
-    "Contralmirante",
-    "Coronel",
-    "Capitán de Navío",
-    "Teniente Coronel",
-    "Capitán de Fragata",
-    "Mayor",
-    "Capitán de Corbeta",
-    "Capitán",
-    "Teniente de Navío",
-    "Primer Teniente",
-    "Teniente de Fragata",
-    "Teniente",
-    "Alférez de Navío",
-  ];
-
-  const FANB_GRADOS_SUBOFICIALES = [
-    "Sargento Supervisor",
-    "Sargento Ayudante",
-    "Sargento Mayor de Primera",
-    "Sargento Mayor de Segunda",
-    "Sargento Mayor de Tercera",
-    "Sargento Primero",
-    "Sargento Segundo",
-  ];
 
   const issuesCount = filteredIssueIds ? filteredIssueIds.size : getGroupIssueCount(undefined, undefined, false);
   const canUserCreateIssue = allowPermissions(

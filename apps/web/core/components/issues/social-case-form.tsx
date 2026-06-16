@@ -216,7 +216,7 @@ const GRADOS_ARMADA = [
   "Capitán de Corbeta",
   "Teniente de Navío",
   "Teniente de Fragata",
-  "Alférez de Navío",
+  "Teniente de Corbeta",
   "Sargento Supervisor",
   "Sargento Ayudante",
   "Sargento Mayor de Primera",

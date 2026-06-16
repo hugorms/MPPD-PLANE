@@ -92,8 +92,8 @@ export function SocialCaseEstadoProvider({ children }: { children: ReactNode }) 
     setCondicionFilter((prev) =>
       prev.includes(condicion) ? prev.filter((c) => c !== condicion) : [...prev, condicion]
     );
-    // Al cambiar a solo Civil, limpiar filtros que solo aplican a militares
-    if (condicion === "Militar") {
+    // Solo limpiar filtros militares cuando se está QUITANDO Militar (no al añadirlo)
+    if (condicion === "Militar" && condicionFilter.includes("Militar")) {
       setComponenteFilter([]);
       setGradoFilter([]);
     }
