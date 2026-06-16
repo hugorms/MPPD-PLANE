@@ -689,6 +689,7 @@ export const SocialCaseForm = ({
     "entidad",
     "esMilitar",
     "condicionMilitar",
+    "gradoMilitar",
     "fechaCierre",
     "institucionContactada",
     "telefono",
@@ -697,7 +698,6 @@ export const SocialCaseForm = ({
 
   const TITLE_CASE_FIELDS = new Set<keyof SocialCaseData>([
     "nombre",
-    "gradoMilitar",
     "unidadDependencia",
     "direccion",
     "parroquia",
