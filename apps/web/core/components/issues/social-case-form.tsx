@@ -185,6 +185,64 @@ const FANB_COMPONENTS_SET = new Set([
   "Milicia Nacional Bolivariana",
 ]);
 
+// Jerarquías militares por componente
+const GRADOS_TIERRA = [
+  "General en Jefe",
+  "Mayor General",
+  "General de División",
+  "General de Brigada",
+  "Coronel",
+  "Teniente Coronel",
+  "Mayor",
+  "Capitán",
+  "Primer Teniente",
+  "Teniente",
+  "Sargento Supervisor",
+  "Sargento Ayudante",
+  "Sargento Mayor de Primera",
+  "Sargento Mayor de Segunda",
+  "Sargento Mayor de Tercera",
+  "Sargento Primero",
+  "Sargento Segundo",
+] as const;
+
+const GRADOS_ARMADA = [
+  "Almirante en Jefe",
+  "Almirante",
+  "Vicealmirante",
+  "Contralmirante",
+  "Capitán de Navío",
+  "Capitán de Fragata",
+  "Capitán de Corbeta",
+  "Teniente de Navío",
+  "Teniente de Fragata",
+  "Alférez de Navío",
+  "Sargento Supervisor",
+  "Sargento Ayudante",
+  "Sargento Mayor de Primera",
+  "Sargento Mayor de Segunda",
+  "Sargento Mayor de Tercera",
+  "Sargento Primero",
+  "Sargento Segundo",
+] as const;
+
+const getGradosByComponente = (componente: string): readonly string[] => {
+  if (componente === "Armada Bolivariana de Venezuela") return GRADOS_ARMADA;
+  if (componente) return GRADOS_TIERRA;
+  return [];
+};
+
+const matchGrado = (text: string, componente: string): string => {
+  if (!text) return "";
+  const grades = componente
+    ? getGradosByComponente(componente)
+    : ([...GRADOS_TIERRA, ...GRADOS_ARMADA] as readonly string[]);
+  const norm = text.toLowerCase().trim();
+  const exact = grades.find((g) => g.toLowerCase() === norm);
+  if (exact) return exact;
+  return grades.find((g) => norm.includes(g.toLowerCase()) || g.toLowerCase().includes(norm)) ?? "";
+};
+
 export const isMilitarySocialCaseData = (
   data?: Pick<
     SocialCaseData,
@@ -778,8 +836,10 @@ export const SocialCaseForm = ({
         ...(result.entidad && { entidad: result.entidad }),
         ...(esMilitarDetectado && { esMilitar: "true" }),
         ...(result.condicionMilitar && { condicionMilitar: result.condicionMilitar }),
-        ...(result.gradoMilitar && { gradoMilitar: toUpper(result.gradoMilitar) }),
         ...(result.componente && { jornada: result.componente }),
+        ...(result.gradoMilitar && {
+          gradoMilitar: matchGrado(result.gradoMilitar, result.componente ?? latestData.current.jornada),
+        }),
       };
       const next = { ...latestData.current, ...onfaloFields };
       setData(next);
@@ -1218,13 +1278,43 @@ export const SocialCaseForm = ({
               </div>
             </div>
 
-            {/* Fila 3: Condición | Grado | Componente — solo si es Militar, con animación */}
+            {/* Fila 3: Componente | Condición | Grado — solo si es Militar, con animación */}
             <div
               className={cn(
                 "grid grid-cols-2 gap-x-6 gap-y-3 overflow-hidden transition-all duration-200",
                 data.esMilitar === "true" ? "max-h-60 opacity-100" : "pointer-events-none max-h-0 opacity-0"
               )}
             >
+              <div className="col-span-2">
+                <label htmlFor="sc-jornada" className={labelClass}>
+                  Componente
+                </label>
+                <select
+                  id="sc-jornada"
+                  disabled={!isEditable}
+                  className={fc(isEditable, "jornada")}
+                  value={data.jornada}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setData((prev) => {
+                      const next = { ...prev, jornada: val, gradoMilitar: "" };
+                      if (mode === "create-no-save") {
+                        try {
+                          localStorage.setItem(PENDING_KEY, JSON.stringify(next));
+                        } catch (_) {}
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  <option value="">-- Seleccionar componente --</option>
+                  <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
+                  <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
+                  <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
+                  <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
+                  <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
+                </select>
+              </div>
               <div>
                 <label htmlFor="sc-condicion-militar" className={labelClass}>
                   Condición militar
@@ -1246,33 +1336,21 @@ export const SocialCaseForm = ({
                 <label htmlFor="sc-grado" className={labelClass}>
                   Grado militar
                 </label>
-                <input
+                <select
                   id="sc-grado"
-                  disabled={!isEditable}
-                  autoCapitalize="words"
-                  className={fc(isEditable, "gradoMilitar")}
-                  placeholder="Ej: Teniente, Sargento..."
+                  disabled={!isEditable || !data.jornada}
+                  className={fc(isEditable && !!data.jornada, "gradoMilitar")}
                   value={data.gradoMilitar}
                   onChange={(e) => update("gradoMilitar", e.target.value)}
-                />
-              </div>
-              <div className="col-span-2">
-                <label htmlFor="sc-jornada" className={labelClass}>
-                  Componente
-                </label>
-                <select
-                  id="sc-jornada"
-                  disabled={!isEditable}
-                  className={fc(isEditable, "jornada")}
-                  value={data.jornada}
-                  onChange={(e) => update("jornada", e.target.value)}
                 >
-                  <option value="">-- Seleccionar componente --</option>
-                  <option value="Ejército Nacional Bolivariano">Ejército Nacional Bolivariano</option>
-                  <option value="Armada Bolivariana de Venezuela">Armada Bolivariana de Venezuela</option>
-                  <option value="Aviación Militar Bolivariana">Aviación Militar Bolivariana</option>
-                  <option value="Guardia Nacional Bolivariana">Guardia Nacional Bolivariana</option>
-                  <option value="Milicia Nacional Bolivariana">Milicia Nacional Bolivariana</option>
+                  <option value="">
+                    {data.jornada ? "-- Seleccionar grado --" : "-- Selecciona componente primero --"}
+                  </option>
+                  {getGradosByComponente(data.jornada).map((grado) => (
+                    <option key={grado} value={grado}>
+                      {grado}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
