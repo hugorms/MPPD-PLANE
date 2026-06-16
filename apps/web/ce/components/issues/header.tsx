@@ -8,7 +8,7 @@ import React from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // icons
-import { Circle, MapPin, Shield } from "lucide-react";
+import { Award, Building2, Circle, MapPin, Shield } from "lucide-react";
 // plane imports
 import {
   EUserPermissions,
@@ -64,13 +64,63 @@ export const IssuesHeader = observer(function IssuesHeader() {
   const {
     estadosFilter,
     condicionFilter,
+    componenteFilter,
+    gradoFilter,
     toggleEstado,
     toggleCondicion,
+    toggleComponente,
+    toggleGrado,
     clearEstados,
     clearCondiciones,
+    clearComponentes,
+    clearGrados,
     filteredIssueIds,
     loadingFilter,
   } = useSocialCaseEstadoFilter();
+
+  // Componente y Grado solo son relevantes cuando hay casos militares
+  const showMilitaryFilters = condicionFilter.length !== 1 || condicionFilter[0] !== "Civil";
+
+  const FANB_COMPONENTES = [
+    "Ejército Nacional Bolivariano",
+    "Armada Bolivariana de Venezuela",
+    "Aviación Militar Bolivariana",
+    "Guardia Nacional Bolivariana",
+    "Milicia Nacional Bolivariana",
+  ];
+
+  const FANB_GRADOS_OFICIALES = [
+    "General en Jefe",
+    "Almirante en Jefe",
+    "Mayor General",
+    "Almirante",
+    "General de División",
+    "Vicealmirante",
+    "General de Brigada",
+    "Contralmirante",
+    "Coronel",
+    "Capitán de Navío",
+    "Teniente Coronel",
+    "Capitán de Fragata",
+    "Mayor",
+    "Capitán de Corbeta",
+    "Capitán",
+    "Teniente de Navío",
+    "Primer Teniente",
+    "Teniente de Fragata",
+    "Teniente",
+    "Alférez de Navío",
+  ];
+
+  const FANB_GRADOS_SUBOFICIALES = [
+    "Sargento Supervisor",
+    "Sargento Ayudante",
+    "Sargento Mayor de Primera",
+    "Sargento Mayor de Segunda",
+    "Sargento Mayor de Tercera",
+    "Sargento Primero",
+    "Sargento Segundo",
+  ];
 
   const issuesCount = filteredIssueIds ? filteredIssueIds.size : getGroupIssueCount(undefined, undefined, false);
   const canUserCreateIssue = allowPermissions(
@@ -251,6 +301,178 @@ export const IssuesHeader = observer(function IssuesHeader() {
               )}
             </div>
           </FiltersDropdown>
+          {/* Filtro por Componente FANB — solo visible si hay militares */}
+          {showMilitaryFilters && (
+            <FiltersDropdown
+              miniIcon={<Building2 className="size-3.5" />}
+              title={
+                componenteFilter.length === 0
+                  ? "Componente"
+                  : componenteFilter.length === 1
+                    ? componenteFilter[0].split(" ")[0]
+                    : `${componenteFilter.length} componentes`
+              }
+              placement="bottom-end"
+              isFiltersApplied={componenteFilter.length > 0}
+            >
+              <div className="flex w-60 flex-col overflow-hidden">
+                <div className="flex items-center justify-between border-b border-subtle px-3 py-2">
+                  <span className="text-xs font-medium text-tertiary">Componente FANB</span>
+                  {componenteFilter.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearComponentes}
+                      className="text-xs text-accent-primary hover:underline"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                <div className="py-1">
+                  {FANB_COMPONENTES.map((comp) => {
+                    const selected = componenteFilter.includes(comp);
+                    return (
+                      <button
+                        key={comp}
+                        type="button"
+                        onClick={() => toggleComponente(comp)}
+                        className={`text-sm flex w-full items-center gap-2.5 px-3 py-1.5 transition-colors hover:bg-surface-2 ${
+                          selected ? "text-accent-primary" : "text-secondary"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                            selected ? "border-accent-primary bg-accent-primary" : "border-custom-border-300"
+                          }`}
+                        >
+                          {selected && (
+                            <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                              <path
+                                d="M1.5 5L4 7.5L8.5 2.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                        <span>{comp}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {loadingFilter && (
+                  <div className="text-xs animate-pulse border-t border-subtle px-3 py-2 text-tertiary">
+                    Filtrando...
+                  </div>
+                )}
+              </div>
+            </FiltersDropdown>
+          )}
+          {/* Filtro por Grado militar — solo visible si hay militares */}
+          {showMilitaryFilters && (
+            <FiltersDropdown
+              miniIcon={<Award className="size-3.5" />}
+              title={
+                gradoFilter.length === 0
+                  ? "Grado"
+                  : gradoFilter.length === 1
+                    ? gradoFilter[0]
+                    : `${gradoFilter.length} grados`
+              }
+              placement="bottom-end"
+              isFiltersApplied={gradoFilter.length > 0}
+            >
+              <div className="flex w-56 flex-col overflow-hidden">
+                <div className="flex items-center justify-between border-b border-subtle px-3 py-2">
+                  <span className="text-xs font-medium text-tertiary">Grado militar</span>
+                  {gradoFilter.length > 0 && (
+                    <button type="button" onClick={clearGrados} className="text-xs text-accent-primary hover:underline">
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+                <div className="vertical-scrollbar scrollbar-sm max-h-72 overflow-y-auto py-1">
+                  <div className="tracking-wider px-3 py-1 text-[10px] font-semibold text-tertiary uppercase">
+                    Oficiales
+                  </div>
+                  {FANB_GRADOS_OFICIALES.map((grado) => {
+                    const selected = gradoFilter.includes(grado);
+                    return (
+                      <button
+                        key={grado}
+                        type="button"
+                        onClick={() => toggleGrado(grado)}
+                        className={`text-sm flex w-full items-center gap-2.5 px-3 py-1.5 transition-colors hover:bg-surface-2 ${
+                          selected ? "text-accent-primary" : "text-secondary"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                            selected ? "border-accent-primary bg-accent-primary" : "border-custom-border-300"
+                          }`}
+                        >
+                          {selected && (
+                            <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                              <path
+                                d="M1.5 5L4 7.5L8.5 2.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                        <span>{grado}</span>
+                      </button>
+                    );
+                  })}
+                  <div className="tracking-wider mt-1 px-3 py-1 text-[10px] font-semibold text-tertiary uppercase">
+                    Suboficiales
+                  </div>
+                  {FANB_GRADOS_SUBOFICIALES.map((grado) => {
+                    const selected = gradoFilter.includes(grado);
+                    return (
+                      <button
+                        key={grado}
+                        type="button"
+                        onClick={() => toggleGrado(grado)}
+                        className={`text-sm flex w-full items-center gap-2.5 px-3 py-1.5 transition-colors hover:bg-surface-2 ${
+                          selected ? "text-accent-primary" : "text-secondary"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                            selected ? "border-accent-primary bg-accent-primary" : "border-custom-border-300"
+                          }`}
+                        >
+                          {selected && (
+                            <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 10 10" fill="none">
+                              <path
+                                d="M1.5 5L4 7.5L8.5 2.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          )}
+                        </span>
+                        <span>{grado}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {loadingFilter && (
+                  <div className="text-xs animate-pulse border-t border-subtle px-3 py-2 text-tertiary">
+                    Filtrando...
+                  </div>
+                )}
+              </div>
+            </FiltersDropdown>
+          )}
           <HeaderFilters
             projectId={projectId}
             currentProjectDetails={currentProjectDetails}

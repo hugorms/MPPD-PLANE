@@ -45,6 +45,11 @@ class SocialCaseReportEndpoint(BaseAPIView):
             else []
         )
 
+        componentes_raw = request.query_params.get("componentes", "").strip()
+        componentes = [c.strip() for c in componentes_raw.split(",") if c.strip()] if componentes_raw else []
+        grados_raw = request.query_params.get("grados", "").strip()
+        grados = [g.strip() for g in grados_raw.split(",") if g.strip()] if grados_raw else []
+
         base_filters = {
             "workspace__slug": slug,
             "project_id": project_id,
@@ -59,6 +64,27 @@ class SocialCaseReportEndpoint(BaseAPIView):
             for e in estados:
                 estado_q |= Q(description_html__icontains=f'>{e}<')
             queryset = queryset.filter(estado_q)
+
+        if componentes:
+            # OR entre componentes — nombres únicos, búsqueda por texto plano
+            comp_q = Q()
+            for c in componentes:
+                comp_q |= (
+                    Q(description_html__icontains=f'"jornada":"{c}"')
+                    | Q(description_html__icontains=f'"jornada": "{c}"')
+                    | Q(description_html__icontains=f'>{c}<')
+                )
+            queryset = queryset.filter(comp_q)
+
+        if grados:
+            # OR entre grados — búsqueda por JSON caption para evitar coincidencias parciales
+            grado_q = Q()
+            for g in grados:
+                grado_q |= (
+                    Q(description_html__icontains=f'"gradoMilitar":"{g}"')
+                    | Q(description_html__icontains=f'"gradoMilitar": "{g}"')
+                )
+            queryset = queryset.filter(grado_q)
 
         if len(condiciones) == 1:
             military_q = (
