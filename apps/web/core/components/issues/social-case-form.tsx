@@ -1113,7 +1113,7 @@ export const SocialCaseForm = ({
 
             {/* Panel de decisión: cédula duplicada */}
             {duplicateCase && !duplicateConfirmed && (
-              <div className="border-custom-border-200 bg-custom-background-100 overflow-hidden rounded-lg border">
+              <div className="bg-custom-background-100 overflow-hidden rounded-lg border-[0.5px] border-subtle">
                 {/* Franja de acento */}
                 <div className="bg-amber-500 h-0.5 w-full" />
                 {/* Encabezado */}
@@ -1132,11 +1132,11 @@ export const SocialCaseForm = ({
                   </div>
                 </div>
                 {/* Barra de acciones */}
-                <div className="border-custom-border-200 bg-custom-background-90 flex flex-wrap items-center gap-1.5 border-t px-3 py-2">
+                <div className="bg-custom-background-90 flex flex-wrap items-center gap-1.5 border-t-[0.5px] border-subtle px-3 py-2">
                   <span className="text-custom-text-300 mr-0.5 text-[11px]">¿Qué deseas hacer?</span>
                   <a
                     href={duplicateCase.path}
-                    className="border-custom-border-200 bg-custom-background-100 text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] font-medium transition-colors"
+                    className="text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border-[0.5px] border-subtle bg-transparent px-2 py-1 text-[11px] font-medium transition-colors"
                   >
                     <ExternalLink className="h-2.5 w-2.5" />
                     Ver caso
@@ -1149,7 +1149,7 @@ export const SocialCaseForm = ({
                           await onReabrirDuplicate(duplicateCase.id);
                           window.location.assign(duplicateCase.path);
                         }}
-                        className="border-custom-border-200 bg-custom-background-100 text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border px-2 py-1 text-[11px] font-medium transition-colors"
+                        className="text-custom-text-200 hover:bg-custom-background-80 hover:text-custom-text-100 inline-flex items-center gap-1 rounded border-[0.5px] border-subtle bg-transparent px-2 py-1 text-[11px] font-medium transition-colors"
                       >
                         <RotateCcw className="h-2.5 w-2.5" />
                         Reabrir caso
@@ -1158,7 +1158,7 @@ export const SocialCaseForm = ({
                   <button
                     type="button"
                     onClick={() => setDuplicateConfirmed(true)}
-                    className="bg-amber-600 hover:bg-amber-700 inline-flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium text-white transition-colors"
+                    className="bg-custom-primary-100 hover:bg-custom-primary-200 inline-flex items-center gap-1 rounded border-[0.5px] border-subtle px-2 py-1 text-[11px] font-medium text-white transition-colors"
                   >
                     <Plus className="h-2.5 w-2.5" />
                     Nuevo caso
